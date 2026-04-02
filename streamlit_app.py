@@ -141,23 +141,21 @@ with col_logo:
     st.markdown("#### *Santa Teresa del Tuy en la palma de tu mano*")
 
 with col_share:
-    # BOTÓN DE COMPARTIR NATIVO
-    url_publica = "https://guia-almenar.streamlit.app" # Reemplaza con tu URL real
+    # URL ACTUALIZADA PARA EL NUEVO REPOSITORIO
+    url_publica = "https://guia-comercial-almenar.streamlit.app"
     compartir_js = f"""
         <script>
         function compartirApp() {{
+            const shareData = {{
+                title: 'Guía Comercial Almenar',
+                text: 'Mira los mejores comercios de Santa Teresa del Tuy aquí:',
+                url: '{url_publica}'
+            }};
             if (navigator.share) {{
-                navigator.share({{
-                    title: 'Guía Comercial Almenar',
-                    text: 'Mira los mejores comercios de Santa Teresa del Tuy aquí:',
-                    url: '{url_publica}'
-                }}).then(() => {{
-                    console.log('Gracias por compartir');
-                }})
-                .catch(console.error);
+                navigator.share(shareData).catch(console.error);
             }} else {{
-                alert("Copiado al portapapeles: {url_publica}");
-                navigator.clipboard.writeText("{url_publica}");
+                navigator.clipboard.writeText('{url_publica}');
+                alert("Enlace copiado al portapapeles: {url_publica}");
             }}
         }}
         </script>
