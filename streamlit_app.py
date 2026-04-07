@@ -75,6 +75,15 @@ st.markdown("""
     }
 
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+    
+    /* Estilo para los comentarios */
+    .comment-box {
+        background-color: #374151;
+        padding: 10px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        border-left: 5px solid #ffcc00;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -112,7 +121,7 @@ if c.fetchone()[0] == 0:
     ]
     for nom, cat, ubi, res in comercios_iniciales:
         c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", 
-                  (nom, cat, ubi, "https://via.placeholder.com/150", res, 5))
+                  (nom, cat, ubi, "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa", res, 5))
     conn.commit()
 
 # --- PANEL ADMIN CON CLAVE ÚNICA ---
@@ -128,10 +137,12 @@ if admin_pass == "Juan*316*":
             n = st.text_input("Nombre del Negocio")
             cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
             ub = st.text_input("Ubicación")
+            url_img = st.text_input("URL de la Foto (Link)", placeholder="https://ejemplo.com/foto.jpg")
             res = st.text_area("Reseña")
             est = st.slider("Estrellas", 1, 5, 5)
             if st.form_submit_button("Guardar Negocio"):
-                c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, "https://via.placeholder.com/150", res, est))
+                final_img = url_img if url_img else "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa"
+                c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
                 conn.commit()
                 st.sidebar.success("¡Guardado!")
                 st.rerun()
@@ -169,16 +180,52 @@ with col_s2:
 
 # --- BUSCADOR Y MOSTRADOR EN TIEMPO REAL ---
 busq = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Farmacia, Repuestos...")
-# Consultamos la base de datos siempre antes de mostrar para reflejar cambios inmediatos
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
     filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
     for _, r in filtrado.iterrows():
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
-            st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-            st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
-            st.info(f"**Reseña:** {r['reseña_willian']}")
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.image(r['foto_url'], use_container_width=True)
+                st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
+                st.info(f"**Reseña:** {r['reseña_willian']}")
+            
+            with col2:
+                st.subheader("💬 Opiniones de la comunidad")
+                
+                # Formulario para nuevos comentarios
+                with st.form(key=f"form_op_{r['id']}"):
+                    user = st.text_input("Tu Nombre", key=f"user_{r['id']}")
+                    comm = st.text_area("¿Qué te pareció?", key=f"comm_{r['id']}")
+                    stars_u = st.slider("Tu calificación", 1, 5, 5, key=f"stars_{r['id']}")
+                    if st.form_submit_button("Publicar Opinión"):
+                        if user and comm:
+                            fecha_hoy = datetime.now().strftime("%d/%m/%Y")
+                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
+                                      (int(r['id']), user, comm, stars_u, fecha_hoy))
+                            conn.commit()
+                            st.success("¡Gracias por tu opinión!")
+                            st.rerun()
+                        else:
+                            st.warning("Por favor escribe tu nombre y un comentario.")
+
+                # Mostrar comentarios existentes
+                ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id={int(r['id'])} ORDER BY id DESC", conn)
+                if not ops.empty:
+                    for _, op in ops.iterrows():
+                        st.markdown(f"""
+                        <div class="comment-box">
+                            <b>👤 {op['usuario']}</b> <small>({op['fecha']})</small><br>
+                            {'⭐' * op['estrellas_u']}<br>
+                            {op['comentario']}
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.write("Sé el primero en opinar sobre este negocio.")
 
 # --- PIE DE PÁGINA ACTUALIZADO ---
 st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
