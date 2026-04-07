@@ -238,12 +238,13 @@ if not df.empty:
             with col1:
                 # SE CORRIGE LA VISUALIZACIÓN DE IMÁGENES AQUÍ
                 try:
-                    if r['foto_url'] and str(r['foto_url']).startswith('http'):
-                        st.image(r['foto_url'], use_container_width=True)
+                    url_o_dato = str(r['foto_url']).strip()
+                    if url_o_dato.startswith('http') or url_o_dato.startswith('data:image'):
+                        st.image(url_o_dato, use_container_width=True)
                     else:
-                        st.image("https://via.placeholder.com/600x400?text=Imagen+No+Disponible", use_container_width=True)
+                        st.warning("Imagen no disponible")
                 except:
-                    st.image("https://via.placeholder.com/600x400?text=Error+al+cargar+Imagen", use_container_width=True)
+                    st.image("https://via.placeholder.com/600x400?text=Imagen+Error", use_container_width=True)
                 
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
