@@ -11,7 +11,7 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD TOTAL) ---
 st.markdown("""
     <style>
-    /* OCULTAMIENTO TOTAL DE INTERFAZ DE STREAMLIT (GESTIÓN Y HERRAMIENTAS) */
+    /* OCULTAMIENTO TOTAL DE INTERFAZ DE STREAMLIT */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -20,20 +20,32 @@ st.markdown("""
     .stAppToolbar {visibility: hidden !important; display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
     
-    /* ELIMINAR BOTÓN 'MANAGE APP' Y MARCOS FLOTANTES */
     button[title="Manage app"] {display: none !important;}
     div[data-testid="stStatusWidget"] {display: none !important;}
     .stAppDeployButton {display: none !important;}
-    #styled-link-icon {display: none !important;}
     
     /* Fondo general */
     .stApp { background-color: #111827; color: #ffffff; }
     
-    /* Panel lateral */
+    /* PANEL LATERAL: Letras visibles y Negritas */
     [data-testid="stSidebar"] { background-color: #1f2937; }
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p, 
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span, 
+    [data-testid="stSidebar"] label {
         color: #ffffff !important;
-        font-weight: bold;
+        font-weight: bold !important;
+        font-size: 1.1em !important;
+    }
+
+    /* Logo Ovalado en el Sidebar */
+    .sidebar-logo-oval {
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        border-radius: 50% / 30%; /* Forma ovalada */
+        border: 3px solid #ffcc00;
+        object-fit: cover;
     }
 
     /* Encabezado Tricolor en forma de ARCO */
@@ -76,7 +88,6 @@ st.markdown("""
 
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
     
-    /* Estilo para los comentarios */
     .comment-box {
         background-color: #374151;
         padding: 10px;
@@ -92,7 +103,6 @@ conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
-# Tabla para ajustes de la app (Logo)
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
 conn.commit()
 
@@ -133,6 +143,12 @@ if c.fetchone()[0] == 0:
     conn.commit()
 
 # --- PANEL ADMIN CON CLAVE ÚNICA ---
+c.execute("SELECT logo_url FROM ajustes WHERE id=1")
+res_logo = c.fetchone()
+current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+
+# Mostrar Logo Ovalado arriba en el Sidebar
+st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="120">', unsafe_allow_html=True)
 st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
@@ -142,13 +158,11 @@ if admin_pass == "Juan*316*":
     
     if menu == "Ajustes Logo":
         st.sidebar.subheader("Actualizar Logo Principal")
-        logo_file = st.sidebar.file_uploader("Subir foto del logo", type=['png', 'jpg', 'jpeg'])
-        logo_url_manual = st.sidebar.text_input("O pega URL del logo")
+        logo_url_manual = st.sidebar.text_input("Pega la URL del nuevo logo", value=current_logo)
         if st.sidebar.button("Guardar Logo"):
-            final_logo = logo_url_manual if logo_url_manual else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-            c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (final_logo,))
+            c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (logo_url_manual,))
             conn.commit()
-            st.sidebar.success("Logo actualizado")
+            st.sidebar.success("Logo actualizado con éxito")
             st.rerun()
 
     elif menu == "Añadir":
@@ -194,12 +208,9 @@ elif admin_pass != "":
     st.sidebar.error("Clave Incorrecta")
 
 # --- CUERPO PRINCIPAL ---
-c.execute("SELECT logo_url FROM ajustes WHERE id=1")
-result = c.fetchone()
-current_logo = result[0] if result else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
-
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
+# Logo en cuerpo principal (Normal)
 col_logo_1, col_logo_2, col_logo_3 = st.columns([2,1,2])
 with col_logo_2:
     st.image(current_logo, width=150)
@@ -228,6 +239,7 @@ if not df.empty:
             col1, col2 = st.columns([1, 1])
             
             with col1:
+                # AQUÍ SE CARGA LA FOTO DEL NEGOCIO
                 st.image(r['foto_url'], use_container_width=True)
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
