@@ -11,12 +11,14 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD) ---
 st.markdown("""
     <style>
-    /* Ocultar el icono de GitHub (el gatico), el menú, el pie de página y el botón de gestión */
+    /* Ocultar gatico, menú, pie de página y TODA la barra de gestión/herramientas */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
     .stDeployButton {display: none !important;}
+    .stAppToolbar {visibility: hidden !important; display: none !important;}
+    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
     
     /* Fondo general */
     .stApp { background-color: #111827; color: #ffffff; }
@@ -71,11 +73,42 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- BASE DE DATOS ---
+# Usamos una ruta persistente para evitar que se borre la información al reiniciar
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
 conn.commit()
+
+# --- CARGA DE DATOS REALES (Solo si la base de datos está totalmente nueva) ---
+c.execute("SELECT COUNT(*) FROM comercios")
+if c.fetchone()[0] == 0:
+    comercios_iniciales = [
+        ("Farmatodo", "Farmacias", "Av. Ayacucho", "Excelente atención y variedad."),
+        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "Productos frescos y buena ubicación."),
+        ("Panadería La Mansión del Tuy", "Otros", "Casco Central", "El mejor pan de la zona."),
+        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón", "Todo para la construcción."),
+        ("Clínica Pasqualini", "Salud", "Calle Falcón", "Atención médica especializada."),
+        ("Farmacia Saas", "Farmacias", "Av. Bolívar", "Medicamentos garantizados."),
+        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional", "Precios competitivos."),
+        ("Pollo a la Broaster Santa Teresa", "Otros", "Cerca de la Plaza Bolívar", "Sabor tradicional."),
+        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores", "Herramientas de calidad."),
+        ("Centro Médico Tuy", "Salud", "Urb. Independencia", "Servicio de emergencias 24h."),
+        ("Repuestos El Catire", "Otros", "Av. Principal", "Especialistas en frenos y tren delantero."),
+        ("Librería El Estudiante", "Otros", "Calle Comercio", "Artículos de oficina y escolares."),
+        ("Zapatería La Bota de Oro", "Otros", "Casco Central", "Calzado nacional e importado."),
+        ("Inversiones Nassif", "Otros", "Zona Industrial", "Distribución de alimentos."),
+        ("Bodegón El Canario", "Otros", "Calle Ayacucho", "Bebidas y snacks nacionales."),
+        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo", "Examen visual y monturas."),
+        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal", "Carnes de primera."),
+        ("Taller Mecánico El Chamo", "Otros", "Entrada a Santa Teresa", "Mecánica general."),
+        ("Peluquería Estilo y Clase", "Otros", "Casco Central", "Cortes y tintes modernos."),
+        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza", "Prueba tu suerte diariamente.")
+    ]
+    for nom, cat, ubi, res in comercios_iniciales:
+        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", 
+                  (nom, cat, ubi, "https://via.placeholder.com/150", res, 5))
+    conn.commit()
 
 # --- PANEL ADMIN CON CLAVE ÚNICA ---
 st.sidebar.title("🛠️ Administración")
