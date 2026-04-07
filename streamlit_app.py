@@ -11,7 +11,7 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD) ---
 st.markdown("""
     <style>
-    /* Ocultar gatico, menú, pie de página y TODA la barra de gestión/herramientas */
+    /* OCULTAMIENTO TOTAL DE INTERFAZ DE ADMINISTRACIÓN Y GESTIÓN */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -19,6 +19,10 @@ st.markdown("""
     .stDeployButton {display: none !important;}
     .stAppToolbar {visibility: hidden !important; display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    /* Bloqueo específico para el botón "Manage app" y decoradores */
+    div[data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    button[title="Manage app"] {display: none !important;}
+    #styled-link-icon {display: none !important;}
     
     /* Fondo general */
     .stApp { background-color: #111827; color: #ffffff; }
@@ -73,7 +77,6 @@ st.markdown("""
     """, unsafe_allow_html=True)
 
 # --- BASE DE DATOS ---
-# Usamos una ruta persistente para evitar que se borre la información al reiniciar
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
@@ -164,6 +167,7 @@ with col_s2:
 
 # --- BUSCADOR ---
 busq = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Farmacia, Repuestos...")
+# Recargar datos en cada interacción para tiempo real
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
