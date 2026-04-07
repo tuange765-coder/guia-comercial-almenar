@@ -124,8 +124,11 @@ if c.fetchone()[0] == 0:
     for nom, cat, ubi, img, res, est in comercios_iniciales:
         c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", 
                   (nom, cat, ubi, img, res, est))
-    
-    # Logo inicial predeterminado
+    conn.commit()
+
+# --- VERIFICACIÓN DE AJUSTES (LOGO) ---
+c.execute("SELECT COUNT(*) FROM ajustes")
+if c.fetchone()[0] == 0:
     c.execute("INSERT INTO ajustes (id, logo_url) VALUES (1, 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png')")
     conn.commit()
 
@@ -192,7 +195,8 @@ elif admin_pass != "":
 
 # --- CUERPO PRINCIPAL ---
 c.execute("SELECT logo_url FROM ajustes WHERE id=1")
-current_logo = c.fetchone()[0]
+result = c.fetchone()
+current_logo = result[0] if result else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
