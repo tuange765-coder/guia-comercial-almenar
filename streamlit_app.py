@@ -174,19 +174,21 @@ if admin_pass == "Juan*316*":
             n = st.text_input("Nombre del Negocio")
             cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
             ub = st.text_input("Ubicación")
-            # --- MEJORA: SUBIDA DE FOTO DESDE PC ---
-            uploaded_file = st.file_uploader("Sube la foto del negocio", type=['png', 'jpg', 'jpeg'])
-            url_img = st.text_input("O usa un enlace (URL) si prefieres", placeholder="https://ejemplo.com/foto.jpg")
+            
+            # --- NUEVA OPCIÓN: SUBIR FOTO DESDE PC ---
+            subida_pc = st.file_uploader("Sube la foto del local desde tu PC", type=['png', 'jpg', 'jpeg'])
+            url_img = st.text_input("O pega URL de la Foto (Link)", placeholder="https://ejemplo.com/foto.jpg")
+            
             res = st.text_area("Reseña")
             est = st.slider("Estrellas", 1, 5, 5)
             if st.form_submit_button("Guardar Negocio"):
-                final_img = "https://via.placeholder.com/600x300?text=Sin+Imagen"
-                if uploaded_file:
-                    img_bytes = uploaded_file.read()
-                    encoded_img = base64.b64encode(img_bytes).decode()
-                    final_img = f"data:image/png;base64,{encoded_img}"
-                elif url_img:
-                    final_img = url_img
+                final_img = url_img if url_img else "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa"
+                
+                # Si se subió un archivo, lo convertimos a base64
+                if subida_pc:
+                    img_bytes = subida_pc.read()
+                    encoded = base64.b64encode(img_bytes).decode()
+                    final_img = f"data:image/png;base64,{encoded}"
                 
                 c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
                 conn.commit()
@@ -201,16 +203,17 @@ if admin_pass == "Juan*316*":
             with st.sidebar.form("edit_form"):
                 new_n = st.text_input("Nombre", value=row['nombre'])
                 new_res = st.text_area("Reseña", value=row['reseña_willian'])
-                # --- MEJORA: CAMBIAR FOTO DESDE PC AL EDITAR ---
-                new_uploaded = st.file_uploader("Actualizar foto desde PC", type=['png', 'jpg', 'jpeg'])
-                new_img_url = st.text_input("O actualizar por URL", value=row['foto_url'])
+                
+                # --- NUEVA OPCIÓN: CAMBIAR FOTO DESDE PC ---
+                mod_subida_pc = st.file_uploader("Cambiar foto desde PC", type=['png', 'jpg', 'jpeg'])
+                new_img = st.text_input("O cambiar por URL", value=row['foto_url'])
                 
                 if st.form_submit_button("Actualizar"):
-                    final_img_mod = new_img_url
-                    if new_uploaded:
-                        img_bytes = new_uploaded.read()
-                        encoded_img = base64.b64encode(img_bytes).decode()
-                        final_img_mod = f"data:image/png;base64,{encoded_img}"
+                    final_img_mod = new_img
+                    if mod_subida_pc:
+                        img_bytes_mod = mod_subida_pc.read()
+                        encoded_mod = base64.b64encode(img_bytes_mod).decode()
+                        final_img_mod = f"data:image/png;base64,{encoded_mod}"
                         
                     c.execute("UPDATE comercios SET nombre=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_res, final_img_mod, int(row['id'])))
                     conn.commit()
@@ -254,9 +257,12 @@ if not df.empty:
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             with col1:
+                # --- SOLUCIÓN TÉCNICA DEFINITIVA PARA LAS FOTOS ---
                 try:
                     foto = str(r['foto_url']).strip()
-                    if foto.startswith('http') or foto.startswith('data:image'):
+                    if foto.startswith('http'):
+                        st.image(foto, use_container_width=True, caption=f"Local: {r['nombre']}")
+                    elif foto.startswith('data:image'):
                         st.image(foto, use_container_width=True)
                     else:
                         st.warning("Imagen no configurada")
