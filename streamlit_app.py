@@ -21,34 +21,33 @@ st.markdown("""
         font-weight: bold;
     }
 
-    /* Encabezado Tricolor en forma de ARCO */
+    /* Encabezado Tricolor en forma de ARCO PROFESIONAL */
     .venezuela-header {
         text-align: center;
         padding: 60px 10px 40px 10px;
         background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-        border-radius: 100% 100% 20px 20px / 100% 100% 20px 20px;
+        border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
         margin-bottom: 30px;
-        box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+        box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+        border: 1px solid rgba(255,255,255,0.1);
     }
     .stars-arc { 
         color: white; 
         font-size: 2.5em; 
         letter-spacing: 15px; 
         font-weight: bold; 
-        text-shadow: 2px 2px 5px #000;
-        margin-top: -20px;
+        text-shadow: 3px 3px 6px #000;
+        margin-top: -15px;
     }
     
-    /* Categorías */
-    .category-header { background-color: #3b82f6; color: white; padding: 10px; border-radius: 8px; border-left: 8px solid #ffcc00; }
-    
-    /* RECUADROS DE TEXTO */
+    /* RECUADROS DE TEXTO: Letras Negras sobre Fondo Blanco */
     input, textarea, [data-baseweb="select"] { 
         background-color: #ffffff !important; 
         color: #000000 !important; 
         font-weight: bold !important;
     }
     
+    /* Forzar visibilidad del texto escrito */
     .stTextInput input, .stTextArea textarea {
         color: #000000 !important;
     }
@@ -75,7 +74,7 @@ conn.commit()
 
 # --- PANEL ADMIN (AÑADIR Y MODIFICAR) ---
 st.sidebar.title("🛠️ Administración")
-admin_pass = st.sidebar.text_input("Clave", type="password")
+admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar"])
@@ -87,7 +86,7 @@ if admin_pass == "Juan*316*":
             ub = st.text_input("Ubicación")
             res = st.text_area("Reseña")
             est = st.slider("Estrellas", 1, 5, 5)
-            if st.form_submit_button("Guardar"):
+            if st.form_submit_button("Guardar Negocio"):
                 c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, "https://via.placeholder.com/150", res, est))
                 conn.commit()
                 st.sidebar.success("¡Guardado!")
@@ -96,7 +95,7 @@ if admin_pass == "Juan*316*":
     elif menu == "Modificar":
         df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
         if not df_mod.empty:
-            target = st.sidebar.selectbox("Elegir Negocio", df_mod['nombre'].tolist())
+            target = st.sidebar.selectbox("Elegir Negocio para Editar", df_mod['nombre'].tolist())
             row = df_mod[df_mod['nombre'] == target].iloc[0]
             with st.sidebar.form("edit_form"):
                 new_n = st.text_input("Nombre", value=row['nombre'])
@@ -112,25 +111,18 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.title("🚀 Guía Comercial Almenar")
 st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
-# --- SECCIÓN PARA COMPARTIR ---
-link_app = "https://guia-comercial-almenar.streamlit.app"
-whatsapp_url = f"https://api.whatsapp.com/send?text=¡Mira la Guía de Santa Teresa! 🚀 {link_app}"
+# --- SECCIÓN PARA COMPARTIR ACTUALIZADA ---
+link_app = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
+whatsapp_url = f"https://api.whatsapp.com/send?text=¡Mira la Guía Comercial de Santa Teresa! 🚀 Accede aquí: {link_app}"
 
-col_share1, col_share2 = st.columns(2)
-
-with col_share1:
+col_s1, col_s2 = st.columns(2)
+with col_s1:
     st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.1em;">📲 Compartir por WhatsApp</div></a>', unsafe_allow_html=True)
-
-with col_share2:
-    st.markdown(f"""
-        <div class="share-link-box">
-            <small>🔗 Enlace de la App:</small><br>
-            <b style="color:#ffcc00;">{link_app}</b>
-        </div>
-    """, unsafe_allow_html=True)
+with col_s2:
+    st.markdown(f'<div class="share-link-box"><small>🔗 Enlace Directo:</small><br><b style="color:#ffcc00;">{link_app}</b></div>', unsafe_allow_html=True)
 
 # --- BUSCADOR ---
-busq = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Farmacia, Repuestos...")
+busq = st.text_input("🔍 ¿Qué estás buscando hoy?", placeholder="Ej: Farmacia, Repuestos...")
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
