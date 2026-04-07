@@ -161,7 +161,15 @@ if admin_pass == "Juan*316*":
     elif menu == "Añadir":
         with st.sidebar.form("add_form"):
             n = st.text_input("Nombre")
-            cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
+            # --- CATEGORÍAS ACTUALIZADAS ---
+            cat = st.selectbox("Categoría", [
+                "Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", 
+                "Supermercados", "Electrodomésticos y línea blanca", 
+                "Telefonía y Tecnología", "Servicios de Fibra Óptica", 
+                "Carnicerías", "Charcuterías", "Comida rápida", 
+                "Tienda de ropa", "Perfumerías", "Entes gubernamentales", 
+                "Taxis y mototaxis", "Servicios"
+            ])
             ub = st.text_input("Ubicación")
             up_file = st.file_uploader("Foto desde PC", type=['png', 'jpg', 'jpeg'])
             url_img = st.text_input("O Link de Internet")
@@ -183,7 +191,6 @@ if admin_pass == "Juan*316*":
             with st.sidebar.form("edit_form"):
                 new_n = st.text_input("Nombre", value=row['nombre'])
                 new_res = st.text_area("Reseña", value=row['reseña_willian'])
-                # --- OPCIÓN DE FOTO DESDE PC EN MODIFICAR ---
                 up_file_mod = st.file_uploader("Cambiar Foto desde PC", type=['png', 'jpg', 'jpeg'])
                 new_img = st.text_input("O cambiar por URL", value=row['foto_url'])
                 if st.form_submit_button("Actualizar"):
