@@ -92,36 +92,41 @@ conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
+# Tabla para ajustes de la app (Logo)
+c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
 conn.commit()
 
-# --- CARGA DE DATOS REALES (Solo si la base de datos está totalmente nueva) ---
+# --- CARGA DE DATOS REALES ---
 c.execute("SELECT COUNT(*) FROM comercios")
 if c.fetchone()[0] == 0:
     comercios_iniciales = [
-        ("Farmatodo", "Farmacias", "Av. Ayacucho", "Excelente atención y variedad."),
-        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "Productos frescos y buena ubicación."),
-        ("Panadería La Mansión del Tuy", "Otros", "Casco Central", "El mejor pan de la zona."),
-        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón", "Todo para la construcción."),
-        ("Clínica Pasqualini", "Salud", "Calle Falcón", "Atención médica especializada."),
-        ("Farmacia Saas", "Farmacias", "Av. Bolívar", "Medicamentos garantizados."),
-        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional", "Precios competitivos."),
-        ("Pollo a la Broaster Santa Teresa", "Otros", "Cerca de la Plaza Bolívar", "Sabor tradicional."),
-        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores", "Herramientas de calidad."),
-        ("Centro Médico Tuy", "Salud", "Urb. Independencia", "Servicio de emergencias 24h."),
-        ("Repuestos El Catire", "Otros", "Av. Principal", "Especialistas en frenos y tren delantero."),
-        ("Librería El Estudiante", "Otros", "Calle Comercio", "Artículos de oficina y escolares."),
-        ("Zapatería La Bota de Oro", "Otros", "Casco Central", "Calzado nacional e importado."),
-        ("Inversiones Nassif", "Otros", "Zona Industrial", "Distribución de alimentos."),
-        ("Bodegón El Canario", "Otros", "Calle Ayacucho", "Bebidas y snacks nacionales."),
-        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo", "Examen visual y monturas."),
-        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal", "Carnes de primera."),
-        ("Taller Mecánico El Chamo", "Otros", "Entrada a Santa Teresa", "Mecánica general."),
-        ("Peluquería Estilo y Clase", "Otros", "Casco Central", "Cortes y tintes modernos."),
-        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza", "Prueba tu suerte diariamente.")
+        ("Farmatodo", "Farmacias", "Av. Ayacucho", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870?q=80&w=600", "Excelente atención y variedad.", 5),
+        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", "Productos frescos y buena ubicación.", 5),
+        ("Panadería La Mansión del Tuy", "Otros", "Casco Central", "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600", "El mejor pan de la zona.", 5),
+        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón", "https://images.unsplash.com/photo-1581244276891-8bb499b0f918?q=80&w=600", "Todo para la construcción.", 5),
+        ("Clínica Pasqualini", "Salud", "Calle Falcón", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600", "Atención médica especializada.", 5),
+        ("Farmacia Saas", "Farmacias", "Av. Bolívar", "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=600", "Medicamentos garantizados.", 5),
+        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional", "https://images.unsplash.com/photo-1604719312563-8912e93d5c33?q=80&w=600", "Precios competitivos.", 5),
+        ("Pollo a la Broaster Santa Teresa", "Otros", "Cerca de la Plaza Bolívar", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600", "Sabor tradicional.", 5),
+        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores", "https://images.unsplash.com/photo-1530124560676-41bc1275d813?q=80&w=600", "Herramientas de calidad.", 5),
+        ("Centro Médico Tuy", "Salud", "Urb. Independencia", "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=600", "Servicio de emergencias 24h.", 5),
+        ("Repuestos El Catire", "Otros", "Av. Principal", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600", "Especialistas en frenos y tren delantero.", 5),
+        ("Librería El Estudiante", "Otros", "Calle Comercio", "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600", "Artículos de oficina y escolares.", 5),
+        ("Zapatería La Bota de Oro", "Otros", "Casco Central", "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600", "Calzado nacional e importado.", 5),
+        ("Inversiones Nassif", "Otros", "Zona Industrial", "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600", "Distribución de alimentos.", 5),
+        ("Bodegón El Canario", "Otros", "Calle Ayacucho", "https://images.unsplash.com/photo-1534527489986-3e33beae29aa?q=80&w=600", "Bebidas y snacks nacionales.", 5),
+        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo", "https://images.unsplash.com/photo-1511499767390-90342f16b20a?q=80&w=600", "Examen visual y monturas.", 5),
+        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal", "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=600", "Carnes de primera.", 5),
+        ("Taller Mecánico El Chamo", "Otros", "Entrada a Santa Teresa", "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=600", "Mecánica general.", 5),
+        ("Peluquería Estilo y Clase", "Otros", "Casco Central", "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600", "Cortes y tintes modernos.", 5),
+        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza", "https://images.unsplash.com/photo-1518133295144-c79ac1976030?q=80&w=600", "Prueba tu suerte diariamente.", 5)
     ]
-    for nom, cat, ubi, res in comercios_iniciales:
+    for nom, cat, ubi, img, res, est in comercios_iniciales:
         c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", 
-                  (nom, cat, ubi, "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa", res, 5))
+                  (nom, cat, ubi, img, res, est))
+    
+    # Logo inicial predeterminado
+    c.execute("INSERT INTO ajustes (id, logo_url) VALUES (1, 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png')")
     conn.commit()
 
 # --- PANEL ADMIN CON CLAVE ÚNICA ---
@@ -130,9 +135,20 @@ admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
     st.sidebar.success("Acceso Concedido")
-    menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar"])
+    menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
-    if menu == "Añadir":
+    if menu == "Ajustes Logo":
+        st.sidebar.subheader("Actualizar Logo Principal")
+        logo_file = st.sidebar.file_uploader("Subir foto del logo", type=['png', 'jpg', 'jpeg'])
+        logo_url_manual = st.sidebar.text_input("O pega URL del logo")
+        if st.sidebar.button("Guardar Logo"):
+            final_logo = logo_url_manual if logo_url_manual else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+            c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (final_logo,))
+            conn.commit()
+            st.sidebar.success("Logo actualizado")
+            st.rerun()
+
+    elif menu == "Añadir":
         with st.sidebar.form("add_form"):
             n = st.text_input("Nombre del Negocio")
             cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
@@ -155,16 +171,35 @@ if admin_pass == "Juan*316*":
             with st.sidebar.form("edit_form"):
                 new_n = st.text_input("Nombre", value=row['nombre'])
                 new_res = st.text_area("Reseña", value=row['reseña_willian'])
+                new_img = st.text_input("Nueva URL de Foto", value=row['foto_url'])
                 if st.form_submit_button("Actualizar"):
-                    c.execute("UPDATE comercios SET nombre=?, reseña_willian=? WHERE id=?", (new_n, new_res, int(row['id'])))
+                    c.execute("UPDATE comercios SET nombre=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_res, new_img, int(row['id'])))
                     conn.commit()
                     st.sidebar.success("¡Actualizado!")
                     st.rerun()
+
+    elif menu == "Borrar":
+        df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
+        if not df_del.empty:
+            target_del = st.sidebar.selectbox("Negocio a ELIMINAR", df_del['nombre'].tolist())
+            if st.sidebar.button("⚠️ ELIMINAR DEFINITIVAMENTE"):
+                c.execute("DELETE FROM comercios WHERE nombre=?", (target_del,))
+                conn.commit()
+                st.sidebar.error(f"{target_del} eliminado.")
+                st.rerun()
 elif admin_pass != "":
     st.sidebar.error("Clave Incorrecta")
 
 # --- CUERPO PRINCIPAL ---
+c.execute("SELECT logo_url FROM ajustes WHERE id=1")
+current_logo = c.fetchone()[0]
+
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
+
+col_logo_1, col_logo_2, col_logo_3 = st.columns([2,1,2])
+with col_logo_2:
+    st.image(current_logo, width=150)
+
 st.title("🚀 Guía Comercial Almenar")
 st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
@@ -197,7 +232,6 @@ if not df.empty:
             with col2:
                 st.subheader("💬 Opiniones de la comunidad")
                 
-                # Formulario para nuevos comentarios
                 with st.form(key=f"form_op_{r['id']}"):
                     user = st.text_input("Tu Nombre", key=f"user_{r['id']}")
                     comm = st.text_area("¿Qué te pareció?", key=f"comm_{r['id']}")
@@ -213,7 +247,6 @@ if not df.empty:
                         else:
                             st.warning("Por favor escribe tu nombre y un comentario.")
 
-                # Mostrar comentarios existentes
                 ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id={int(r['id'])} ORDER BY id DESC", conn)
                 if not ops.empty:
                     for _, op in ops.iterrows():
