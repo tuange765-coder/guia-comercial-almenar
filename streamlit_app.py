@@ -8,10 +8,10 @@ from PIL import Image, ImageFile
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
-# --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD) ---
+# --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD TOTAL) ---
 st.markdown("""
     <style>
-    /* OCULTAMIENTO TOTAL DE INTERFAZ DE ADMINISTRACIÓN Y GESTIÓN */
+    /* OCULTAMIENTO TOTAL DE INTERFAZ DE STREAMLIT (GESTIÓN Y HERRAMIENTAS) */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
@@ -19,9 +19,11 @@ st.markdown("""
     .stDeployButton {display: none !important;}
     .stAppToolbar {visibility: hidden !important; display: none !important;}
     [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-    /* Bloqueo específico para el botón "Manage app" y decoradores */
-    div[data-testid="stStatusWidget"] {visibility: hidden !important; display: none !important;}
+    
+    /* ELIMINAR BOTÓN 'MANAGE APP' Y MARCOS FLOTANTES */
     button[title="Manage app"] {display: none !important;}
+    div[data-testid="stStatusWidget"] {display: none !important;}
+    .stAppDeployButton {display: none !important;}
     #styled-link-icon {display: none !important;}
     
     /* Fondo general */
@@ -165,9 +167,9 @@ with col_s1:
 with col_s2:
     st.markdown(f'<div class="share-link-box"><small>🔗 Enlace Directo:</small><br><b style="color:#ffcc00;">{link_app}</b></div>', unsafe_allow_html=True)
 
-# --- BUSCADOR ---
+# --- BUSCADOR Y MOSTRADOR EN TIEMPO REAL ---
 busq = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Farmacia, Repuestos...")
-# Recargar datos en cada interacción para tiempo real
+# Consultamos la base de datos siempre antes de mostrar para reflejar cambios inmediatos
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
@@ -179,4 +181,4 @@ if not df.empty:
             st.info(f"**Reseña:** {r['reseña_willian']}")
 
 # --- PIE DE PÁGINA ACTUALIZADO ---
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.no
