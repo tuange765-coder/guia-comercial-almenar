@@ -5,101 +5,115 @@ import os
 from datetime import datetime
 from PIL import Image, ImageFile
 import base64
+import urllib.parse
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD TOTAL) ---
 st.markdown("""
-    <style>
-    /* OCULTAMIENTO TOTAL DE INTERFAZ DE STREAMLIT */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;}
-    .stDeployButton {display: none !important;}
-    .stAppToolbar {visibility: hidden !important; display: none !important;}
-    [data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-    
-    button[title="Manage app"] {display: none !important;}
-    div[data-testid="stStatusWidget"] {display: none !important;}
-    .stAppDeployButton {display: none !important;}
-    
-    /* Fondo general */
-    .stApp { background-color: #111827; color: #ffffff; }
-    
-    /* PANEL LATERAL: Letras visibles y Negritas */
-    [data-testid="stSidebar"] { background-color: #1f2937; }
-    [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p, 
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] span, 
-    [data-testid="stSidebar"] label {
-        color: #ffffff !important;
-        font-weight: bold !important;
-        font-size: 1.1em !important;
-    }
+<style>
+/* OCULTAMIENTO TOTAL DE INTERFAZ DE STREAMLIT */
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+.viewerBadge_container__1QSob {display: none !important;}
+.stDeployButton {display: none !important;}
+.stAppToolbar {visibility: hidden !important; display: none !important;}
+[data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+button[title="Manage app"] {display: none !important;}
+div[data-testid="stStatusWidget"] {display: none !important;}
+.stAppDeployButton {display: none !important;}
 
-    /* Logo Ovalado en el Sidebar */
-    .sidebar-logo-oval {
-        display: block;
-        margin-left: auto;
-        margin-right: auto;
-        border-radius: 50% / 30%; /* Forma ovalada */
-        border: 3px solid #ffcc00;
-        object-fit: cover;
-    }
+/* Fondo general */
+.stApp { background-color: #111827; color: #ffffff; }
 
-    /* Encabezado Tricolor en forma de ARCO */
-    .venezuela-header {
-        text-align: center;
-        padding: 60px 10px 40px 10px;
-        background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-        border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
-        margin-bottom: 30px;
-        box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
-    }
-    .stars-arc { 
-        color: white; 
-        font-size: 2.5em; 
-        letter-spacing: 15px; 
-        font-weight: bold; 
-        text-shadow: 3px 3px 6px #000;
-        margin-top: -15px;
-    }
-    
-    /* RECUADROS DE TEXTO: Letras Negras sobre Fondo Blanco */
-    input, textarea, [data-baseweb="select"] { 
-        background-color: #ffffff !important; 
-        color: #000000 !important; 
-        font-weight: bold !important;
-    }
-    
-    .stTextInput input, .stTextArea textarea {
-        color: #000000 !important;
-    }
+/* PANEL LATERAL: Letras visibles y Negritas */
+[data-testid="stSidebar"] { background-color: #1f2937; }
+[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+[data-testid="stSidebar"] p,
+[data-testid="stSidebar"] span,
+[data-testid="stSidebar"] label {
+color: #ffffff !important;
+font-weight: bold !important;
+font-size: 1.1em !important;
+}
 
-    .share-link-box {
-        background-color: #1f2937;
-        border: 2px dashed #3b82f6;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        margin: 20px 0;
-    }
+/* Logo Ovalado en el Sidebar */
+.sidebar-logo-oval {
+display: block;
+margin-left: auto;
+margin-right: auto;
+border-radius: 50% / 30%; /* Forma ovalada */
+border: 3px solid #ffcc00;
+object-fit: cover;
+}
 
-    .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
-    
-    .comment-box {
-        background-color: #374151;
-        padding: 10px;
-        border-radius: 5px;
-        margin-bottom: 5px;
-        border-left: 5px solid #ffcc00;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+/* Encabezado Tricolor en forma de ARCO */
+.venezuela-header {
+text-align: center;
+padding: 60px 10px 40px 10px;
+background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
+border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
+margin-bottom: 30px;
+box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+}
+.stars-arc {
+color: white;
+font-size: 2.5em;
+letter-spacing: 15px;
+font-weight: bold;
+text-shadow: 3px 3px 6px #000;
+margin-top: -15px;
+}
 
-# --- BASE DE DATOS ---
+/* RECUADROS DE TEXTO: Letras Negras sobre Fondo Blanco */
+input, textarea, [data-baseweb="select"] {
+background-color: #ffffff !important;
+color: #000000 !important;
+font-weight: bold !important;
+}
+.stTextInput input, .stTextArea textarea {
+color: #000000 !important;
+}
+
+.share-link-box {
+background-color: #1f2937;
+border: 2px dashed #3b82f6;
+padding: 15px;
+border-radius: 10px;
+text-align: center;
+margin: 20px 0;
+}
+
+.footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+.comment-box {
+background-color: #374151;
+padding: 10px;
+border-radius: 5px;
+margin-bottom: 5px;
+border-left: 5px solid #ffcc00;
+}
+
+/* Botón de Maps personalizado */
+.maps-button {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #ea4335;
+    color: white !important;
+    text-decoration: none;
+    border-radius: 5px;
+    font-weight: bold;
+    margin-top: 10px;
+    text-align: center;
+}
+.maps-button:hover {
+    background-color: #c53929;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# --- BASE DE DATOS (PERSISTENCIA GARANTIZADA POR SQLITE) ---
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
@@ -107,34 +121,34 @@ c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCR
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
 conn.commit()
 
-# --- CARGA DE DATOS REALES ---
+# --- CARGA DE DATOS REALES (ACTUALIZADOS) ---
 c.execute("SELECT COUNT(*) FROM comercios")
 if c.fetchone()[0] == 0:
     comercios_iniciales = [
-        ("Farmatodo", "Farmacias", "Av. Ayacucho", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870?q=80&w=600", "Excelente atención y variedad.", 5),
-        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", "Productos frescos y buena ubicación.", 5),
-        ("Panadería La Mansión del Tuy", "Otros", "Casco Central", "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600", "El mejor pan de la zona.", 5),
-        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón", "https://images.unsplash.com/photo-1581244276891-8bb499b0f918?q=80&w=600", "Todo para la construcción.", 5),
-        ("Clínica Pasqualini", "Salud", "Calle Falcón", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600", "Atención médica especializada.", 5),
-        ("Farmacia Saas", "Farmacias", "Av. Bolívar", "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=600", "Medicamentos garantizados.", 5),
-        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional", "https://images.unsplash.com/photo-1604719312563-8912e93d5c33?q=80&w=600", "Precios competitivos.", 5),
-        ("Pollo a la Broaster Santa Teresa", "Otros", "Cerca de la Plaza Bolívar", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600", "Sabor tradicional.", 5),
-        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores", "https://images.unsplash.com/photo-1530124560676-41bc1275d813?q=80&w=600", "Herramientas de calidad.", 5),
-        ("Centro Médico Tuy", "Salud", "Urb. Independencia", "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=600", "Servicio de emergencias 24h.", 5),
-        ("Repuestos El Catire", "Otros", "Av. Principal", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600", "Especialistas en frenos y tren delantero.", 5),
-        ("Librería El Estudiante", "Otros", "Calle Comercio", "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600", "Artículos de oficina y escolares.", 5),
-        ("Zapatería La Bota de Oro", "Otros", "Casco Central", "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600", "Calzado nacional e importado.", 5),
-        ("Inversiones Nassif", "Otros", "Zona Industrial", "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600", "Distribución de alimentos.", 5),
-        ("Bodegón El Canario", "Otros", "Calle Ayacucho", "https://images.unsplash.com/photo-1534527489986-3e33beae29aa?q=80&w=600", "Bebidas y snacks nacionales.", 5),
-        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo", "https://images.unsplash.com/photo-1511499767390-90342f16b20a?q=80&w=600", "Examen visual y monturas.", 5),
-        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal", "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=600", "Carnes de primera.", 5),
-        ("Taller Mecánico El Chamo", "Otros", "Entrada a Santa Teresa", "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=600", "Mecánica general.", 5),
-        ("Peluquería Estilo y Clase", "Otros", "Casco Central", "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600", "Cortes y tintes modernos.", 5),
-        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza", "https://images.unsplash.com/photo-1518133295144-c79ac1976030?q=80&w=600", "Prueba tu suerte diariamente.", 5)
+        ("Farmatodo", "Farmacias", "Av. Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870?q=80&w=600", "Excelente atención y variedad.", 5),
+        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", "Productos frescos y buena ubicación.", 5),
+        ("Panadería La Mansión del Tuy", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600", "El mejor pan de la zona.", 5),
+        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1581244276891-8bb499b0f918?q=80&w=600", "Todo para la construcción.", 5),
+        ("Clínica Pasqualini", "Salud", "Calle Falcón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600", "Atención médica especializada.", 5),
+        ("Farmacia Saas", "Farmacias", "Av. Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=600", "Medicamentos garantizados.", 5),
+        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1604719312563-8912e93d5c33?q=80&w=600", "Precios competitivos.", 5),
+        ("Pollo a la Broaster Santa Teresa", "Otros", "Plaza Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600", "Sabor tradicional.", 5),
+        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1530124560676-41bc1275d813?q=80&w=600", "Herramientas de calidad.", 5),
+        ("Centro Médico Tuy", "Salud", "Urb. Independencia, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=600", "Servicio de emergencias 24h.", 5),
+        ("Repuestos El Catire", "Otros", "Av. Principal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600", "Especialistas en frenos y tren delantero.", 5),
+        ("Librería El Estudiante", "Otros", "Calle Comercio, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600", "Artículos de oficina y escolares.", 5),
+        ("Zapatería La Bota de Oro", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600", "Calzado nacional e importado.", 5),
+        ("Inversiones Nassif", "Otros", "Zona Industrial, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600", "Distribución de alimentos.", 5),
+        ("Bodegón El Canario", "Otros", "Calle Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1534527489986-3e33beae29aa?q=80&w=600", "Bebidas y snacks nacionales.", 5),
+        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1511499767390-90342f16b20a?q=80&w=600", "Examen visual y monturas.", 5),
+        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=600", "Carnes de primera.", 5),
+        ("Taller Mecánico El Chamo", "Otros", "Entrada Santa Teresa, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=600", "Mecánica general.", 5),
+        ("Peluquería Estilo y Clase", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600", "Cortes y tintes modernos.", 5),
+        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1518133295144-c79ac1976030?q=80&w=600", "Prueba tu suerte diariamente.", 5)
     ]
     for nom, cat, ubi, img, res, est in comercios_iniciales:
-        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", 
-                  (nom, cat, ubi, img, res, est))
+        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)",
+        (nom, cat, ubi, img, res, est))
     conn.commit()
 
 # --- VERIFICACIÓN DE AJUSTES (LOGO) ---
@@ -174,22 +188,11 @@ if admin_pass == "Juan*316*":
             n = st.text_input("Nombre del Negocio")
             cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
             ub = st.text_input("Ubicación")
-            
-            # --- NUEVA OPCIÓN: SUBIR FOTO DESDE PC ---
-            subida_pc = st.file_uploader("Sube la foto del local desde tu PC", type=['png', 'jpg', 'jpeg'])
-            url_img = st.text_input("O pega URL de la Foto (Link)", placeholder="https://ejemplo.com/foto.jpg")
-            
+            url_img = st.text_input("URL de la Foto (Link)", placeholder="https://ejemplo.com/foto.jpg")
             res = st.text_area("Reseña")
             est = st.slider("Estrellas", 1, 5, 5)
             if st.form_submit_button("Guardar Negocio"):
                 final_img = url_img if url_img else "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa"
-                
-                # Si se subió un archivo, lo convertimos a base64
-                if subida_pc:
-                    img_bytes = subida_pc.read()
-                    encoded = base64.b64encode(img_bytes).decode()
-                    final_img = f"data:image/png;base64,{encoded}"
-                
                 c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
                 conn.commit()
                 st.sidebar.success("¡Guardado!")
@@ -203,19 +206,9 @@ if admin_pass == "Juan*316*":
             with st.sidebar.form("edit_form"):
                 new_n = st.text_input("Nombre", value=row['nombre'])
                 new_res = st.text_area("Reseña", value=row['reseña_willian'])
-                
-                # --- NUEVA OPCIÓN: CAMBIAR FOTO DESDE PC ---
-                mod_subida_pc = st.file_uploader("Cambiar foto desde PC", type=['png', 'jpg', 'jpeg'])
-                new_img = st.text_input("O cambiar por URL", value=row['foto_url'])
-                
+                new_img = st.text_input("Nueva URL de Foto", value=row['foto_url'])
                 if st.form_submit_button("Actualizar"):
-                    final_img_mod = new_img
-                    if mod_subida_pc:
-                        img_bytes_mod = mod_subida_pc.read()
-                        encoded_mod = base64.b64encode(img_bytes_mod).decode()
-                        final_img_mod = f"data:image/png;base64,{encoded_mod}"
-                        
-                    c.execute("UPDATE comercios SET nombre=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_res, final_img_mod, int(row['id'])))
+                    c.execute("UPDATE comercios SET nombre=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_res, new_img, int(row['id'])))
                     conn.commit()
                     st.sidebar.success("¡Actualizado!")
                     st.rerun()
@@ -257,22 +250,25 @@ if not df.empty:
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             with col1:
-                # --- SOLUCIÓN TÉCNICA DEFINITIVA PARA LAS FOTOS ---
+                # VISUALIZACIÓN DE IMÁGENES
                 try:
-                    foto = str(r['foto_url']).strip()
-                    if foto.startswith('http'):
-                        st.image(foto, use_container_width=True, caption=f"Local: {r['nombre']}")
-                    elif foto.startswith('data:image'):
-                        st.image(foto, use_container_width=True)
+                    url_o_dato = str(r['foto_url']).strip()
+                    if url_o_dato.startswith('http') or url_o_dato.startswith('data:image'):
+                        st.image(url_o_dato, use_container_width=True)
                     else:
-                        st.warning("Imagen no configurada")
-                except Exception as e:
-                    st.image("https://via.placeholder.com/600x400?text=Error+al+Cargar+Imagen", use_container_width=True)
+                        st.warning("Imagen no disponible")
+                except:
+                    st.image("https://via.placeholder.com/600x400?text=Imagen+Error", use_container_width=True)
                 
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
                 st.info(f"**Reseña:** {r['reseña_willian']}")
-            
+                
+                # --- BOTÓN DE GOOGLE MAPS ---
+                query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']}")
+                link_maps = f"https://www.google.com/maps/search/?api=1&query={query_maps}"
+                st.markdown(f'<a href="{link_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+
             with col2:
                 st.subheader("💬 Opiniones de la comunidad")
                 with st.form(key=f"form_op_{r['id']}"):
@@ -282,8 +278,8 @@ if not df.empty:
                     if st.form_submit_button("Publicar Opinión"):
                         if user and comm:
                             fecha_hoy = datetime.now().strftime("%d/%m/%Y")
-                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
-                                      (int(r['id']), user, comm, stars_u, fecha_hoy))
+                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)",
+                            (int(r['id']), user, comm, stars_u, fecha_hoy))
                             conn.commit()
                             st.success("¡Gracias por tu opinión!")
                             st.rerun()
