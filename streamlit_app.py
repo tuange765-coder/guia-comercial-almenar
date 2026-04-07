@@ -250,15 +250,15 @@ if not df.empty:
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             with col1:
-                # VISUALIZACIÓN DE IMÁGENES
+                # VISUALIZACIÓN DE IMÁGENES INTEGRADA
                 try:
                     url_o_dato = str(r['foto_url']).strip()
                     if url_o_dato.startswith('http') or url_o_dato.startswith('data:image'):
                         st.image(url_o_dato, use_container_width=True)
                     else:
-                        st.warning("Imagen no disponible")
+                        st.image("https://via.placeholder.com/600x400?text=Imagen+No+Disponible", use_container_width=True)
                 except:
-                    st.image("https://via.placeholder.com/600x400?text=Imagen+Error", use_container_width=True)
+                    st.image("https://via.placeholder.com/600x400?text=Error+al+Cargar", use_container_width=True)
                 
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
