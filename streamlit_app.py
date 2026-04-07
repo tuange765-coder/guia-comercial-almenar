@@ -146,6 +146,16 @@ current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/
 st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
+# Lista Maestra de Categorías
+lista_categorias = [
+    "Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", 
+    "Supermercados", "Electrodomésticos y línea blanca", 
+    "Telefonía y Tecnología", "Servicios de Fibra Óptica", 
+    "Carnicerías", "Charcuterías", "Comida rápida", 
+    "Tienda de ropa", "Perfumerías", "Entes gubernamentales", 
+    "Taxis y mototaxis", "Servicios"
+]
+
 if admin_pass == "Juan*316*":
     st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
@@ -161,15 +171,7 @@ if admin_pass == "Juan*316*":
     elif menu == "Añadir":
         with st.sidebar.form("add_form"):
             n = st.text_input("Nombre")
-            # --- CATEGORÍAS ACTUALIZADAS ---
-            cat = st.selectbox("Categoría", [
-                "Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", 
-                "Supermercados", "Electrodomésticos y línea blanca", 
-                "Telefonía y Tecnología", "Servicios de Fibra Óptica", 
-                "Carnicerías", "Charcuterías", "Comida rápida", 
-                "Tienda de ropa", "Perfumerías", "Entes gubernamentales", 
-                "Taxis y mototaxis", "Servicios"
-            ])
+            cat = st.selectbox("Categoría", lista_categorias)
             ub = st.text_input("Ubicación")
             up_file = st.file_uploader("Foto desde PC", type=['png', 'jpg', 'jpeg'])
             url_img = st.text_input("O Link de Internet")
@@ -217,23 +219,35 @@ busq = st.text_input("🔍 ¿Qué buscas hoy?")
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
-    filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
-    for idx, r in filtrado.iterrows():
-        with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
-            col1, col2 = st.columns([1, 1])
-            with col1:
-                st.image(r['foto_url'], use_container_width=True)
-                st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                st.info(f"**Reseña:** {r['reseña_willian']}")
-            with col2:
-                st.subheader("💬 Opiniones")
-                with st.form(key=f"f_{idx}"):
-                    u = st.text_input("Nombre")
-                    m = st.text_area("Comentario")
-                    if st.form_submit_button("Enviar"):
-                        c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?,?,?,?)", (r['id'], u, m, datetime.now().strftime("%d/%m/%Y")))
-                        conn.commit()
-                        st.rerun()
+    # --- SISTEMA DE PESTAÑAS POR CATEGORÍA ---
+    # Creamos las pestañas usando la lista maestra
+    tabs = st.tabs(lista_categorias)
+    
+    for i, categoria_nombre in enumerate(lista_categorias):
+        with tabs[i]:
+            # Filtramos los comercios por la categoría de la pestaña y la búsqueda del usuario
+            filtrado = df[(df['categoria'] == categoria_nombre) & 
+                          (df['nombre'].str.contains(busq, case=False))]
+            
+            if not filtrado.empty:
+                for idx, r in filtrado.iterrows():
+                    with st.expander(f"🏢 {r['nombre']}"):
+                        col1, col2 = st.columns([1, 1])
+                        with col1:
+                            st.image(r['foto_url'], use_container_width=True)
+                            st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                            st.info(f"**Reseña:** {r['reseña_willian']}")
+                        with col2:
+                            st.subheader("💬 Opiniones")
+                            with st.form(key=f"f_{idx}_{categoria_nombre}"):
+                                u = st.text_input("Nombre")
+                                m = st.text_area("Comentario")
+                                if st.form_submit_button("Enviar"):
+                                    c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?,?,?,?)", (r['id'], u, m, datetime.now().strftime("%d/%m/%Y")))
+                                    conn.commit()
+                                    st.rerun()
+            else:
+                st.write(f"No hay registros en la categoría {categoria_nombre} que coincidan con tu búsqueda.")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
