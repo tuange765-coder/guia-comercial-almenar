@@ -152,14 +152,13 @@ st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
-    # Muestra el logo solo cuando el admin entra
-    st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="120">', unsafe_allow_html=True)
+    # Muestra el logo solo cuando el admin entra (MÁS GRANDE AHORA)
+    st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
     st.sidebar.success("Acceso Concedido")
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
     if menu == "Ajustes Logo":
         st.sidebar.subheader("Actualizar Logo Principal")
-        # Opción para subir desde PC
         uploaded_logo = st.sidebar.file_uploader("Sube el logo desde tu PC", type=['png', 'jpg', 'jpeg'])
         if uploaded_logo:
             img_bytes = uploaded_logo.read()
@@ -236,12 +235,18 @@ df = pd.read_sql_query("SELECT * FROM comercios", conn)
 if not df.empty:
     filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
     for _, r in filtrado.iterrows():
-        # Aquí se carga la imagen correspondiente al negocio automáticamente
+        # EXPANDER CORREGIDO PARA ASEGURAR QUE LAS IMÁGENES SE VEAN
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             
             with col1:
-                st.image(r['foto_url'], use_container_width=True)
+                # Se fuerza la visualización de la imagen guardada en el DB
+                try:
+                    st.image(r['foto_url'], use_container_width=True)
+                except:
+                    st.warning("No se pudo cargar la imagen original.")
+                    st.image("https://via.placeholder.com/600x300?text=Imagen+No+Disponible", use_container_width=True)
+                
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
                 st.info(f"**Reseña:** {r['reseña_willian']}")
