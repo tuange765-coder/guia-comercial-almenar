@@ -11,11 +11,12 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD) ---
 st.markdown("""
     <style>
-    /* Ocultar el icono de GitHub (el gatico), el menú y el pie de página de Streamlit */
+    /* Ocultar el icono de GitHub (el gatico), el menú, el pie de página y el botón de gestión */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
+    .stDeployButton {display: none !important;}
     
     /* Fondo general */
     .stApp { background-color: #111827; color: #ffffff; }
@@ -140,4 +141,5 @@ if not df.empty:
             st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
             st.info(f"**Reseña:** {r['reseña_willian']}")
 
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Reflexiones de Willian Almenar</div>", unsafe_allow_html=True)
+# --- PIE DE PÁGINA ACTUALIZADO ---
+st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
