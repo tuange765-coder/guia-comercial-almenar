@@ -86,7 +86,24 @@ text-align: center;
 margin: 20px 0;
 }
 
-.footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+/* PIE DE PÁGINA DORADO Y BRILLANTE */
+.footer-willian { 
+    background: #000; 
+    color: #fff; 
+    padding: 30px; 
+    text-align: center; 
+    border-top: 4px solid #ffcc00; 
+    margin-top: 50px; 
+}
+.gold-text {
+    background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: bold;
+    font-size: 1.2em;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
 .comment-box {
 background-color: #374151;
 padding: 10px;
@@ -188,11 +205,18 @@ if admin_pass == "Juan*316*":
             n = st.text_input("Nombre del Negocio")
             cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
             ub = st.text_input("Ubicación")
-            url_img = st.text_input("URL de la Foto (Link)", placeholder="https://ejemplo.com/foto.jpg")
+            uploaded_file = st.file_uploader("Sube la foto del negocio (Opcional)", type=['png', 'jpg', 'jpeg'])
+            url_img = st.text_input("O usa un Link de Internet", placeholder="https://ejemplo.com/foto.jpg")
             res = st.text_area("Reseña")
             est = st.slider("Estrellas", 1, 5, 5)
             if st.form_submit_button("Guardar Negocio"):
-                final_img = url_img if url_img else "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa"
+                final_img = "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa"
+                if uploaded_file:
+                    img_bytes = uploaded_file.read()
+                    encoded_img = base64.b64encode(img_bytes).decode()
+                    final_img = f"data:image/png;base64,{encoded_img}"
+                elif url_img:
+                    final_img = url_img
                 c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
                 conn.commit()
                 st.sidebar.success("¡Guardado!")
@@ -299,5 +323,14 @@ if not df.empty:
 else:
     st.info("No hay negocios registrados aún. Usa el panel de administración para añadir el primero.")
 
-# --- PIE DE PÁGINA ---
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
+# --- PIE DE PÁGINA ACTUALIZADO CON LETRAS DORADAS Y BRILLO ---
+st.markdown(f"""
+<div class='footer-willian'>
+    📍 Santa Teresa del Tuy, Venezuela.<br>
+    <span class='gold-text'>
+        © {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, 
+        Todos los derechos reservados, prohibida la reproduccion parcial o total. 
+        Santa Teresa del Tuy 2026
+    </span>
+</div>
+""", unsafe_allow_html=True)
