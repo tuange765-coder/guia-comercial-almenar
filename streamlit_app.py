@@ -4,6 +4,7 @@ import pandas as pd
 import os
 from datetime import datetime
 from PIL import Image, ImageFile
+import base64
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
@@ -147,23 +148,28 @@ c.execute("SELECT logo_url FROM ajustes WHERE id=1")
 res_logo = c.fetchone()
 current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
-# Mostrar Logo Ovalado arriba en el Sidebar
-st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="120">', unsafe_allow_html=True)
 st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
+    # Muestra el logo solo cuando el admin entra
+    st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="120">', unsafe_allow_html=True)
     st.sidebar.success("Acceso Concedido")
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
     if menu == "Ajustes Logo":
         st.sidebar.subheader("Actualizar Logo Principal")
-        logo_url_manual = st.sidebar.text_input("Pega la URL del nuevo logo", value=current_logo)
-        if st.sidebar.button("Guardar Logo"):
-            c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (logo_url_manual,))
-            conn.commit()
-            st.sidebar.success("Logo actualizado con éxito")
-            st.rerun()
+        # Opción para subir desde PC
+        uploaded_logo = st.sidebar.file_uploader("Sube el logo desde tu PC", type=['png', 'jpg', 'jpeg'])
+        if uploaded_logo:
+            img_bytes = uploaded_logo.read()
+            encoded_img = base64.b64encode(img_bytes).decode()
+            logo_data_url = f"data:image/png;base64,{encoded_img}"
+            if st.sidebar.button("Guardar Logo"):
+                c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (logo_data_url,))
+                conn.commit()
+                st.sidebar.success("Logo actualizado con éxito")
+                st.rerun()
 
     elif menu == "Añadir":
         with st.sidebar.form("add_form"):
@@ -210,11 +216,6 @@ elif admin_pass != "":
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# Logo en cuerpo principal (Normal)
-col_logo_1, col_logo_2, col_logo_3 = st.columns([2,1,2])
-with col_logo_2:
-    st.image(current_logo, width=150)
-
 st.title("🚀 Guía Comercial Almenar")
 st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
@@ -235,11 +236,11 @@ df = pd.read_sql_query("SELECT * FROM comercios", conn)
 if not df.empty:
     filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
     for _, r in filtrado.iterrows():
+        # Aquí se carga la imagen correspondiente al negocio automáticamente
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             
             with col1:
-                # AQUÍ SE CARGA LA FOTO DEL NEGOCIO
                 st.image(r['foto_url'], use_container_width=True)
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
