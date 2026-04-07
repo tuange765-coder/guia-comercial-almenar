@@ -152,7 +152,6 @@ st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
-    # Muestra el logo solo cuando el admin entra (MÁS GRANDE AHORA)
     st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
     st.sidebar.success("Acceso Concedido")
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
@@ -214,7 +213,6 @@ elif admin_pass != "":
 
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
-
 st.title("🚀 Guía Comercial Almenar")
 st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
@@ -234,18 +232,18 @@ df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
     filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
-    for _, r in filtrado.iterrows():
-        # EXPANDER CORREGIDO PARA ASEGURAR QUE LAS IMÁGENES SE VEAN
+    for idx, r in filtrado.iterrows():
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
-            
             with col1:
-                # Se fuerza la visualización de la imagen guardada en el DB
+                # SE CORRIGE LA VISUALIZACIÓN DE IMÁGENES AQUÍ
                 try:
-                    st.image(r['foto_url'], use_container_width=True)
+                    if r['foto_url'].startswith('http'):
+                        st.image(r['foto_url'], use_container_width=True)
+                    else:
+                        st.warning("Imagen no disponible")
                 except:
-                    st.warning("No se pudo cargar la imagen original.")
-                    st.image("https://via.placeholder.com/600x300?text=Imagen+No+Disponible", use_container_width=True)
+                    st.image("https://via.placeholder.com/600x400?text=Imagen+Error", use_container_width=True)
                 
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
@@ -253,11 +251,10 @@ if not df.empty:
             
             with col2:
                 st.subheader("💬 Opiniones de la comunidad")
-                
                 with st.form(key=f"form_op_{r['id']}"):
-                    user = st.text_input("Tu Nombre", key=f"user_{r['id']}")
-                    comm = st.text_area("¿Qué te pareció?", key=f"comm_{r['id']}")
-                    stars_u = st.slider("Tu calificación", 1, 5, 5, key=f"stars_{r['id']}")
+                    user = st.text_input("Tu Nombre", key=f"user_{idx}")
+                    comm = st.text_area("¿Qué te pareció?", key=f"comm_{idx}")
+                    stars_u = st.slider("Tu calificación", 1, 5, 5, key=f"stars_{idx}")
                     if st.form_submit_button("Publicar Opinión"):
                         if user and comm:
                             fecha_hoy = datetime.now().strftime("%d/%m/%Y")
@@ -282,5 +279,5 @@ if not df.empty:
                 else:
                     st.write("Sé el primero en opinar sobre este negocio.")
 
-# --- PIE DE PÁGINA ACTUALIZADO ---
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True
+# --- PIE DE PÁGINA ---
+st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
