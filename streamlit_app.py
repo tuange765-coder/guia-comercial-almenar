@@ -8,19 +8,60 @@ from PIL import Image, ImageFile
 # --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
-# --- ESTILO VENEZUELA (FONDO OSCURO Y ESTRELLAS) ---
+# --- ESTILO VENEZUELA (FONDO OSCURO Y ARCO TRICOLOR) ---
 st.markdown("""
     <style>
+    /* Fondo general */
     .stApp { background-color: #111827; color: #ffffff; }
+    
+    /* Panel lateral */
     [data-testid="stSidebar"] { background-color: #1f2937; }
-    .venezuela-header {
-        text-align: center; padding: 30px;
-        background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-        border-radius: 15px; margin-bottom: 20px;
+    [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {
+        color: #ffffff !important;
+        font-weight: bold;
     }
-    .stars-arc { color: white; font-size: 2em; letter-spacing: 12px; font-weight: bold; }
+
+    /* Encabezado Tricolor en forma de ARCO */
+    .venezuela-header {
+        text-align: center;
+        padding: 60px 10px 40px 10px;
+        background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
+        border-radius: 100% 100% 20px 20px / 100% 100% 20px 20px;
+        margin-bottom: 30px;
+        box-shadow: 0px 4px 15px rgba(0,0,0,0.5);
+    }
+    .stars-arc { 
+        color: white; 
+        font-size: 2.5em; 
+        letter-spacing: 15px; 
+        font-weight: bold; 
+        text-shadow: 2px 2px 5px #000;
+        margin-top: -20px;
+    }
+    
+    /* Categorías */
     .category-header { background-color: #3b82f6; color: white; padding: 10px; border-radius: 8px; border-left: 8px solid #ffcc00; }
-    input, textarea { background-color: #ffffff !important; color: #000000 !important; font-weight: bold; }
+    
+    /* RECUADROS DE TEXTO */
+    input, textarea, [data-baseweb="select"] { 
+        background-color: #ffffff !important; 
+        color: #000000 !important; 
+        font-weight: bold !important;
+    }
+    
+    .stTextInput input, .stTextArea textarea {
+        color: #000000 !important;
+    }
+
+    .share-link-box {
+        background-color: #1f2937;
+        border: 2px dashed #3b82f6;
+        padding: 15px;
+        border-radius: 10px;
+        text-align: center;
+        margin: 20px 0;
+    }
+
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
     </style>
     """, unsafe_allow_html=True)
@@ -71,14 +112,27 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.title("🚀 Guía Comercial Almenar")
 st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
-# Compartir por WhatsApp
+# --- SECCIÓN PARA COMPARTIR ---
 link_app = "https://guia-comercial-almenar.streamlit.app"
 whatsapp_url = f"https://api.whatsapp.com/send?text=¡Mira la Guía de Santa Teresa! 🚀 {link_app}"
-st.markdown(f'<a href="{whatsapp_url}" target="_blank"><div style="background-color:#25d366; color:white; padding:12px; border-radius:10px; text-align:center; font-weight:bold;">📲 Compartir por WhatsApp</div></a>', unsafe_allow_html=True)
 
-# Buscador
+col_share1, col_share2 = st.columns(2)
+
+with col_share1:
+    st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.1em;">📲 Compartir por WhatsApp</div></a>', unsafe_allow_html=True)
+
+with col_share2:
+    st.markdown(f"""
+        <div class="share-link-box">
+            <small>🔗 Enlace de la App:</small><br>
+            <b style="color:#ffcc00;">{link_app}</b>
+        </div>
+    """, unsafe_allow_html=True)
+
+# --- BUSCADOR ---
 busq = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Farmacia, Repuestos...")
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
+
 if not df.empty:
     filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
     for _, r in filtrado.iterrows():
