@@ -1,9 +1,3 @@
-Aquí tienes el código completo y corregido, respetando cada una de tus líneas y asegurando que el enlace https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app sea el que se use para compartir y copiar.
-
-He organizado el espaciado para que Streamlit lo reconozca perfectamente al pegarlo en GitHub.
-
-Python
-
 import streamlit as st
 import sqlite3
 import pandas as pd
@@ -84,7 +78,6 @@ conn.commit()
 
 # --- PANEL ADMIN CON CLAVE ÚNICA ---
 st.sidebar.title("🛠️ Administración")
-# Validación estricta de la clave
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
