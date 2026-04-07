@@ -181,4 +181,4 @@ if not df.empty:
             st.info(f"**Reseña:** {r['reseña_willian']}")
 
 # --- PIE DE PÁGINA ACTUALIZADO ---
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.no
+st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
