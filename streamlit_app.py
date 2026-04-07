@@ -13,7 +13,6 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD TOTAL) ---
 st.markdown("""
 <style>
-/* OCULTAMIENTO TOTAL DE INTERFAZ DE STREAMLIT */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
@@ -25,10 +24,8 @@ button[title="Manage app"] {display: none !important;}
 div[data-testid="stStatusWidget"] {display: none !important;}
 .stAppDeployButton {display: none !important;}
 
-/* Fondo general */
 .stApp { background-color: #111827; color: #ffffff; }
 
-/* PANEL LATERAL: Letras visibles y Negritas */
 [data-testid="stSidebar"] { background-color: #1f2937; }
 [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
 [data-testid="stSidebar"] p,
@@ -39,17 +36,15 @@ font-weight: bold !important;
 font-size: 1.1em !important;
 }
 
-/* Logo Ovalado en el Sidebar */
 .sidebar-logo-oval {
 display: block;
 margin-left: auto;
 margin-right: auto;
-border-radius: 50% / 30%; /* Forma ovalada */
+border-radius: 50% / 30%;
 border: 3px solid #ffcc00;
 object-fit: cover;
 }
 
-/* Encabezado Tricolor en forma de ARCO */
 .venezuela-header {
 text-align: center;
 padding: 60px 10px 40px 10px;
@@ -67,7 +62,6 @@ text-shadow: 3px 3px 6px #000;
 margin-top: -15px;
 }
 
-/* RECUADROS DE TEXTO: Letras Negras sobre Fondo Blanco */
 input, textarea, [data-baseweb="select"] {
 background-color: #ffffff !important;
 color: #000000 !important;
@@ -86,7 +80,6 @@ text-align: center;
 margin: 20px 0;
 }
 
-/* PIE DE PÁGINA DORADO Y BRILLANTE */
 .footer-willian { 
     background: #000; 
     color: #fff; 
@@ -112,7 +105,6 @@ margin-bottom: 5px;
 border-left: 5px solid #ffcc00;
 }
 
-/* Botón de Maps personalizado */
 .maps-button {
     display: inline-block;
     padding: 10px 20px;
@@ -124,13 +116,10 @@ border-left: 5px solid #ffcc00;
     margin-top: 10px;
     text-align: center;
 }
-.maps-button:hover {
-    background-color: #c53929;
-}
 </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS (PERSISTENCIA GARANTIZADA POR SQLITE) ---
+# --- BASE DE DATOS ---
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
@@ -138,134 +127,86 @@ c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCR
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
 conn.commit()
 
-# --- CARGA DE DATOS REALES (20 COMERCIOS) ---
+# --- CARGA INICIAL ---
 c.execute("SELECT COUNT(*) FROM comercios")
 if c.fetchone()[0] == 0:
     comercios_iniciales = [
-        ("Farmatodo Santa Teresa", "Farmacias", "Av. Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870?q=80&w=600", "Excelente atención 24 horas y gran variedad de productos.", 5),
-        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", "El punto de referencia para las compras familiares.", 5),
-        ("Panadería La Mansión del Tuy", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600", "Tradición en panadería y pastelería de calidad.", 5),
-        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1581244276891-8bb499b0f918?q=80&w=600", "Todo lo necesario para el hogar y la construcción.", 4),
-        ("Clínica Pasqualini", "Salud", "Calle Falcón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600", "Atención médica profesional y confiable.", 5),
-        ("Farmacia Saas", "Farmacias", "Av. Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=600", "Amplio stock de medicamentos y buena ubicación.", 5),
-        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1604719312563-8912e93d5c33?q=80&w=600", "Precios competitivos y gran espacio de compras.", 5),
-        ("Pollo a la Broaster Santa Teresa", "Otros", "Cerca de la Plaza Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600", "El sabor tradicional del pollo frito en el pueblo.", 4),
-        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1530124560676-41bc1275d813?q=80&w=600", "Materiales pesados y herramientas especializadas.", 4),
-        ("Centro Médico Tuy", "Salud", "Urb. Independencia, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=600", "Servicios de laboratorio y especialidades.", 5),
-        ("Repuestos El Catire", "Otros", "Av. Principal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600", "Soluciones rápidas para tu vehículo.", 5),
-        ("Librería El Estudiante", "Otros", "Calle Comercio, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600", "Todo para el regreso a clases y oficina.", 5),
-        ("Zapatería La Bota de Oro", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600", "Calzado para toda la familia a buen precio.", 4),
-        ("Inversiones Nassif", "Otros", "Zona Industrial, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600", "Líderes en distribución de alimentos y víveres.", 5),
-        ("Bodegón El Canario", "Otros", "Calle Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1534527489986-3e33beae29aa?q=80&w=600", "Delicateses y bebidas nacionales e importadas.", 5),
-        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1511499767390-90342f16b20a?q=80&w=600", "Salud visual con tecnología avanzada.", 5),
-        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=600", "Los mejores cortes de carne de la zona.", 5),
-        ("Taller Mecánico El Chamo", "Otros", "Entrada Santa Teresa, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=600", "Expertos en motores y tren delantero.", 4),
-        ("Peluquería Estilo y Clase", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600", "Cortes modernos y atención personalizada.", 5),
-        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1518133295144-c79ac1976030?q=80&w=600", "Donde los sueños de Santa Teresa se hacen realidad.", 4)
+        ("Farmatodo Santa Teresa", "Farmacias", "Av. Ayacucho", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870", "Excelente atención 24 horas.", 5),
+        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e", "Referencia para compras.", 5)
     ]
     for nom, cat, ubi, img, res, est in comercios_iniciales:
-        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)",
-        (nom, cat, ubi, img, res, est))
+        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (nom, cat, ubi, img, res, est))
     conn.commit()
 
-# --- VERIFICACIÓN DE AJUSTES (LOGO) ---
-c.execute("SELECT COUNT(*) FROM ajustes")
-if c.fetchone()[0] == 0:
-    c.execute("INSERT INTO ajustes (id, logo_url) VALUES (1, 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png')")
-    conn.commit()
-
-# --- PANEL ADMIN CON CLAVE ÚNICA ---
 c.execute("SELECT logo_url FROM ajustes WHERE id=1")
 res_logo = c.fetchone()
 current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
+# --- PANEL ADMIN ---
 st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 if admin_pass == "Juan*316*":
     st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
-    st.sidebar.success("Acceso Concedido")
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
     if menu == "Ajustes Logo":
-        st.sidebar.subheader("Actualizar Logo Principal")
-        uploaded_logo = st.sidebar.file_uploader("Sube el logo desde tu PC", type=['png', 'jpg', 'jpeg'])
-        if uploaded_logo:
-            img_bytes = uploaded_logo.read()
-            encoded_img = base64.b64encode(img_bytes).decode()
-            logo_data_url = f"data:image/png;base64,{encoded_img}"
-            if st.sidebar.button("Guardar Logo"):
-                c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (logo_data_url,))
-                conn.commit()
-                st.sidebar.success("Logo actualizado con éxito")
-                st.rerun()
+        uploaded_logo = st.sidebar.file_uploader("Sube el logo (PC)", type=['png', 'jpg', 'jpeg'])
+        if uploaded_logo and st.sidebar.button("Guardar Logo"):
+            encoded_logo = base64.b64encode(uploaded_logo.read()).decode()
+            c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (f"data:image/png;base64,{encoded_logo}",))
+            conn.commit()
+            st.rerun()
 
     elif menu == "Añadir":
         with st.sidebar.form("add_form"):
-            n = st.text_input("Nombre del Negocio")
+            n = st.text_input("Nombre")
             cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
             ub = st.text_input("Ubicación")
-            uploaded_file = st.file_uploader("Sube la foto del negocio (Opcional)", type=['png', 'jpg', 'jpeg'])
-            url_img = st.text_input("O usa un Link de Internet", placeholder="https://ejemplo.com/foto.jpg")
+            up_file = st.file_uploader("Foto desde PC", type=['png', 'jpg', 'jpeg'])
+            url_img = st.text_input("O Link de Internet")
             res = st.text_area("Reseña")
             est = st.slider("Estrellas", 1, 5, 5)
-            if st.form_submit_button("Guardar Negocio"):
-                final_img = "https://via.placeholder.com/600x300?text=Negocio+en+Santa+Teresa"
-                if uploaded_file:
-                    img_bytes = uploaded_file.read()
-                    encoded_img = base64.b64encode(img_bytes).decode()
-                    final_img = f"data:image/png;base64,{encoded_img}"
-                elif url_img:
-                    final_img = url_img
+            if st.form_submit_button("Guardar"):
+                final_img = url_img if url_img else "https://via.placeholder.com/600x300"
+                if up_file:
+                    final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
                 c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
                 conn.commit()
-                st.sidebar.success("¡Guardado!")
                 st.rerun()
 
     elif menu == "Modificar":
         df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
         if not df_mod.empty:
-            target = st.sidebar.selectbox("Elegir Negocio para Editar", df_mod['nombre'].tolist())
+            target = st.sidebar.selectbox("Elegir Negocio", df_mod['nombre'].tolist())
             row = df_mod[df_mod['nombre'] == target].iloc[0]
             with st.sidebar.form("edit_form"):
                 new_n = st.text_input("Nombre", value=row['nombre'])
                 new_res = st.text_area("Reseña", value=row['reseña_willian'])
-                new_img = st.text_input("Nueva URL de Foto", value=row['foto_url'])
+                # --- OPCIÓN DE FOTO DESDE PC EN MODIFICAR ---
+                up_file_mod = st.file_uploader("Cambiar Foto desde PC", type=['png', 'jpg', 'jpeg'])
+                new_img = st.text_input("O cambiar por URL", value=row['foto_url'])
                 if st.form_submit_button("Actualizar"):
-                    c.execute("UPDATE comercios SET nombre=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_res, new_img, int(row['id'])))
+                    img_to_save = new_img
+                    if up_file_mod:
+                        img_to_save = f"data:image/png;base64,{base64.b64encode(up_file_mod.read()).decode()}"
+                    c.execute("UPDATE comercios SET nombre=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_res, img_to_save, int(row['id'])))
                     conn.commit()
-                    st.sidebar.success("¡Actualizado!")
                     st.rerun()
 
     elif menu == "Borrar":
         df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
-        if not df_del.empty:
-            target_del = st.sidebar.selectbox("Negocio a ELIMINAR", df_del['nombre'].tolist())
-            if st.sidebar.button("⚠️ ELIMINAR DEFINITIVAMENTE"):
-                c.execute("DELETE FROM comercios WHERE nombre=?", (target_del,))
-                conn.commit()
-                st.sidebar.error(f"{target_del} eliminado.")
-                st.rerun()
-elif admin_pass != "":
-    st.sidebar.error("Clave Incorrecta")
+        target_del = st.sidebar.selectbox("Negocio a ELIMINAR", df_del['nombre'].tolist())
+        if st.sidebar.button("⚠️ ELIMINAR"):
+            c.execute("DELETE FROM comercios WHERE nombre=?", (target_del,))
+            conn.commit()
+            st.rerun()
 
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
-st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
-# --- SECCIÓN PARA COMPARTIR ---
-link_app = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
-whatsapp_url = f"https://api.whatsapp.com/send?text=¡Mira la Guía Comercial de Santa Teresa! 🚀 Accede aquí: {link_app}"
-
-col_s1, col_s2 = st.columns(2)
-with col_s1:
-    st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.1em;">📲 Compartir por WhatsApp</div></a>', unsafe_allow_html=True)
-with col_s2:
-    st.markdown(f'<div class="share-link-box"><small>🔗 Enlace Directo:</small><br><b style="color:#ffcc00;">{link_app}</b></div>', unsafe_allow_html=True)
-
-# --- BUSCADOR Y MOSTRADOR EN TIEMPO REAL ---
-busq = st.text_input("🔍 ¿Qué buscas hoy?", placeholder="Ej: Farmacia, Repuestos...")
+busq = st.text_input("🔍 ¿Qué buscas hoy?")
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
@@ -274,56 +215,20 @@ if not df.empty:
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             with col1:
-                try:
-                    url_o_dato = str(r['foto_url']).strip()
-                    if url_o_dato.startswith('http') or url_o_dato.startswith('data:image'):
-                        st.image(url_o_dato, use_container_width=True)
-                    else:
-                        st.image("https://via.placeholder.com/600x400?text=Imagen+No+Disponible", use_container_width=True)
-                except:
-                    st.image("https://via.placeholder.com/600x400?text=Error+al+Cargar", use_container_width=True)
-                
+                st.image(r['foto_url'], use_container_width=True)
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
                 st.info(f"**Reseña:** {r['reseña_willian']}")
-                
-                query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']}")
-                link_maps = f"https://www.google.com/maps/search/?api=1&query={query_maps}"
-                st.markdown(f'<a href="{link_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
-
             with col2:
-                st.subheader("💬 Opiniones de la comunidad")
-                with st.form(key=f"form_op_{r['id']}"):
-                    user = st.text_input("Tu Nombre", key=f"user_{idx}")
-                    comm = st.text_area("¿Qué te pareció?", key=f"comm_{idx}")
-                    stars_u = st.slider("Tu calificación", 1, 5, 5, key=f"stars_{idx}")
-                    if st.form_submit_button("Publicar Opinión"):
-                        if user and comm:
-                            fecha_hoy = datetime.now().strftime("%d/%m/%Y")
-                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)",
-                            (int(r['id']), user, comm, stars_u, fecha_hoy))
-                            conn.commit()
-                            st.success("¡Gracias por tu opinión!")
-                            st.rerun()
-                        else:
-                            st.warning("Por favor escribe tu nombre y un comentario.")
+                st.subheader("💬 Opiniones")
+                with st.form(key=f"f_{idx}"):
+                    u = st.text_input("Nombre")
+                    m = st.text_area("Comentario")
+                    if st.form_submit_button("Enviar"):
+                        c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?,?,?,?)", (r['id'], u, m, datetime.now().strftime("%d/%m/%Y")))
+                        conn.commit()
+                        st.rerun()
 
-                ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id={int(r['id'])} ORDER BY id DESC", conn)
-                if not ops.empty:
-                    for _, op in ops.iterrows():
-                        st.markdown(f"""
-                        <div class="comment-box">
-                            <b>👤 {op['usuario']}</b> <small>({op['fecha']})</small><br>
-                            {'⭐' * op['estrellas_u']}<br>
-                            {op['comentario']}
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.write("Sé el primero en opinar sobre este negocio.")
-else:
-    st.info("No hay negocios registrados aún. Usa el panel de administración para añadir el primero.")
-
-# --- PIE DE PÁGINA ACTUALIZADO CON LETRAS DORADAS Y BRILLO ---
+# --- PIE DE PÁGINA ---
 st.markdown(f"""
 <div class='footer-willian'>
     📍 Santa Teresa del Tuy, Venezuela.<br>
