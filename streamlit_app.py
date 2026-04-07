@@ -121,30 +121,30 @@ c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCR
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
 conn.commit()
 
-# --- CARGA DE DATOS REALES (ACTUALIZADOS) ---
+# --- CARGA DE DATOS REALES (20 COMERCIOS) ---
 c.execute("SELECT COUNT(*) FROM comercios")
 if c.fetchone()[0] == 0:
     comercios_iniciales = [
-        ("Farmatodo", "Farmacias", "Av. Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870?q=80&w=600", "Excelente atención y variedad.", 5),
-        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", "Productos frescos y buena ubicación.", 5),
-        ("Panadería La Mansión del Tuy", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600", "El mejor pan de la zona.", 5),
-        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1581244276891-8bb499b0f918?q=80&w=600", "Todo para la construcción.", 5),
-        ("Clínica Pasqualini", "Salud", "Calle Falcón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600", "Atención médica especializada.", 5),
-        ("Farmacia Saas", "Farmacias", "Av. Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=600", "Medicamentos garantizados.", 5),
-        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1604719312563-8912e93d5c33?q=80&w=600", "Precios competitivos.", 5),
-        ("Pollo a la Broaster Santa Teresa", "Otros", "Plaza Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600", "Sabor tradicional.", 5),
-        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1530124560676-41bc1275d813?q=80&w=600", "Herramientas de calidad.", 5),
-        ("Centro Médico Tuy", "Salud", "Urb. Independencia, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=600", "Servicio de emergencias 24h.", 5),
-        ("Repuestos El Catire", "Otros", "Av. Principal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600", "Especialistas en frenos y tren delantero.", 5),
-        ("Librería El Estudiante", "Otros", "Calle Comercio, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600", "Artículos de oficina y escolares.", 5),
-        ("Zapatería La Bota de Oro", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600", "Calzado nacional e importado.", 5),
-        ("Inversiones Nassif", "Otros", "Zona Industrial, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600", "Distribución de alimentos.", 5),
-        ("Bodegón El Canario", "Otros", "Calle Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1534527489986-3e33beae29aa?q=80&w=600", "Bebidas y snacks nacionales.", 5),
-        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1511499767390-90342f16b20a?q=80&w=600", "Examen visual y monturas.", 5),
-        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=600", "Carnes de primera.", 5),
-        ("Taller Mecánico El Chamo", "Otros", "Entrada Santa Teresa, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=600", "Mecánica general.", 5),
-        ("Peluquería Estilo y Clase", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600", "Cortes y tintes modernos.", 5),
-        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1518133295144-c79ac1976030?q=80&w=600", "Prueba tu suerte diariamente.", 5)
+        ("Farmatodo Santa Teresa", "Farmacias", "Av. Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1587854692152-cbe660fe0870?q=80&w=600", "Excelente atención 24 horas y gran variedad de productos.", 5),
+        ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=600", "El punto de referencia para las compras familiares.", 5),
+        ("Panadería La Mansión del Tuy", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=600", "Tradición en panadería y pastelería de calidad.", 5),
+        ("Ferretería El Águila", "Ferreterias", "Sector El Rincón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1581244276891-8bb499b0f918?q=80&w=600", "Todo lo necesario para el hogar y la construcción.", 4),
+        ("Clínica Pasqualini", "Salud", "Calle Falcón, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?q=80&w=600", "Atención médica profesional y confiable.", 5),
+        ("Farmacia Saas", "Farmacias", "Av. Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1576602976047-174e57a47881?q=80&w=600", "Amplio stock de medicamentos y buena ubicación.", 5),
+        ("Supermercado Hiper Líder", "Supermercados", "Carretera Nacional, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1604719312563-8912e93d5c33?q=80&w=600", "Precios competitivos y gran espacio de compras.", 5),
+        ("Pollo a la Broaster Santa Teresa", "Otros", "Cerca de la Plaza Bolívar, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?q=80&w=600", "El sabor tradicional del pollo frito en el pueblo.", 4),
+        ("Ferretería El Constructor", "Ferreterias", "Sector Las Flores, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1530124560676-41bc1275d813?q=80&w=600", "Materiales pesados y herramientas especializadas.", 4),
+        ("Centro Médico Tuy", "Salud", "Urb. Independencia, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1516549655169-df83a0774514?q=80&w=600", "Servicios de laboratorio y especialidades.", 5),
+        ("Repuestos El Catire", "Otros", "Av. Principal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?q=80&w=600", "Soluciones rápidas para tu vehículo.", 5),
+        ("Librería El Estudiante", "Otros", "Calle Comercio, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=600", "Todo para el regreso a clases y oficina.", 5),
+        ("Zapatería La Bota de Oro", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1549298916-b41d501d3772?q=80&w=600", "Calzado para toda la familia a buen precio.", 4),
+        ("Inversiones Nassif", "Otros", "Zona Industrial, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=600", "Líderes en distribución de alimentos y víveres.", 5),
+        ("Bodegón El Canario", "Otros", "Calle Ayacucho, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1534527489986-3e33beae29aa?q=80&w=600", "Delicateses y bebidas nacionales e importadas.", 5),
+        ("Óptica Santa Teresa", "Salud", "C.C. El Recreo, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1511499767390-90342f16b20a?q=80&w=600", "Salud visual con tecnología avanzada.", 5),
+        ("Carnicería La Ternera", "Supermercados", "Sector Mameyal, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?q=80&w=600", "Los mejores cortes de carne de la zona.", 5),
+        ("Taller Mecánico El Chamo", "Otros", "Entrada Santa Teresa, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?q=80&w=600", "Expertos en motores y tren delantero.", 4),
+        ("Peluquería Estilo y Clase", "Otros", "Casco Central, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1560066984-138dadb4c035?q=80&w=600", "Cortes modernos y atención personalizada.", 5),
+        ("Agencia de Loterías La Suerte", "Otros", "Frente a la Plaza, Santa Teresa del Tuy", "https://images.unsplash.com/photo-1518133295144-c79ac1976030?q=80&w=600", "Donde los sueños de Santa Teresa se hacen realidad.", 4)
     ]
     for nom, cat, ubi, img, res, est in comercios_iniciales:
         c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)",
@@ -250,7 +250,6 @@ if not df.empty:
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 1])
             with col1:
-                # VISUALIZACIÓN DE IMÁGENES INTEGRADA
                 try:
                     url_o_dato = str(r['foto_url']).strip()
                     if url_o_dato.startswith('http') or url_o_dato.startswith('data:image'):
@@ -264,7 +263,6 @@ if not df.empty:
                 st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
                 st.info(f"**Reseña:** {r['reseña_willian']}")
                 
-                # --- BOTÓN DE GOOGLE MAPS ---
                 query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']}")
                 link_maps = f"https://www.google.com/maps/search/?api=1&query={query_maps}"
                 st.markdown(f'<a href="{link_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
@@ -298,6 +296,8 @@ if not df.empty:
                         """, unsafe_allow_html=True)
                 else:
                     st.write("Sé el primero en opinar sobre este negocio.")
+else:
+    st.info("No hay negocios registrados aún. Usa el panel de administración para añadir el primero.")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, Todos los derechos reservados, prohibida la reproduccion parcial o total. Santa Teresa del Tuy 2026</div>", unsafe_allow_html=True)
