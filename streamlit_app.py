@@ -7,7 +7,7 @@ from PIL import Image, ImageFile
 import base64
 import urllib.parse
 
-# --- FUNCIÓN PARA MÚSICA DE FONDO (CON VOLUMEN SUAVE AL 30%) ---
+# --- FUNCIÓN PARA MÚSICA DE FONDO (CONTROL MANUAL PARA COMPATIBILIDAD) ---
 def autoplay_music(file_path):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -32,8 +32,6 @@ def autoplay_music(file_path):
                             console.log("Error al reproducir:", error);
                         }});
                     }}
-                    
-                    // Intentar reproducir también al hacer clic en cualquier parte del cuerpo
                     document.body.addEventListener('click', playAudio, {{ once: true }});
                 </script>
                 """
@@ -43,9 +41,10 @@ def autoplay_music(file_path):
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
 # --- ACTIVAR MÚSICA ---
+# Asegúrate de que el archivo esté en la carpeta 'música' o ajusta la ruta
 autoplay_music("música/musica1.mp3")
 
-# --- ESTILO VENEZUELA (TU DISEÑO ORIGINAL) ---
+# --- ESTILO VENEZUELA (DISEÑO ORIGINAL) ---
 st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
@@ -173,6 +172,14 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="180"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
+# --- LISTA MAESTRA DE CATEGORÍAS ---
+lista_maestra_categorias = [
+    "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
+    "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
+    "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
+    "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
+]
+
 # --- CONTROL POR PESTAÑAS PRINCIPALES (TAB) ---
 tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
 
@@ -186,19 +193,12 @@ with tab_llave_admin:
             df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
             st.table(df_visitas)
             
-            lista_categorias = [
-                "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
-                "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
-                "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
-                "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
-            ]
-            
             accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
             
             if accion == "Añadir":
                 with st.form("admin_add"):
                     n = st.text_input("Nombre del Negocio")
-                    cat = st.selectbox("Categoría", lista_categorias)
+                    cat = st.selectbox("Categoría", lista_maestra_categorias)
                     ub = st.text_input("Ubicación")
                     up_file = st.file_uploader("Subir foto de negocio (PC)", type=['png', 'jpg', 'jpeg'])
                     url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
@@ -224,24 +224,13 @@ with tab_publico:
     # --- CÁLCULO DE VISITAS TOTALES ---
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     total_visitas = total_visitas_res if total_visitas_res else 0
-    st.markdown(f"""
-        <div class="visitas-badge">
-            <span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span>
-        </div>
-    """, unsafe_allow_html=True)
+    st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span></div>', unsafe_allow_html=True)
 
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     
-    lista_maestra_categorias = [
-        "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
-        "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
-        "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
-        "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
-    ]
-    
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
-    # --- INSERTAR DONAS MUMU SI NO EXISTE EN LA BÚSQUEDA ---
+    # --- DATOS FIJOS: DONAS MUMU ---
     mumu_data = {
         'nombre': 'Donas Mumu',
         'categoria': 'Dulces',
@@ -251,26 +240,22 @@ with tab_publico:
         'estrellas_w': 5
     }
 
+    # Filtrado por búsqueda
     if not df.empty:
-        mask = (
-            df['nombre'].str.contains(busq, case=False) | 
-            df['categoria'].str.contains(busq, case=False) |
-            df['ubicacion'].str.contains(busq, case=False) |
-            df['reseña_willian'].str.contains(busq, case=False)
-        )
+        mask = (df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False) | df['ubicacion'].str.contains(busq, case=False) | df['reseña_willian'].str.contains(busq, case=False))
         df_busqueda = df[mask]
     else:
         df_busqueda = pd.DataFrame(columns=['nombre', 'categoria', 'ubicacion', 'foto_url', 'reseña_willian', 'estrellas_w'])
 
     if busq and not df_busqueda.empty:
-        st.success(f"✅ Se encontraron {len(df_busqueda)} coincidencias para '{busq}'")
+        st.success(f"✅ Se encontraron coincidencias para '{busq}'")
             
     tabs_negocios = st.tabs(lista_maestra_categorias)
     for i, cat_name in enumerate(lista_maestra_categorias):
         with tabs_negocios[i]:
             filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
             
-            # Si estamos en la categoría Dulces, mostramos Donas Mumu primero si coincide con la búsqueda o si no hay búsqueda
+            # Mostrar Donas Mumu si estamos en Dulces
             if cat_name == "Dulces" and (not busq or "donas" in busq.lower() or "mumu" in busq.lower()):
                 st.markdown(f"##### 🏢 **{mumu_data['nombre']}**")
                 c1, c2 = st.columns([1, 1])
@@ -288,7 +273,6 @@ with tab_publico:
                 st.write(f"ℹ️ No hay más comercios registrados en **{cat_name}** aún.")
             else:
                 for idx, r in filtrado_pestaña.iterrows():
-                    # Evitar duplicar si Donas Mumu ya está en la DB
                     if r['nombre'] == 'Donas Mumu' and cat_name == "Dulces": continue
                     st.markdown(f"##### 🏢 **{r['nombre']}**")
                     col1, col2 = st.columns([1, 1])
