@@ -207,11 +207,12 @@ if admin_pass == "Juan*316*":
 
     elif menu == "Borrar":
         df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
-        target_del = st.sidebar.selectbox("Negocio a ELIMINAR", df_del['nombre'].tolist())
-        if st.sidebar.button("⚠️ ELIMINAR"):
-            c.execute("DELETE FROM comercios WHERE nombre=?", (target_del,))
-            conn.commit()
-            st.rerun()
+        if not df_del.empty:
+            target_del = st.sidebar.selectbox("Negocio a ELIMINAR", df_del['nombre'].tolist())
+            if st.sidebar.button("⚠️ ELIMINAR"):
+                c.execute("DELETE FROM comercios WHERE nombre=?", (target_del,))
+                conn.commit()
+                st.rerun()
 
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
@@ -232,8 +233,7 @@ if not df.empty:
     tabs = st.tabs(lista_categorias)
     for i, categoria_nombre in enumerate(lista_categorias):
         with tabs[i]:
-            filtrado = df[(df['categoria'] == categoria_nombre) &
-                          (df['nombre'].str.contains(busq, case=False))]
+            filtrado = df[(df['categoria'] == categoria_nombre) & (df['nombre'].str.contains(busq, case=False))]
             if not filtrado.empty:
                 for idx, r in filtrado.iterrows():
                     st.markdown(f"##### 🏢 **{r['nombre']}**")
@@ -242,14 +242,12 @@ if not df.empty:
                         with col1:
                             st.image(r['foto_url'], use_container_width=True)
                             st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                            
                             query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
                             st.markdown(f"""
                             <a href="https://www.google.com/maps/search/?api=1&query={query_maps}" target="_blank" class="maps-button">
                                 📍 Ver en Google Maps
                             </a>
                             """, unsafe_allow_html=True)
-                            
                             st.info(f"**Reseña:** {r['reseña_willian']}")
                         with col2:
                             st.subheader("💬 Opiniones")
@@ -262,7 +260,6 @@ if not df.empty:
                                     {op[1]}
                                 </div>
                                 """, unsafe_allow_html=True)
-
                             with st.form(key=f"f_{idx}_{categoria_nombre}"):
                                 u = st.text_input("Nombre", key=f"user_{idx}")
                                 m = st.text_area("Comentario", key=f"comm_{idx}")
