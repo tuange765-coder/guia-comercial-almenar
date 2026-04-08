@@ -7,16 +7,20 @@ from PIL import Image, ImageFile
 import base64
 import urllib.parse
 
-# --- FUNCIÓN PARA MÚSICA DE FONDO ---
+# --- FUNCIÓN PARA MÚSICA DE FONDO (CON VOLUMEN SUAVE AL 30%) ---
 def autoplay_music(file_path):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
             data = f.read()
             b64 = base64.b64encode(data).decode()
             md = f"""
-                <audio autoplay loop>
+                <audio id="audio-player" autoplay loop controls style="width: 100%; height: 40px;">
                 <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
                 </audio>
+                <script>
+                    var audio = document.getElementById("audio-player");
+                    audio.volume = 0.3;
+                </script>
                 """
             st.markdown(md, unsafe_allow_html=True)
 
@@ -24,8 +28,8 @@ def autoplay_music(file_path):
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
 # --- ACTIVAR MÚSICA ---
-# Cambia "mi_musica.mp3" por el nombre exacto de tu canción en GitHub
-autoplay_music("mi_musica.mp3")
+# Aquí ajustamos la ruta a tu nueva carpeta "música"
+autoplay_music("música/musica1.mp3")
 
 # --- ESTILO VENEZUELA (TU DISEÑO ORIGINAL) ---
 st.markdown("""
@@ -74,7 +78,8 @@ button[data-baseweb="tab"] p {
 
 .logo-container {
     text-align: center;
-    margin-top: -50px; /* Ajustado para el nuevo tamaño del logo */
+    margin-top: -50px;
+    /* Ajustado para el nuevo tamaño del logo */
     margin-bottom: 20px;
 }
 .app-logo {
@@ -92,8 +97,7 @@ input, textarea, [data-baseweb="select"] {
 .footer-willian {
     background: #000;
     color: #fff;
-    padding: 30px;
-    text-align: center;
+    padding: 30px;    text-align: center;
     border-top: 4px solid #ffcc00;
     margin-top: 50px;
 }
