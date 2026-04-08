@@ -136,6 +136,15 @@ text-align: center;
 background-color: #1f2937;
 border-right: 2px solid #ffcc00;
 }
+
+.visitas-badge {
+    text-align: center;
+    background: rgba(255, 204, 0, 0.1);
+    border: 1px solid #ffcc00;
+    border-radius: 10px;
+    padding: 10px;
+    margin-bottom: 20px;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -213,7 +222,24 @@ with tab_llave_admin:
                     st.rerun()
 
 with tab_publico:
+    # --- CÁLCULO DE VISITAS TOTALES ---
+    total_visitas = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
+    st.markdown(f"""
+        <div class="visitas-badge">
+            <span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span>
+        </div>
+    """, unsafe_allow_html=True)
+
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
+    
+    # --- LISTA MAESTRA DE CATEGORÍAS PARA LA PESTAÑA PRINCIPAL ---
+    lista_maestra_categorias = [
+        "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
+        "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
+        "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
+        "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
+    ]
+    
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
     if not df.empty:
@@ -228,17 +254,16 @@ with tab_publico:
         if busq and not df_busqueda.empty:
             st.success(f"✅ Se encontraron {len(df_busqueda)} coincidencias para '{busq}'")
             
-        categorias_con_resultados = sorted(df_busqueda['categoria'].unique().tolist())
-        
-        if not categorias_con_resultados:
-            st.warning(f"❌ No se encontró nada relacionado con '{busq}' en ninguna categoría.")
-        else:
-            tabs_negocios = st.tabs(categorias_con_resultados)
-            for i, cat_name in enumerate(categorias_con_resultados):
-                with tabs_negocios[i]:
-                    filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
+        # Generamos las pestañas basadas en la lista maestra
+        tabs_negocios = st.tabs(lista_maestra_categorias)
+        for i, cat_name in enumerate(lista_maestra_categorias):
+            with tabs_negocios[i]:
+                filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
+                if filtrado_pestaña.empty:
+                    st.write(f"ℹ️ No hay comercios registrados en la categoría **{cat_name}** aún.")
+                else:
                     for idx, r in filtrado_pestaña.iterrows():
-                        st.markdown(f"##### 🏢 **{r['nombre']}** ({r['categoria']})")
+                        st.markdown(f"##### 🏢 **{r['nombre']}**")
                         col1, col2 = st.columns([1, 1])
                         with col1:
                             st.image(r['foto_url'], use_container_width=True)
@@ -251,6 +276,8 @@ with tab_publico:
                             else:
                                 st.write("*Sin reseña disponible por ahora.*")
                         st.markdown("---")
+    else:
+        st.info("👋 ¡Bienvenido! Pronto verás aquí los mejores comercios de Santa Teresa del Tuy.")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
