@@ -186,7 +186,6 @@ with tab_llave_admin:
             df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
             st.table(df_visitas)
             
-            # --- LISTA DE CATEGORÍAS ACTUALIZADA ---
             lista_categorias = [
                 "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
                 "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
@@ -223,7 +222,8 @@ with tab_llave_admin:
 
 with tab_publico:
     # --- CÁLCULO DE VISITAS TOTALES ---
-    total_visitas = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
+    total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
+    total_visitas = total_visitas_res if total_visitas_res else 0
     st.markdown(f"""
         <div class="visitas-badge">
             <span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span>
@@ -232,7 +232,6 @@ with tab_publico:
 
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     
-    # --- LISTA MAESTRA DE CATEGORÍAS PARA LA PESTAÑA PRINCIPAL ---
     lista_maestra_categorias = [
         "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
         "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
@@ -242,6 +241,16 @@ with tab_publico:
     
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
+    # --- INSERTAR DONAS MUMU SI NO EXISTE EN LA BÚSQUEDA ---
+    mumu_data = {
+        'nombre': 'Donas Mumu',
+        'categoria': 'Dulces',
+        'ubicacion': 'Santa Teresa del Tuy, Sector Centro',
+        'foto_url': 'https://img.freepik.com/foto-gratis/donas-glaseadas-frescas-variedad-sabores_23-2149021430.jpg',
+        'reseña_willian': 'Las mejores donas de la zona, frescura garantizada y un sabor que te transporta. ¡Altamente recomendadas!',
+        'estrellas_w': 5
+    }
+
     if not df.empty:
         mask = (
             df['nombre'].str.contains(busq, case=False) | 
@@ -250,34 +259,50 @@ with tab_publico:
             df['reseña_willian'].str.contains(busq, case=False)
         )
         df_busqueda = df[mask]
-
-        if busq and not df_busqueda.empty:
-            st.success(f"✅ Se encontraron {len(df_busqueda)} coincidencias para '{busq}'")
-            
-        # Generamos las pestañas basadas en la lista maestra
-        tabs_negocios = st.tabs(lista_maestra_categorias)
-        for i, cat_name in enumerate(lista_maestra_categorias):
-            with tabs_negocios[i]:
-                filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
-                if filtrado_pestaña.empty:
-                    st.write(f"ℹ️ No hay comercios registrados en la categoría **{cat_name}** aún.")
-                else:
-                    for idx, r in filtrado_pestaña.iterrows():
-                        st.markdown(f"##### 🏢 **{r['nombre']}**")
-                        col1, col2 = st.columns([1, 1])
-                        with col1:
-                            st.image(r['foto_url'], use_container_width=True)
-                            st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                            query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
-                            st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
-                        with col2:
-                            if r['reseña_willian']:
-                                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                            else:
-                                st.write("*Sin reseña disponible por ahora.*")
-                        st.markdown("---")
     else:
-        st.info("👋 ¡Bienvenido! Pronto verás aquí los mejores comercios de Santa Teresa del Tuy.")
+        df_busqueda = pd.DataFrame(columns=['nombre', 'categoria', 'ubicacion', 'foto_url', 'reseña_willian', 'estrellas_w'])
+
+    if busq and not df_busqueda.empty:
+        st.success(f"✅ Se encontraron {len(df_busqueda)} coincidencias para '{busq}'")
+            
+    tabs_negocios = st.tabs(lista_maestra_categorias)
+    for i, cat_name in enumerate(lista_maestra_categorias):
+        with tabs_negocios[i]:
+            filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
+            
+            # Si estamos en la categoría Dulces, mostramos Donas Mumu primero si coincide con la búsqueda o si no hay búsqueda
+            if cat_name == "Dulces" and (not busq or "donas" in busq.lower() or "mumu" in busq.lower()):
+                st.markdown(f"##### 🏢 **{mumu_data['nombre']}**")
+                c1, c2 = st.columns([1, 1])
+                with c1:
+                    st.image(mumu_data['foto_url'], use_container_width=True)
+                    st.write(f"📍 **Ubicación:** {mumu_data['ubicacion']}")
+                    q_maps = urllib.parse.quote(f"{mumu_data['nombre']} {mumu_data['ubicacion']} Santa Teresa del Tuy")
+                    st.markdown(f'<a href="https://www.google.com/maps/search/{q_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+                with c2:
+                    st.info(f"**Reseña de Willian:** {mumu_data['reseña_willian']}")
+                    st.warning(f"⭐ Puntuación: {mumu_data['estrellas_w']}/5")
+                st.markdown("---")
+
+            if filtrado_pestaña.empty and not (cat_name == "Dulces" and (not busq or "donas" in busq.lower())):
+                st.write(f"ℹ️ No hay más comercios registrados en **{cat_name}** aún.")
+            else:
+                for idx, r in filtrado_pestaña.iterrows():
+                    # Evitar duplicar si Donas Mumu ya está en la DB
+                    if r['nombre'] == 'Donas Mumu' and cat_name == "Dulces": continue
+                    st.markdown(f"##### 🏢 **{r['nombre']}**")
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.image(r['foto_url'], use_container_width=True)
+                        st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                        query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
+                        st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+                    with col2:
+                        if r['reseña_willian']:
+                            st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                        else:
+                            st.write("*Sin reseña disponible por ahora.*")
+                    st.markdown("---")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
