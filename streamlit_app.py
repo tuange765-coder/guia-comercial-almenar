@@ -7,8 +7,25 @@ from PIL import Image, ImageFile
 import base64
 import urllib.parse
 
+# --- FUNCIÓN PARA MÚSICA DE FONDO ---
+def autoplay_music(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio autoplay loop>
+                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                """
+            st.markdown(md, unsafe_allow_html=True)
+
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
+
+# --- ACTIVAR MÚSICA ---
+# Cambia "mi_musica.mp3" por el nombre exacto de tu canción en GitHub
+autoplay_music("mi_musica.mp3")
 
 # --- ESTILO VENEZUELA (TU DISEÑO ORIGINAL) ---
 st.markdown("""
