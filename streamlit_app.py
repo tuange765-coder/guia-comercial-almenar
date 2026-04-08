@@ -1,3 +1,5 @@
+import streamlit as st
+import sqlite3
 import pandas as pd
 import os
 from datetime import datetime
@@ -5,7 +7,7 @@ from PIL import Image, ImageFile
 import base64
 import urllib.parse
 
-# --- CONFIGURACIÓN DE PÁGINA ---
+# --- CONFIGURACIÓN DE PÁGINA (DEBE SER LA PRIMERA ORDEN DE STREAMLIT) ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
 # --- ESTILO VENEZUELA (ARCO, LETRAS NEGRAS Y SEGURIDAD TOTAL) ---
@@ -156,8 +158,8 @@ lista_categorias = [
 
 if admin_pass == "Juan*316*":
     st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
-    # --- RECORDATORIO DE SEGURIDAD DE DATOS ---
-    st.sidebar.warning("🔒 Los datos están vinculados a 'guia_santa_teresa.db'. No se borrarán al modificar el código ni al cerrar sesión.")
+    st.sidebar.warning("🔒 Datos vinculados a 'guia_santa_teresa.db'. No se borrarán al cerrar sesión.")
+    
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
     if menu == "Ajustes Logo":
@@ -227,7 +229,6 @@ busq = st.text_input("🔍 ¿Qué buscas hoy?")
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
-    # --- SISTEMA DE PESTAÑAS POR CATEGORÍA ---
     tabs = st.tabs(lista_categorias)
     for i, categoria_nombre in enumerate(lista_categorias):
         with tabs[i]:
@@ -235,7 +236,7 @@ if not df.empty:
                           (df['nombre'].str.contains(busq, case=False))]
             if not filtrado.empty:
                 for idx, r in filtrado.iterrows():
-                    # --- TITULO PEQUEÑO ---
+                    # Título de negocio ajustado (más pequeño)
                     st.markdown(f"#### 🏢 **{r['nombre']}**")
                     with st.expander("Ver detalles y opiniones"):
                         col1, col2 = st.columns([1, 1])
