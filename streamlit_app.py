@@ -20,8 +20,7 @@ def autoplay_music(file_path):
                 <script>
                     var audio = document.getElementById("audio-player");
                     audio.volume = 0.3;
-                    
-                    // Intento de reproducción forzada al interactuar
+                    // Intento de reproducción forzada al interactuar con cualquier parte de la página
                     window.addEventListener('click', function() {{
                         audio.play();
                     }}, {{ once: true }});
@@ -54,82 +53,82 @@ div[data-testid="stStatusWidget"] {display: none !important;}
 
 /* REFUERZO DE COLOR PARA LETRAS Y PESTAÑAS */
 h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
-    color: #ffffff !important;
+color: #ffffff !important;
 }
 
 /* Estilo para las pestañas (Tabs) para que se vean claras */
 button[data-baseweb="tab"] p {
-    color: #ffcc00 !important;
-    font-weight: bold !important;
-    font-size: 1.1em !important;
+color: #ffcc00 !important;
+font-weight: bold !important;
+font-size: 1.1em !important;
 }
 
 .venezuela-header {
-    text-align: center;
-    padding: 60px 10px 40px 10px;
-    background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-    border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
-    margin-bottom: 30px;
-    box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+text-align: center;
+padding: 60px 10px 40px 10px;
+background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
+border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
+margin-bottom: 30px;
+box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
 }
 .stars-arc {
-    color: white;
-    font-size: 2.5em;
-    letter-spacing: 15px;
-    font-weight: bold;
-    text-shadow: 3px 3px 6px #000;
-    margin-top: -15px;
+color: white;
+font-size: 2.5em;
+letter-spacing: 15px;
+font-weight: bold;
+text-shadow: 3px 3px 6px #000;
+margin-top: -15px;
 }
 
 .logo-container {
-    text-align: center;
-    margin-top: -50px;
-    /* Ajustado para el nuevo tamaño del logo */
-    margin-bottom: 20px;
+text-align: center;
+margin-top: -50px;
+/* Ajustado para el nuevo tamaño del logo */
+margin-bottom: 20px;
 }
 .app-logo {
-    border-radius: 50% / 30%;
-    border: 3px solid #ffcc00;
-    box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
+border-radius: 50% / 30%;
+border: 3px solid #ffcc00;
+box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
 }
 
 input, textarea, [data-baseweb="select"] {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-    font-weight: bold !important;
+background-color: #ffffff !important;
+color: #000000 !important;
+font-weight: bold !important;
 }
 
 .footer-willian {
-    background: #000;
-    color: #fff;
-    padding: 30px;    text-align: center;
-    border-top: 4px solid #ffcc00;
-    margin-top: 50px;
+background: #000;
+color: #fff;
+padding: 30px; text-align: center;
+border-top: 4px solid #ffcc00;
+margin-top: 50px;
 }
 .gold-text {
-    background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: bold;
-    font-size: 1.2em;
+background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+font-weight: bold;
+font-size: 1.2em;
 }
 
 .maps-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #ea4335;
-    color: white !important;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-    margin-top: 10px;
-    text-align: center;
+display: inline-block;
+padding: 10px 20px;
+background-color: #ea4335;
+color: white !important;
+text-decoration: none;
+border-radius: 5px;
+font-weight: bold;
+margin-top: 10px;
+text-align: center;
 }
 
 /* Estilo para que la barra lateral combine con tu diseño */
 [data-testid="stSidebar"] {
-    background-color: #1f2937;
-    border-right: 2px solid #ffcc00;
+background-color: #1f2937;
+border-right: 2px solid #ffcc00;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -140,7 +139,6 @@ c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
-# Tabla para el contador de visitas
 c.execute('CREATE TABLE IF NOT EXISTS visitas (fecha TEXT PRIMARY KEY, conteo INTEGER)')
 conn.commit()
 
@@ -169,16 +167,12 @@ with tab_llave_admin:
         admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
         if admin_pass == "Juan*316*":
             st.success("Modo Editor Total Activado")
-            
             # --- SECCIÓN DE ESTADÍSTICAS (CONTADOR) ---
             st.markdown("### 📊 Estadísticas de Visitas")
             df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
             st.table(df_visitas)
-            
             lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
-            
             accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
-            
             if accion == "Añadir":
                 with st.form("admin_add"):
                     n = st.text_input("Nombre del Negocio")
@@ -194,7 +188,7 @@ with tab_llave_admin:
                         c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, 5))
                         conn.commit()
                         st.rerun()
-
+            
             elif accion == "Modificar/Quitar":
                 df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
                 if not df_mod.empty:
@@ -264,8 +258,8 @@ with tab_publico:
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
 <div class='footer-willian'>
-    <span class='gold-text'>© {datetime.now().year} - Diseñada por Willian Almenar</span><br>
-    <a href='https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold; font-size: 1.1em;'>🔗 VISITAR GUÍA OFICIAL</a><br>
-    Santa Teresa del Tuy 2026
+<span class='gold-text'>© {datetime.now().year} - Diseñada por Willian Almenar</span><br>
+<a href='https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold; font-size: 1.1em;'>🔗 COMPARTIR GUÍA OFICIAL</a><br>
+Santa Teresa del Tuy 2026
 </div>
 """, unsafe_allow_html=True)
