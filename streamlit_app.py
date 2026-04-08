@@ -202,6 +202,7 @@ with tab_llave_admin:
             
             accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
             
+            # --- LÓGICA DE BOTONES DEL PANEL ---
             if accion == "Añadir":
                 with st.form("admin_add"):
                     n = st.text_input("Nombre del Negocio")
@@ -218,6 +219,40 @@ with tab_llave_admin:
                         conn.commit()
                         st.rerun()
             
+            elif accion == "Modificar/Quitar":
+                df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
+                if not df_mod.empty:
+                    target_mod = st.selectbox("Selecciona Negocio para editar", df_mod['nombre'].tolist())
+                    row = df_mod[df_mod['nombre'] == target_mod].iloc[0]
+                    with st.form("edit_form"):
+                        new_n = st.text_input("Editar Nombre", value=row['nombre'])
+                        new_cat = st.selectbox("Editar Categoría", lista_maestra_categorias, index=lista_maestra_categorias.index(row['categoria']) if row['categoria'] in lista_maestra_categorias else 0)
+                        new_ub = st.text_input("Editar Ubicación", value=row['ubicacion'])
+                        new_res = st.text_area("Modificar Reseña", value=row['reseña_willian'])
+                        new_up_file = st.file_uploader("Cambiar Foto", type=['png', 'jpg', 'jpeg'])
+                        if st.form_submit_button("Actualizar Cambios"):
+                            if new_up_file:
+                                img_data = f"data:image/png;base64,{base64.b64encode(new_up_file.read()).decode()}"
+                                c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_cat, new_ub, new_res, img_data, int(row['id'])))
+                            else:
+                                c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_cat, new_ub, new_res, int(row['id'])))
+                            conn.commit()
+                            st.rerun()
+                else:
+                    st.warning("No hay negocios para modificar.")
+
+            elif accion == "Borrar Negocio":
+                df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
+                if not df_del.empty:
+                    target = st.selectbox("Negocio a eliminar permanentemente:", df_del['nombre'].tolist())
+                    if st.button("🔴 Confirmar Eliminación"):
+                        c.execute("DELETE FROM comercios WHERE nombre=?", (target,))
+                        conn.commit()
+                        st.success(f"{target} eliminado.")
+                        st.rerun()
+                else:
+                    st.warning("No hay negocios para borrar.")
+
             elif accion == "Ajustes Logo":
                 st.write("Carga el logo de cabecera:")
                 new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
@@ -236,7 +271,7 @@ with tab_publico:
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
     mumu_data = {
-        'id': 9999, # ID ficticio para Donas Mumu
+        'id': 9999,
         'nombre': 'Donas Mumu',
         'categoria': 'Dulces',
         'ubicacion': 'Santa Teresa del Tuy, Sector Centro',
@@ -251,20 +286,14 @@ with tab_publico:
     else:
         df_busqueda = pd.DataFrame(columns=['id', 'nombre', 'categoria', 'ubicacion', 'foto_url', 'reseña_willian', 'estrellas_w'])
 
-    if busq and not df_busqueda.empty:
-        st.success(f"✅ Se encontraron coincidencias para '{busq}'")
-            
     tabs_negocios = st.tabs(lista_maestra_categorias)
     for i, cat_name in enumerate(lista_maestra_categorias):
         with tabs_negocios[i]:
             filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
             
-            # --- FUNCIÓN INTERNA PARA MOSTRAR SECCIÓN DE OPINIONES ---
             def mostrar_opiniones(comercio_id, nombre_negocio):
                 st.markdown(f"---")
                 st.markdown(f"💬 **Opiniones sobre {nombre_negocio}**")
-                
-                # Formulario para nueva opinión
                 with st.expander("Escribir mi opinión"):
                     with st.form(f"form_op_{comercio_id}"):
                         u_name = st.text_input("Tu Nombre", key=f"name_{comercio_id}")
@@ -273,30 +302,15 @@ with tab_publico:
                         if st.form_submit_button("Enviar Opinión"):
                             if u_name and u_comment:
                                 fecha_op = datetime.now().strftime("%d/%m/%Y %H:%M")
-                                c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
-                                          (comercio_id, u_name, u_comment, u_stars, fecha_op))
+                                c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", (comercio_id, u_name, u_comment, u_stars, fecha_op))
                                 conn.commit()
-                                st.success("¡Gracias por tu opinión!")
                                 st.rerun()
-                            else:
-                                st.warning("Por favor rellena tu nombre y comentario.")
-
-                # Mostrar opiniones existentes
                 ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {comercio_id} ORDER BY id DESC", conn)
                 if not ops.empty:
                     for _, op in ops.iterrows():
-                        st.markdown(f"""
-                        <div class="opinion-card">
-                            <span style="color:#ffcc00; font-weight:bold;">{op['usuario']}</span> 
-                            <span style="color:#888; font-size:0.8em;">({op['fecha']})</span><br>
-                            {"⭐" * op['estrellas_u']}<br>
-                            <p style="margin-top:5px;">{op['comentario']}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                else:
-                    st.write("*Aún no hay opiniones. ¡Sé el primero!*")
+                        st.markdown(f'<div class="opinion-card"><span style="color:#ffcc00; font-weight:bold;">{op["usuario"]}</span> <span style="color:#888; font-size:0.8em;">({op["fecha"]})</span><br>{"⭐" * op["estrellas_u"]}<br><p style="margin-top:5px;">{op["comentario"]}</p></div>', unsafe_allow_html=True)
+                else: st.write("*Aún no hay opiniones.*")
 
-            # --- BLOQUE DONAS MUMU ---
             if cat_name == "Dulces" and (not busq or "donas" in busq.lower() or "mumu" in busq.lower()):
                 st.markdown(f"##### 🏢 **{mumu_data['nombre']}**")
                 c1, c2 = st.columns([1, 1])
@@ -311,10 +325,7 @@ with tab_publico:
                 mostrar_opiniones(mumu_data['id'], mumu_data['nombre'])
                 st.markdown("---")
 
-            # --- OTROS COMERCIOS ---
-            if filtrado_pestaña.empty and not (cat_name == "Dulces" and (not busq or "donas" in busq.lower())):
-                st.write(f"ℹ️ No hay más comercios registrados en **{cat_name}** aún.")
-            else:
+            if not filtrado_pestaña.empty:
                 for idx, r in filtrado_pestaña.iterrows():
                     if r['nombre'] == 'Donas Mumu' and cat_name == "Dulces": continue
                     st.markdown(f"##### 🏢 **{r['nombre']}**")
@@ -325,10 +336,8 @@ with tab_publico:
                         query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
                         st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
                     with col2:
-                        if r['reseña_willian']:
-                            st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                        else:
-                            st.write("*Sin reseña disponible por ahora.*")
+                        if r['reseña_willian']: st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                        else: st.write("*Sin reseña disponible por ahora.*")
                     mostrar_opiniones(r['id'], r['nombre'])
                     st.markdown("---")
 
