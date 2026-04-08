@@ -127,19 +127,19 @@ with st.expander("🔑 Acceso Administrativo"):
         df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
         st.table(df_visitas)
         
-        lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermercados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
+        lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
         
-        accion = st.radio("Acción:", ["Añadir", "Modificar", "Borrar", "Ajustes Logo"], horizontal=True)
+        accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
         
         if accion == "Añadir":
             with st.form("admin_add"):
                 n = st.text_input("Nombre del Negocio")
                 cat = st.selectbox("Categoría", lista_categorias)
                 ub = st.text_input("Ubicación")
-                up_file = st.file_uploader("Subir foto desde PC", type=['png', 'jpg', 'jpeg'])
+                up_file = st.file_uploader("Subir foto de negocio (PC)", type=['png', 'jpg', 'jpeg'])
                 url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
-                res = st.text_area("Tu Reseña")
-                if st.form_submit_button("Guardar"):
+                res = st.text_area("Escribir Reseña Inicial")
+                if st.form_submit_button("Guardar Negocio"):
                     final_img = url_img
                     if up_file:
                         final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
@@ -147,37 +147,45 @@ with st.expander("🔑 Acceso Administrativo"):
                     conn.commit()
                     st.rerun()
 
-        elif accion == "Modificar":
+        elif accion == "Modificar/Quitar":
             df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
             if not df_mod.empty:
-                target_mod = st.selectbox("Selecciona Negocio a Editar", df_mod['nombre'].tolist())
+                target_mod = st.selectbox("Selecciona Negocio para editar info, fotos o reseñas", df_mod['nombre'].tolist())
                 row = df_mod[df_mod['nombre'] == target_mod].iloc[0]
                 with st.form("edit_form"):
-                    new_n = st.text_input("Nombre", value=row['nombre'])
-                    new_ub = st.text_input("Ubicación", value=row['ubicacion'])
-                    new_res = st.text_area("Reseña de Willian", value=row['reseña_willian'])
-                    new_up_file = st.file_uploader("Cambiar/Subir nueva foto", type=['png', 'jpg', 'jpeg'])
-                    if st.form_submit_button("Actualizar Información"):
-                        if new_up_file:
-                            img_data = f"data:image/png;base64,{base64.b64encode(new_up_file.read()).decode()}"
-                            c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_ub, new_res, img_data, int(row['id'])))
-                        else:
-                            c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_ub, new_res, int(row['id'])))
-                        conn.commit()
-                        st.rerun()
+                    new_n = st.text_input("Editar Nombre", value=row['nombre'])
+                    new_ub = st.text_input("Editar Ubicación", value=row['ubicacion'])
+                    new_res = st.text_area("Modificar Reseña/Comentario de Willian", value=row['reseña_willian'])
+                    new_up_file = st.file_uploader("Subir Nueva Foto (Sustituye la anterior)", type=['png', 'jpg', 'jpeg'])
+                    col_btn1, col_btn2 = st.columns(2)
+                    with col_btn1:
+                        if st.form_submit_button("Actualizar Todo"):
+                            if new_up_file:
+                                img_data = f"data:image/png;base64,{base64.b64encode(new_up_file.read()).decode()}"
+                                c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_ub, new_res, img_data, int(row['id'])))
+                            else:
+                                c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_ub, new_res, int(row['id'])))
+                            conn.commit()
+                            st.rerun()
+                    with col_btn2:
+                        if st.form_submit_button("Quitar Reseña (Limpiar)"):
+                            c.execute("UPDATE comercios SET reseña_willian='' WHERE id=?", (int(row['id']),))
+                            conn.commit()
+                            st.rerun()
 
-        elif accion == "Borrar":
+        elif accion == "Borrar Negocio":
             df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
             if not df_del.empty:
-                target = st.selectbox("Negocio a eliminar:", df_del['nombre'].tolist())
+                target = st.selectbox("Selecciona negocio a eliminar permanentemente:", df_del['nombre'].tolist())
                 if st.button("Confirmar Eliminación"):
                     c.execute("DELETE FROM comercios WHERE nombre=?", (target,))
                     conn.commit()
                     st.rerun()
 
         elif accion == "Ajustes Logo":
-            new_logo = st.file_uploader("Sube tu logo personal (PC)", type=['png', 'jpg', 'jpeg'])
-            if new_logo and st.button("Guardar Nuevo Logo"):
+            st.write("Carga el logo que aparecerá en la cabecera:")
+            new_logo = st.file_uploader("Seleccionar Logo desde PC", type=['png', 'jpg', 'jpeg'])
+            if new_logo and st.button("Aplicar Nuevo Logo"):
                 encoded_logo = base64.b64encode(new_logo.read()).decode()
                 c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
                 conn.commit()
@@ -202,7 +210,10 @@ if not df.empty:
                     query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
                     st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
                 with col2:
-                    st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                    if r['reseña_willian']:
+                        st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                    else:
+                        st.write("*Sin reseña disponible por ahora.*")
                 st.markdown("---")
 
 # --- PIE DE PÁGINA ---
