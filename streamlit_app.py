@@ -41,7 +41,6 @@ def autoplay_music(file_path):
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
 # --- ACTIVAR MÚSICA ---
-# Asegúrate de que el archivo esté en la carpeta 'música' o ajusta la ruta
 autoplay_music("música/musica1.mp3")
 
 # --- ESTILO VENEZUELA (DISEÑO ORIGINAL) ---
@@ -144,6 +143,14 @@ border-right: 2px solid #ffcc00;
     padding: 10px;
     margin-bottom: 20px;
 }
+
+.opinion-card {
+    background: #1f2937;
+    padding: 10px;
+    border-left: 4px solid #ffcc00;
+    margin-bottom: 10px;
+    border-radius: 0 10px 10px 0;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -221,17 +228,15 @@ with tab_llave_admin:
                     st.rerun()
 
 with tab_publico:
-    # --- CÁLCULO DE VISITAS TOTALES ---
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     total_visitas = total_visitas_res if total_visitas_res else 0
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span></div>', unsafe_allow_html=True)
 
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
-    
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
-    # --- DATOS FIJOS: DONAS MUMU ---
     mumu_data = {
+        'id': 9999, # ID ficticio para Donas Mumu
         'nombre': 'Donas Mumu',
         'categoria': 'Dulces',
         'ubicacion': 'Santa Teresa del Tuy, Sector Centro',
@@ -240,12 +245,11 @@ with tab_publico:
         'estrellas_w': 5
     }
 
-    # Filtrado por búsqueda
     if not df.empty:
         mask = (df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False) | df['ubicacion'].str.contains(busq, case=False) | df['reseña_willian'].str.contains(busq, case=False))
         df_busqueda = df[mask]
     else:
-        df_busqueda = pd.DataFrame(columns=['nombre', 'categoria', 'ubicacion', 'foto_url', 'reseña_willian', 'estrellas_w'])
+        df_busqueda = pd.DataFrame(columns=['id', 'nombre', 'categoria', 'ubicacion', 'foto_url', 'reseña_willian', 'estrellas_w'])
 
     if busq and not df_busqueda.empty:
         st.success(f"✅ Se encontraron coincidencias para '{busq}'")
@@ -255,7 +259,44 @@ with tab_publico:
         with tabs_negocios[i]:
             filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
             
-            # Mostrar Donas Mumu si estamos en Dulces
+            # --- FUNCIÓN INTERNA PARA MOSTRAR SECCIÓN DE OPINIONES ---
+            def mostrar_opiniones(comercio_id, nombre_negocio):
+                st.markdown(f"---")
+                st.markdown(f"💬 **Opiniones sobre {nombre_negocio}**")
+                
+                # Formulario para nueva opinión
+                with st.expander("Escribir mi opinión"):
+                    with st.form(f"form_op_{comercio_id}"):
+                        u_name = st.text_input("Tu Nombre", key=f"name_{comercio_id}")
+                        u_comment = st.text_area("¿Qué te pareció este lugar?", key=f"comm_{comercio_id}")
+                        u_stars = st.slider("Calificación", 1, 5, 5, key=f"star_{comercio_id}")
+                        if st.form_submit_button("Enviar Opinión"):
+                            if u_name and u_comment:
+                                fecha_op = datetime.now().strftime("%d/%m/%Y %H:%M")
+                                c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
+                                          (comercio_id, u_name, u_comment, u_stars, fecha_op))
+                                conn.commit()
+                                st.success("¡Gracias por tu opinión!")
+                                st.rerun()
+                            else:
+                                st.warning("Por favor rellena tu nombre y comentario.")
+
+                # Mostrar opiniones existentes
+                ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {comercio_id} ORDER BY id DESC", conn)
+                if not ops.empty:
+                    for _, op in ops.iterrows():
+                        st.markdown(f"""
+                        <div class="opinion-card">
+                            <span style="color:#ffcc00; font-weight:bold;">{op['usuario']}</span> 
+                            <span style="color:#888; font-size:0.8em;">({op['fecha']})</span><br>
+                            {"⭐" * op['estrellas_u']}<br>
+                            <p style="margin-top:5px;">{op['comentario']}</p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.write("*Aún no hay opiniones. ¡Sé el primero!*")
+
+            # --- BLOQUE DONAS MUMU ---
             if cat_name == "Dulces" and (not busq or "donas" in busq.lower() or "mumu" in busq.lower()):
                 st.markdown(f"##### 🏢 **{mumu_data['nombre']}**")
                 c1, c2 = st.columns([1, 1])
@@ -267,8 +308,10 @@ with tab_publico:
                 with c2:
                     st.info(f"**Reseña de Willian:** {mumu_data['reseña_willian']}")
                     st.warning(f"⭐ Puntuación: {mumu_data['estrellas_w']}/5")
+                mostrar_opiniones(mumu_data['id'], mumu_data['nombre'])
                 st.markdown("---")
 
+            # --- OTROS COMERCIOS ---
             if filtrado_pestaña.empty and not (cat_name == "Dulces" and (not busq or "donas" in busq.lower())):
                 st.write(f"ℹ️ No hay más comercios registrados en **{cat_name}** aún.")
             else:
@@ -286,6 +329,7 @@ with tab_publico:
                             st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
                         else:
                             st.write("*Sin reseña disponible por ahora.*")
+                    mostrar_opiniones(r['id'], r['nombre'])
                     st.markdown("---")
 
 # --- PIE DE PÁGINA ---
