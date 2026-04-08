@@ -204,51 +204,45 @@ with tab_llave_admin:
 with tab_publico:
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
+    
     if not df.empty:
-        # Obtenemos categorías únicas y ordenadas
-        categorias_db = sorted(df['categoria'].unique().tolist())
-        
-        # Filtro global de búsqueda: nombre, categoría o ubicación
+        # 1. Filtro global real: Busca en Nombre, Categoría, Ubicación y Reseña
         mask = (
             df['nombre'].str.contains(busq, case=False) | 
             df['categoria'].str.contains(busq, case=False) |
-            df['ubicacion'].str.contains(busq, case=False)
+            df['ubicacion'].str.contains(busq, case=False) |
+            df['reseña_willian'].str.contains(busq, case=False)
         )
         df_busqueda = df[mask]
 
-        # Lógica para abrir la pestaña correcta automáticamente basado en la búsqueda
-        index_auto = 0
-        if busq:
-            for idx, cat in enumerate(categorias_db):
-                # Si lo buscado coincide con la categoría o hay negocios de esa categoría en los resultados
-                if busq.lower() in cat.lower() or any(df_busqueda['categoria'] == cat):
-                    index_auto = idx
-                    break
-
-        tabs_negocios = st.tabs(categorias_db if categorias_db else ["General"])
+        # 2. Si hay búsqueda, mostramos primero los resultados globales para que no importe la pestaña
+        if busq and not df_busqueda.empty:
+            st.success(f"✅ Se encontraron {len(df_busqueda)} coincidencias para '{busq}'")
+            
+        # 3. Categorías dinámicas basadas solo en los resultados encontrados
+        categorias_con_resultados = sorted(df_busqueda['categoria'].unique().tolist())
         
-        for i, cat_name in enumerate(categorias_db):
-            with tabs_negocios[i]:
-                # Filtrar dentro de la pestaña pero respetando la búsqueda global
-                filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
-                
-                if filtrado_pestaña.empty and busq:
-                    st.write(f"*No se encontraron coincidencias para '{busq}' en la categoría {cat_name}.*")
-                
-                for idx, r in filtrado_pestaña.iterrows():
-                    st.markdown(f"##### 🏢 **{r['nombre']}**")
-                    col1, col2 = st.columns([1, 1])
-                    with col1:
-                        st.image(r['foto_url'], use_container_width=True)
-                        st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                        query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
-                        st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
-                    with col2:
-                        if r['reseña_willian']:
-                            st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                        else:
-                            st.write("*Sin reseña disponible por ahora.*")
-                    st.markdown("---")
+        if not categorias_con_resultados:
+            st.warning(f"❌ No se encontró nada relacionado con '{busq}' en ninguna categoría.")
+        else:
+            tabs_negocios = st.tabs(categorias_con_resultados)
+            for i, cat_name in enumerate(categorias_con_resultados):
+                with tabs_negocios[i]:
+                    filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
+                    for idx, r in filtrado_pestaña.iterrows():
+                        st.markdown(f"##### 🏢 **{r['nombre']}** ({r['categoria']})")
+                        col1, col2 = st.columns([1, 1])
+                        with col1:
+                            st.image(r['foto_url'], use_container_width=True)
+                            st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                            query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
+                            st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+                        with col2:
+                            if r['reseña_willian']:
+                                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                            else:
+                                st.write("*Sin reseña disponible por ahora.*")
+                        st.markdown("---")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
