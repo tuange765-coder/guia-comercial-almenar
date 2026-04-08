@@ -57,7 +57,7 @@ button[data-baseweb="tab"] p {
 
 .logo-container {
     text-align: center;
-    margin-top: -20px;
+    margin-top: -50px; /* Ajustado para el nuevo tamaño del logo */
     margin-bottom: 20px;
 }
 .app-logo {
@@ -131,7 +131,7 @@ current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/
 
 # --- CABECERA ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
-st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="120"></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="180"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
 # --- CONTROL POR PESTAÑAS PRINCIPALES (TAB) ---
