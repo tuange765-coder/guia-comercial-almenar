@@ -26,6 +26,18 @@ div[data-testid="stStatusWidget"] {display: none !important;}
 
 .stApp { background-color: #111827; color: #ffffff; }
 
+/* REFUERZO DE COLOR PARA LETRAS Y PESTAÑAS */
+h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
+    color: #ffffff !important;
+}
+
+/* Estilo para las pestañas (Tabs) para que se vean claras */
+button[data-baseweb="tab"] p {
+    color: #ffcc00 !important;
+    font-weight: bold !important;
+    font-size: 1.1em !important;
+}
+
 .venezuela-header {
     text-align: center;
     padding: 60px 10px 40px 10px;
