@@ -236,7 +236,6 @@ if not df.empty:
                           (df['nombre'].str.contains(busq, case=False))]
             if not filtrado.empty:
                 for idx, r in filtrado.iterrows():
-                    # Título de negocio ajustado (Nivel 5: Más pequeño y elegante)
                     st.markdown(f"##### 🏢 **{r['nombre']}**")
                     with st.expander("Ver detalles y opiniones"):
                         col1, col2 = st.columns([1, 1])
@@ -255,9 +254,20 @@ if not df.empty:
                             st.info(f"**Reseña:** {r['reseña_willian']}")
                         with col2:
                             st.subheader("💬 Opiniones")
+                            # Mostrar opiniones existentes
+                            c.execute("SELECT usuario, comentario, fecha FROM opiniones WHERE comercio_id=?", (r['id'],))
+                            ops = c.fetchall()
+                            for op in ops:
+                                st.markdown(f"""
+                                <div class="comment-box">
+                                    <strong>{op[0]}</strong> <small>({op[2]})</small><br>
+                                    {op[1]}
+                                </div>
+                                """, unsafe_allow_html=True)
+
                             with st.form(key=f"f_{idx}_{categoria_nombre}"):
-                                u = st.text_input("Nombre")
-                                m = st.text_area("Comentario")
+                                u = st.text_input("Nombre", key=f"user_{idx}")
+                                m = st.text_area("Comentario", key=f"comm_{idx}")
                                 if st.form_submit_button("Enviar"):
                                     c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?,?,?,?)", (r['id'], u, m, datetime.now().strftime("%d/%m/%Y")))
                                     conn.commit()
