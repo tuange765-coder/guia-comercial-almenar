@@ -87,6 +87,12 @@ input, textarea, [data-baseweb="select"] {
     margin-top: 10px;
     text-align: center;
 }
+
+/* Estilo para que la barra lateral combine con tu diseño */
+[data-testid="stSidebar"] {
+    background-color: #1f2937;
+    border-right: 2px solid #ffcc00;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -116,49 +122,49 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="120"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
-# --- PANEL DE ADMINISTRADOR ---
-with st.expander("🔑 Acceso Administrativo"):
-    admin_pass = st.text_input("Introduce la clave maestra", type="password")
-    if admin_pass == "Juan*316*":
-        st.success("Modo Editor Total Activado")
-        
-        # --- SECCIÓN DE ESTADÍSTICAS (CONTADOR) ---
-        st.markdown("### 📊 Estadísticas de Visitas")
-        df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
-        st.table(df_visitas)
-        
-        lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
-        
-        accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
-        
-        if accion == "Añadir":
-            with st.form("admin_add"):
-                n = st.text_input("Nombre del Negocio")
-                cat = st.selectbox("Categoría", lista_categorias)
-                ub = st.text_input("Ubicación")
-                up_file = st.file_uploader("Subir foto de negocio (PC)", type=['png', 'jpg', 'jpeg'])
-                url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
-                res = st.text_area("Escribir Reseña Inicial")
-                if st.form_submit_button("Guardar Negocio"):
-                    final_img = url_img
-                    if up_file:
-                        final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
-                    c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, 5))
-                    conn.commit()
-                    st.rerun()
+# --- PANEL DE ADMINISTRADOR (AHORA EN PESTAÑA LATERAL) ---
+with st.sidebar:
+    st.markdown("### ⚙️ Gestión de Sistema")
+    with st.expander("🔑 Acceso Administrativo", expanded=False):
+        admin_pass = st.text_input("Introduce la clave maestra", type="password")
+        if admin_pass == "Juan*316*":
+            st.success("Modo Editor Total Activado")
+            
+            # --- SECCIÓN DE ESTADÍSTICAS (CONTADOR) ---
+            st.markdown("### 📊 Estadísticas de Visitas")
+            df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
+            st.table(df_visitas)
+            
+            lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
+            
+            accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=False)
+            
+            if accion == "Añadir":
+                with st.form("admin_add"):
+                    n = st.text_input("Nombre del Negocio")
+                    cat = st.selectbox("Categoría", lista_categorias)
+                    ub = st.text_input("Ubicación")
+                    up_file = st.file_uploader("Subir foto de negocio (PC)", type=['png', 'jpg', 'jpeg'])
+                    url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
+                    res = st.text_area("Escribir Reseña Inicial")
+                    if st.form_submit_button("Guardar Negocio"):
+                        final_img = url_img
+                        if up_file:
+                            final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
+                        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, 5))
+                        conn.commit()
+                        st.rerun()
 
-        elif accion == "Modificar/Quitar":
-            df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
-            if not df_mod.empty:
-                target_mod = st.selectbox("Selecciona Negocio para editar info, fotos o reseñas", df_mod['nombre'].tolist())
-                row = df_mod[df_mod['nombre'] == target_mod].iloc[0]
-                with st.form("edit_form"):
-                    new_n = st.text_input("Editar Nombre", value=row['nombre'])
-                    new_ub = st.text_input("Editar Ubicación", value=row['ubicacion'])
-                    new_res = st.text_area("Modificar Reseña/Comentario de Willian", value=row['reseña_willian'])
-                    new_up_file = st.file_uploader("Subir Nueva Foto (Sustituye la anterior)", type=['png', 'jpg', 'jpeg'])
-                    col_btn1, col_btn2 = st.columns(2)
-                    with col_btn1:
+            elif accion == "Modificar/Quitar":
+                df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
+                if not df_mod.empty:
+                    target_mod = st.selectbox("Selecciona Negocio", df_mod['nombre'].tolist())
+                    row = df_mod[df_mod['nombre'] == target_mod].iloc[0]
+                    with st.form("edit_form"):
+                        new_n = st.text_input("Editar Nombre", value=row['nombre'])
+                        new_ub = st.text_input("Editar Ubicación", value=row['ubicacion'])
+                        new_res = st.text_area("Modificar Reseña", value=row['reseña_willian'])
+                        new_up_file = st.file_uploader("Nueva Foto", type=['png', 'jpg', 'jpeg'])
                         if st.form_submit_button("Actualizar Todo"):
                             if new_up_file:
                                 img_data = f"data:image/png;base64,{base64.b64encode(new_up_file.read()).decode()}"
@@ -167,29 +173,28 @@ with st.expander("🔑 Acceso Administrativo"):
                                 c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_ub, new_res, int(row['id'])))
                             conn.commit()
                             st.rerun()
-                    with col_btn2:
-                        if st.form_submit_button("Quitar Reseña (Limpiar)"):
+                        if st.form_submit_button("Quitar Reseña"):
                             c.execute("UPDATE comercios SET reseña_willian='' WHERE id=?", (int(row['id']),))
                             conn.commit()
                             st.rerun()
 
-        elif accion == "Borrar Negocio":
-            df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
-            if not df_del.empty:
-                target = st.selectbox("Selecciona negocio a eliminar permanentemente:", df_del['nombre'].tolist())
-                if st.button("Confirmar Eliminación"):
-                    c.execute("DELETE FROM comercios WHERE nombre=?", (target,))
+            elif accion == "Borrar Negocio":
+                df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
+                if not df_del.empty:
+                    target = st.selectbox("Negocio a eliminar:", df_del['nombre'].tolist())
+                    if st.button("Confirmar Eliminación"):
+                        c.execute("DELETE FROM comercios WHERE nombre=?", (target,))
+                        conn.commit()
+                        st.rerun()
+
+            elif accion == "Ajustes Logo":
+                st.write("Carga el logo de cabecera:")
+                new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
+                if new_logo and st.button("Aplicar Logo"):
+                    encoded_logo = base64.b64encode(new_logo.read()).decode()
+                    c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
                     conn.commit()
                     st.rerun()
-
-        elif accion == "Ajustes Logo":
-            st.write("Carga el logo que aparecerá en la cabecera:")
-            new_logo = st.file_uploader("Seleccionar Logo desde PC", type=['png', 'jpg', 'jpeg'])
-            if new_logo and st.button("Aplicar Nuevo Logo"):
-                encoded_logo = base64.b64encode(new_logo.read()).decode()
-                c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
-                conn.commit()
-                st.rerun()
 
 # --- BÚSQUEDA Y CONTENIDO ---
 busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
