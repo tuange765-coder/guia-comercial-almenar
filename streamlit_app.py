@@ -240,38 +240,8 @@ with tab_publico:
                         with col2:
                             if r['reseña_willian']:
                                 st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                                st.write("⭐" * r['estrellas_w'])
                             else:
                                 st.write("*Sin reseña disponible por ahora.*")
-                            
-                            # --- SECCIÓN DE OPINIONES DE USUARIOS ---
-                            st.markdown("---")
-                            st.markdown("💬 **Opiniones de la comunidad**")
-                            
-                            # Mostrar opiniones existentes
-                            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY fecha DESC", conn)
-                            if not ops.empty:
-                                for _, op in ops.iterrows():
-                                    st.markdown(f"**{op['usuario']}**: {op['comentario']} ({'⭐' * op['estrellas_u']})")
-                            else:
-                                st.caption("Sé el primero en opinar.")
-
-                            # Formulario para nueva opinión
-                            with st.expander("Escribir una opinión"):
-                                with st.form(f"form_op_{r['id']}"):
-                                    u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
-                                    u_com = st.text_area("Tu comentario", key=f"uc_{r['id']}")
-                                    u_est = st.slider("Calificación", 1, 5, 5, key=f"ue_{r['id']}")
-                                    if st.form_submit_button("Enviar Opinión"):
-                                        if u_nom and u_com:
-                                            fecha_op = datetime.now().strftime("%Y-%m-%d %H:%M")
-                                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)",
-                                                      (r['id'], u_nom, u_com, u_est, fecha_op))
-                                            conn.commit()
-                                            st.success("¡Gracias por tu opinión!")
-                                            st.rerun()
-                                        else:
-                                            st.error("Por favor rellena los campos.")
                         st.markdown("---")
 
 # --- PIE DE PÁGINA ---
