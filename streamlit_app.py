@@ -236,8 +236,8 @@ if not df.empty:
                           (df['nombre'].str.contains(busq, case=False))]
             if not filtrado.empty:
                 for idx, r in filtrado.iterrows():
-                    # Título de negocio ajustado (más pequeño)
-                    st.markdown(f"#### 🏢 **{r['nombre']}**")
+                    # Título de negocio ajustado (Nivel 5: Más pequeño y elegante)
+                    st.markdown(f"##### 🏢 **{r['nombre']}**")
                     with st.expander("Ver detalles y opiniones"):
                         col1, col2 = st.columns([1, 1])
                         with col1:
