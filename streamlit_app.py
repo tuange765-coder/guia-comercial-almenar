@@ -176,7 +176,15 @@ with tab_llave_admin:
             st.markdown("### 📊 Estadísticas de Visitas")
             df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
             st.table(df_visitas)
-            lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
+            
+            # --- LISTA DE CATEGORÍAS ACTUALIZADA ---
+            lista_categorias = [
+                "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
+                "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
+                "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
+                "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
+            ]
+            
             accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
             
             if accion == "Añadir":
