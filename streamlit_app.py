@@ -221,8 +221,8 @@ st.title("🚀 Guía Comercial Almenar")
 # --- ENLACE DE COMPARTIR ---
 st.markdown(f"""
 <div class="share-link-box">
-    <p style="margin:0; font-weight:bold; color:#3b82f6;">🔗 Comparte nuestra Guía:</p>
-    <code style="color:#ffffff; background:none;">https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app</code>
+<p style="margin:0; font-weight:bold; color:#3b82f6;">🔗 Comparte nuestra Guía:</p>
+<code style="color:#ffffff; background:none;">https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app</code>
 </div>
 """, unsafe_allow_html=True)
 
@@ -245,7 +245,7 @@ if not df.empty:
                             query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
                             st.markdown(f"""
                             <a href="https://www.google.com/maps/search/?api=1&query={query_maps}" target="_blank" class="maps-button">
-                                📍 Ver en Google Maps
+                            📍 Ver en Google Maps
                             </a>
                             """, unsafe_allow_html=True)
                             st.info(f"**Reseña:** {r['reseña_willian']}")
@@ -256,8 +256,8 @@ if not df.empty:
                             for op in ops:
                                 st.markdown(f"""
                                 <div class="comment-box">
-                                    <strong>{op[0]}</strong> <small>({op[2]})</small><br>
-                                    {op[1]}
+                                <strong>{op[0]}</strong> <small>({op[2]})</small><br>
+                                {op[1]}
                                 </div>
                                 """, unsafe_allow_html=True)
                             with st.form(key=f"f_{idx}_{categoria_nombre}"):
@@ -274,11 +274,11 @@ if not df.empty:
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
 <div class='footer-willian'>
-    📍 Santa Teresa del Tuy, Venezuela.<br>
-    <span class='gold-text'>
-    © {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar,
-    Todos los derechos reservados, prohibida la reproduccion parcial o total.
-    Santa Teresa del Tuy 2026
-    </span>
+📍 Santa Teresa del Tuy, Venezuela.<br>
+<span class='gold-text'>
+© {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar,
+Todos los derechos reservados, prohibida la reproduccion parcial o total.
+Santa Teresa del Tuy 2026
+</span>
 </div>
 """, unsafe_allow_html=True)
