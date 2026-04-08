@@ -243,6 +243,15 @@ if not df.empty:
                         with col1:
                             st.image(r['foto_url'], use_container_width=True)
                             st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                            
+                            # --- BOTÓN GOOGLE MAPS ---
+                            query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
+                            st.markdown(f"""
+                            <a href="https://www.google.com/maps/search/?api=1&query={query_maps}" target="_blank" class="maps-button">
+                                📍 Ver en Google Maps
+                            </a>
+                            """, unsafe_allow_html=True)
+                            
                             st.info(f"**Reseña:** {r['reseña_willian']}")
                         with col2:
                             st.subheader("💬 Opiniones")
