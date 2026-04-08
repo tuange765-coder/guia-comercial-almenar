@@ -122,11 +122,13 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="120"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
-# --- PANEL DE ADMINISTRADOR (AHORA EN PESTAÑA LATERAL) ---
-with st.sidebar:
+# --- CONTROL POR PESTAÑAS PRINCIPALES (TAB) ---
+tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
+
+with tab_llave_admin:
     st.markdown("### ⚙️ Gestión de Sistema")
-    with st.expander("🔑 Acceso Administrativo", expanded=False):
-        admin_pass = st.text_input("Introduce la clave maestra", type="password")
+    with st.expander("Abrir Cerradura Administrativa", expanded=False):
+        admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
         if admin_pass == "Juan*316*":
             st.success("Modo Editor Total Activado")
             
@@ -137,7 +139,7 @@ with st.sidebar:
             
             lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
             
-            accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=False)
+            accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
             
             if accion == "Añadir":
                 with st.form("admin_add"):
@@ -196,30 +198,30 @@ with st.sidebar:
                     conn.commit()
                     st.rerun()
 
-# --- BÚSQUEDA Y CONTENIDO ---
-busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
-df = pd.read_sql_query("SELECT * FROM comercios", conn)
-
-if not df.empty:
-    categorias_db = df['categoria'].unique().tolist()
-    tabs = st.tabs(categorias_db if categorias_db else ["General"])
-    for i, cat_name in enumerate(categorias_db):
-        with tabs[i]:
-            filtrado = df[(df['categoria'] == cat_name) & (df['nombre'].str.contains(busq, case=False))]
-            for idx, r in filtrado.iterrows():
-                st.markdown(f"##### 🏢 **{r['nombre']}**")
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    st.image(r['foto_url'], use_container_width=True)
-                    st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                    query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
-                    st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
-                with col2:
-                    if r['reseña_willian']:
-                        st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                    else:
-                        st.write("*Sin reseña disponible por ahora.*")
-                st.markdown("---")
+with tab_publico:
+    # --- BÚSQUEDA Y CONTENIDO ---
+    busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
+    df = pd.read_sql_query("SELECT * FROM comercios", conn)
+    if not df.empty:
+        categorias_db = df['categoria'].unique().tolist()
+        tabs_negocios = st.tabs(categorias_db if categorias_db else ["General"])
+        for i, cat_name in enumerate(categorias_db):
+            with tabs_negocios[i]:
+                filtrado = df[(df['categoria'] == cat_name) & (df['nombre'].str.contains(busq, case=False))]
+                for idx, r in filtrado.iterrows():
+                    st.markdown(f"##### 🏢 **{r['nombre']}**")
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.image(r['foto_url'], use_container_width=True)
+                        st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                        query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
+                        st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+                    with col2:
+                        if r['reseña_willian']:
+                            st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                        else:
+                            st.write("*Sin reseña disponible por ahora.*")
+                    st.markdown("---")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
