@@ -166,7 +166,7 @@ if admin_pass == "Juan*316*":
         uploaded_logo = st.sidebar.file_uploader("Sube el logo (PC)", type=['png', 'jpg', 'jpeg'])
         if uploaded_logo and st.sidebar.button("Guardar Logo"):
             encoded_logo = base64.b64encode(uploaded_logo.read()).decode()
-            c.execute("UPDATE ajustes SET logo_url=? WHERE id=1", (f"data:image/png;base64,{encoded_logo}",))
+            c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
             conn.commit()
             st.rerun()
 
@@ -243,7 +243,6 @@ if not df.empty:
                             st.image(r['foto_url'], use_container_width=True)
                             st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                             
-                            # --- BOTÓN GOOGLE MAPS ---
                             query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
                             st.markdown(f"""
                             <a href="https://www.google.com/maps/search/?api=1&query={query_maps}" target="_blank" class="maps-button">
@@ -254,7 +253,6 @@ if not df.empty:
                             st.info(f"**Reseña:** {r['reseña_willian']}")
                         with col2:
                             st.subheader("💬 Opiniones")
-                            # Mostrar opiniones existentes
                             c.execute("SELECT usuario, comentario, fecha FROM opiniones WHERE comercio_id=?", (r['id'],))
                             ops = c.fetchall()
                             for op in ops:
