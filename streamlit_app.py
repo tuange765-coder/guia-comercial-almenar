@@ -83,8 +83,7 @@ margin: 20px 0;
 .footer-willian {
 background: #000;
 color: #fff;
-padding: 30px;
-text-align: center;
+padding: 30px; text-align: center;
 border-top: 4px solid #ffcc00;
 margin-top: 50px;
 }
@@ -142,7 +141,7 @@ c.execute("SELECT logo_url FROM ajustes WHERE id=1")
 res_logo = c.fetchone()
 current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
 
-# --- PANEL ADMIN ---
+# --- PANEL ADMIN (BARRA LATERAL) ---
 st.sidebar.title("🛠️ Administración")
 admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
@@ -167,7 +166,6 @@ if admin_pass == "Juan*316*":
             c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
             conn.commit()
             st.rerun()
-
     elif menu == "Añadir":
         with st.sidebar.form("add_form"):
             n = st.text_input("Nombre")
@@ -183,7 +181,6 @@ if admin_pass == "Juan*316*":
                 c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, 5))
                 conn.commit()
                 st.rerun()
-
     elif menu == "Borrar":
         df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
         if not df_del.empty:
