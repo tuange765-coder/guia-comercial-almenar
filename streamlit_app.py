@@ -14,16 +14,25 @@ def autoplay_music(file_path):
             data = f.read()
             b64 = base64.b64encode(data).decode()
             md = f"""
-                <audio id="audio-player" autoplay loop controls style="width: 100%; height: 40px;">
-                <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                <audio id="audio-player" loop>
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
                 </audio>
+                <div id="music-control" style="text-align:center; padding:10px; background:#1f2937; border-radius:10px; border:1px solid #ffcc00; margin-bottom:20px;">
+                    <p style="color:#ffcc00; margin:0; font-weight:bold;">🎵 Música activada (Haz clic en cualquier parte para iniciar)</p>
+                </div>
                 <script>
                     var audio = document.getElementById("audio-player");
                     audio.volume = 0.3;
-                    // Intento de reproducción forzada al interactuar con cualquier parte de la página
-                    window.addEventListener('click', function() {{
-                        audio.play();
-                    }}, {{ once: true }});
+                    
+                    // Función para activar el audio al primer clic del usuario
+                    function playAudio() {{
+                        audio.play().catch(function(error) {{
+                            console.log("Esperando interacción humana...");
+                        }});
+                    }}
+                    
+                    window.addEventListener('click', playAudio, {{ once: true }});
+                    window.addEventListener('touchstart', playAudio, {{ once: true }});
                 </script>
                 """
             st.markdown(md, unsafe_allow_html=True)
@@ -51,12 +60,10 @@ div[data-testid="stStatusWidget"] {display: none !important;}
 
 .stApp { background-color: #111827; color: #ffffff; }
 
-/* REFUERZO DE COLOR PARA LETRAS Y PESTAÑAS */
 h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
 color: #ffffff !important;
 }
 
-/* Estilo para las pestañas (Tabs) para que se vean claras */
 button[data-baseweb="tab"] p {
 color: #ffcc00 !important;
 font-weight: bold !important;
@@ -83,7 +90,6 @@ margin-top: -15px;
 .logo-container {
 text-align: center;
 margin-top: -50px;
-/* Ajustado para el nuevo tamaño del logo */
 margin-bottom: 20px;
 }
 .app-logo {
@@ -125,7 +131,6 @@ margin-top: 10px;
 text-align: center;
 }
 
-/* Estilo para que la barra lateral combine con tu diseño */
 [data-testid="stSidebar"] {
 background-color: #1f2937;
 border-right: 2px solid #ffcc00;
@@ -167,12 +172,12 @@ with tab_llave_admin:
         admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
         if admin_pass == "Juan*316*":
             st.success("Modo Editor Total Activado")
-            # --- SECCIÓN DE ESTADÍSTICAS (CONTADOR) ---
             st.markdown("### 📊 Estadísticas de Visitas")
             df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
             st.table(df_visitas)
             lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
             accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
+            
             if accion == "Añadir":
                 with st.form("admin_add"):
                     n = st.text_input("Nombre del Negocio")
@@ -189,38 +194,6 @@ with tab_llave_admin:
                         conn.commit()
                         st.rerun()
             
-            elif accion == "Modificar/Quitar":
-                df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
-                if not df_mod.empty:
-                    target_mod = st.selectbox("Selecciona Negocio", df_mod['nombre'].tolist())
-                    row = df_mod[df_mod['nombre'] == target_mod].iloc[0]
-                    with st.form("edit_form"):
-                        new_n = st.text_input("Editar Nombre", value=row['nombre'])
-                        new_ub = st.text_input("Editar Ubicación", value=row['ubicacion'])
-                        new_res = st.text_area("Modificar Reseña", value=row['reseña_willian'])
-                        new_up_file = st.file_uploader("Nueva Foto", type=['png', 'jpg', 'jpeg'])
-                        if st.form_submit_button("Actualizar Todo"):
-                            if new_up_file:
-                                img_data = f"data:image/png;base64,{base64.b64encode(new_up_file.read()).decode()}"
-                                c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_ub, new_res, img_data, int(row['id'])))
-                            else:
-                                c.execute("UPDATE comercios SET nombre=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_ub, new_res, int(row['id'])))
-                            conn.commit()
-                            st.rerun()
-                        if st.form_submit_button("Quitar Reseña"):
-                            c.execute("UPDATE comercios SET reseña_willian='' WHERE id=?", (int(row['id']),))
-                            conn.commit()
-                            st.rerun()
-
-            elif accion == "Borrar Negocio":
-                df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
-                if not df_del.empty:
-                    target = st.selectbox("Negocio a eliminar:", df_del['nombre'].tolist())
-                    if st.button("Confirmar Eliminación"):
-                        c.execute("DELETE FROM comercios WHERE nombre=?", (target,))
-                        conn.commit()
-                        st.rerun()
-
             elif accion == "Ajustes Logo":
                 st.write("Carga el logo de cabecera:")
                 new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
@@ -231,7 +204,6 @@ with tab_llave_admin:
                     st.rerun()
 
 with tab_publico:
-    # --- BÚSQUEDA Y CONTENIDO ---
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     if not df.empty:
