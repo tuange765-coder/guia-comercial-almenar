@@ -17,21 +17,24 @@ def autoplay_music(file_path):
                 <audio id="audio-player" loop>
                     <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
                 </audio>
-                <div id="music-control" style="text-align:center; padding:10px; background:#1f2937; border-radius:10px; border:1px solid #ffcc00; margin-bottom:20px;">
-                    <p style="color:#ffcc00; margin:0; font-weight:bold;">🎵 Música activada (Haz clic en cualquier parte para iniciar)</p>
+                <div id="music-control" onclick="playAudio()" style="text-align:center; padding:15px; background:#1f2937; border:2px solid #ffcc00; border-radius:15px; cursor:pointer; margin-bottom:20px; transition: 0.3s;">
+                    <p style="color:#ffcc00; margin:0; font-weight:bold; font-size:1.1em;">🎵 ACTIVAR MÚSICA AMBIENTAL 🎵</p>
+                    <small style="color:white;">(Haz clic aquí para iniciar el sonido)</small>
                 </div>
                 <script>
                     var audio = document.getElementById("audio-player");
                     audio.volume = 0.3;
                     
                     function playAudio() {{
-                        audio.play().catch(function(error) {{
-                            console.log("Esperando interacción humana...");
+                        audio.play().then(() => {{
+                            document.getElementById("music-control").style.display = "none";
+                        }}).catch(function(error) {{
+                            console.log("Error al reproducir:", error);
                         }});
                     }}
                     
-                    window.addEventListener('click', playAudio, {{ once: true }});
-                    window.addEventListener('touchstart', playAudio, {{ once: true }});
+                    // Intentar reproducir también al hacer clic en cualquier parte del cuerpo
+                    document.body.addEventListener('click', playAudio, {{ once: true }});
                 </script>
                 """
             st.markdown(md, unsafe_allow_html=True)
@@ -206,7 +209,6 @@ with tab_publico:
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
     if not df.empty:
-        # 1. Filtro global real: Busca en Nombre, Categoría, Ubicación y Reseña
         mask = (
             df['nombre'].str.contains(busq, case=False) | 
             df['categoria'].str.contains(busq, case=False) |
@@ -215,11 +217,9 @@ with tab_publico:
         )
         df_busqueda = df[mask]
 
-        # 2. Si hay búsqueda, mostramos primero los resultados globales para que no importe la pestaña
         if busq and not df_busqueda.empty:
             st.success(f"✅ Se encontraron {len(df_busqueda)} coincidencias para '{busq}'")
             
-        # 3. Categorías dinámicas basadas solo en los resultados encontrados
         categorias_con_resultados = sorted(df_busqueda['categoria'].unique().tolist())
         
         if not categorias_con_resultados:
@@ -240,8 +240,38 @@ with tab_publico:
                         with col2:
                             if r['reseña_willian']:
                                 st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                                st.write("⭐" * r['estrellas_w'])
                             else:
                                 st.write("*Sin reseña disponible por ahora.*")
+                            
+                            # --- SECCIÓN DE OPINIONES DE USUARIOS ---
+                            st.markdown("---")
+                            st.markdown("💬 **Opiniones de la comunidad**")
+                            
+                            # Mostrar opiniones existentes
+                            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY fecha DESC", conn)
+                            if not ops.empty:
+                                for _, op in ops.iterrows():
+                                    st.markdown(f"**{op['usuario']}**: {op['comentario']} ({'⭐' * op['estrellas_u']})")
+                            else:
+                                st.caption("Sé el primero en opinar.")
+
+                            # Formulario para nueva opinión
+                            with st.expander("Escribir una opinión"):
+                                with st.form(f"form_op_{r['id']}"):
+                                    u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
+                                    u_com = st.text_area("Tu comentario", key=f"uc_{r['id']}")
+                                    u_est = st.slider("Calificación", 1, 5, 5, key=f"ue_{r['id']}")
+                                    if st.form_submit_button("Enviar Opinión"):
+                                        if u_nom and u_com:
+                                            fecha_op = datetime.now().strftime("%Y-%m-%d %H:%M")
+                                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)",
+                                                      (r['id'], u_nom, u_com, u_est, fecha_op))
+                                            conn.commit()
+                                            st.success("¡Gracias por tu opinión!")
+                                            st.rerun()
+                                        else:
+                                            st.error("Por favor rellena los campos.")
                         st.markdown("---")
 
 # --- PIE DE PÁGINA ---
@@ -249,6 +279,9 @@ st.markdown(f"""
 <div class='footer-willian'>
 <span class='gold-text'>© {datetime.now().year} - Diseñada por Willian Almenar</span><br>
 <a href='https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold; font-size: 1.1em;'>🔗 COMPARTIR GUÍA OFICIAL</a><br>
-Santa Teresa del Tuy 2026
+<p style='margin-top:10px; font-size:0.9em; opacity:0.8;'>
+Aplicacion creada por Willian Almenar. Prohibida su reproduccion parcial o total, <br>
+DERECHOS RESERVADOS, SANTA TERESA DEL TUY 2026.
+</p>
 </div>
 """, unsafe_allow_html=True)
