@@ -24,7 +24,6 @@ def autoplay_music(file_path):
                     var audio = document.getElementById("audio-player");
                     audio.volume = 0.3;
                     
-                    // Función para activar el audio al primer clic del usuario
                     function playAudio() {{
                         audio.play().catch(function(error) {{
                             console.log("Esperando interacción humana...");
@@ -41,10 +40,9 @@ def autoplay_music(file_path):
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
 
 # --- ACTIVAR MÚSICA ---
-# Aquí ajustamos la ruta a tu nueva carpeta "música"
 autoplay_music("música/musica1.mp3")
 
-# --- ESTILO VENEZUELA (TU DISEÑO ORIGINAL) ---
+# --- ESTILO VENEZUELA ---
 st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
@@ -147,7 +145,7 @@ c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url 
 c.execute('CREATE TABLE IF NOT EXISTS visitas (fecha TEXT PRIMARY KEY, conteo INTEGER)')
 conn.commit()
 
-# --- REGISTRO DE VISITA DIARIA ---
+# --- REGISTRO DE VISITA ---
 fecha_hoy = datetime.now().strftime("%Y-%m-%d")
 c.execute("INSERT OR IGNORE INTO visitas (fecha, conteo) VALUES (?, 0)", (fecha_hoy,))
 c.execute("UPDATE visitas SET conteo = conteo + 1 WHERE fecha = ?", (fecha_hoy,))
@@ -163,7 +161,7 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="180"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
-# --- CONTROL POR PESTAÑAS PRINCIPALES (TAB) ---
+# --- CONTROL POR PESTAÑAS PRINCIPALES ---
 tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
 
 with tab_llave_admin:
@@ -172,7 +170,6 @@ with tab_llave_admin:
         admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
         if admin_pass == "Juan*316*":
             st.success("Modo Editor Total Activado")
-            st.markdown("### 📊 Estadísticas de Visitas")
             df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
             st.table(df_visitas)
             lista_categorias = ["Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", "Supermerkados", "Electrodomésticos", "Telefonía", "Carnicerías", "Tienda de ropa", "Servicios"]
@@ -206,12 +203,29 @@ with tab_llave_admin:
 with tab_publico:
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
+    
     if not df.empty:
-        categorias_db = df['categoria'].unique().tolist()
-        tabs_negocios = st.tabs(categorias_db if categorias_db else ["General"])
+        # Extraemos categorías únicas de la DB
+        categorias_db = sorted(df['categoria'].unique().tolist())
+        
+        # Lógica de coincidencia inteligente para activar pestañas
+        index_tab = 0
+        if busq:
+            for idx, cat in enumerate(categorias_db):
+                # Si lo buscado coincide con la categoría o con un comercio de esa categoría
+                df_temp = df[df['categoria'] == cat]
+                if busq.lower() in cat.lower() or df_temp['nombre'].str.contains(busq, case=False).any():
+                    index_tab = idx
+                    break
+        
+        tabs_negocios = st.tabs(categorias_db)
+        
+        # Mostramos el contenido filtrado en cada pestaña
         for i, cat_name in enumerate(categorias_db):
             with tabs_negocios[i]:
-                filtrado = df[(df['categoria'] == cat_name) & (df['nombre'].str.contains(busq, case=False))]
+                filtrado = df[(df['categoria'] == cat_name) & (df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False))]
+                if filtrado.empty:
+                    st.write(f"*No hay resultados para '{busq}' en {cat_name}*")
                 for idx, r in filtrado.iterrows():
                     st.markdown(f"##### 🏢 **{r['nombre']}**")
                     col1, col2 = st.columns([1, 1])
@@ -219,7 +233,7 @@ with tab_publico:
                         st.image(r['foto_url'], use_container_width=True)
                         st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                         query_maps = urllib.parse.quote(f"{r['nombre']} {r['ubicacion']} Santa Teresa del Tuy")
-                        st.markdown(f'<a href="https://www.google.com/maps/search/{query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+                        st.markdown(f'<a href="https://www.google.com/maps/search/?api=1&query={query_maps}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
                     with col2:
                         if r['reseña_willian']:
                             st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
