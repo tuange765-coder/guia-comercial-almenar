@@ -119,7 +119,7 @@ border-left: 5px solid #ffcc00;
 </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS ---
+# --- BASE DE DATOS (PERSISTENCIA TOTAL) ---
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
@@ -158,6 +158,10 @@ lista_categorias = [
 
 if admin_pass == "Juan*316*":
     st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
+    
+    # --- RECORDATORIO DE SEGURIDAD DE DATOS ---
+    st.sidebar.warning("🔒 Los datos están vinculados a 'guia_santa_teresa.db'. No se borrarán al modificar el código ni al cerrar sesión.")
+    
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
     if menu == "Ajustes Logo":
@@ -220,18 +224,17 @@ df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
     # --- SISTEMA DE PESTAÑAS POR CATEGORÍA ---
-    # Creamos las pestañas usando la lista maestra
     tabs = st.tabs(lista_categorias)
     
     for i, categoria_nombre in enumerate(lista_categorias):
         with tabs[i]:
-            # Filtramos los comercios por la categoría de la pestaña y la búsqueda del usuario
             filtrado = df[(df['categoria'] == categoria_nombre) & 
                           (df['nombre'].str.contains(busq, case=False))]
             
             if not filtrado.empty:
                 for idx, r in filtrado.iterrows():
-                    with st.expander(f"🏢 {r['nombre']}"):
+                    st.subheader(f"🏢 {r['nombre']}")
+                    with st.expander("Ver detalles y opiniones"):
                         col1, col2 = st.columns([1, 1])
                         with col1:
                             st.image(r['foto_url'], use_container_width=True)
@@ -246,8 +249,9 @@ if not df.empty:
                                     c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?,?,?,?)", (r['id'], u, m, datetime.now().strftime("%d/%m/%Y")))
                                     conn.commit()
                                     st.rerun()
+                    st.markdown("---")
             else:
-                st.write(f"No hay registros en la categoría {categoria_nombre} que coincidan con tu búsqueda.")
+                st.write(f"No hay registros en {categoria_nombre} para mostrar.")
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
