@@ -260,6 +260,7 @@ with tab_publico:
 st.markdown(f"""
 <div class='footer-willian'>
     <span class='gold-text'>© {datetime.now().year} - Diseñada por Willian Almenar</span><br>
+    <a href='https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app' style='color: #ffcc00; text-decoration: none; font-weight: bold;'>Visitar Guía Oficial</a><br>
     Santa Teresa del Tuy 2026
 </div>
 """, unsafe_allow_html=True)
