@@ -272,66 +272,67 @@ with tab_publico:
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
-    mumu_data = {'id': 9999, 'nombre': 'Donas Mumu', 'categoria': 'Dulces', 'ubicacion': 'Santa Teresa del Tuy, Sector Centro', 'foto_url': 'https://img.freepik.com/foto-gratis/donas-glaseadas-frescas-variedad-sabores_23-2149021430.jpg', 'reseña_willian': 'Las mejores donas de la zona, frescura garantizada y un sabor que te transporta.', 'estrellas_w': 5}
+    # --- FUNCIÓN AUXILIAR DE RENDERIZADO ---
+    def mostrar_opiniones(comercio_id, nombre_negocio):
+        st.markdown(f"---")
+        with st.expander(f"💬 Opiniones de {nombre_negocio}"):
+            with st.form(f"form_op_{comercio_id}"):
+                u_name = st.text_input("Tu Nombre", key=f"n_{comercio_id}")
+                u_comment = st.text_area("Comentario", key=f"c_{comercio_id}")
+                u_stars = st.slider("Nota", 1, 5, 5, key=f"s_{comercio_id}")
+                if st.form_submit_button("Publicar"):
+                    if u_name and u_comment:
+                        c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", (comercio_id, u_name, u_comment, u_stars, datetime.now().strftime("%d/%m/%Y")))
+                        conn.commit()
+                        st.rerun()
+            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {comercio_id} ORDER BY id DESC", conn)
+            for _, op in ops.iterrows():
+                st.markdown(f'<div class="opinion-card"><b>{op["usuario"]}</b> ({op["fecha"]})<br>{"⭐"*op["estrellas_u"]}<br>{op["comentario"]}</div>', unsafe_allow_html=True)
 
-    if not df.empty:
+    def renderizar_tarjeta(r):
+        st.markdown(f"##### 🏢 **{r['nombre']}**")
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.image(r['foto_url'], use_container_width=True)
+            st.write(f"📍 {r['ubicacion']}")
+            st.markdown(f'<a href="http://google.com/maps?q={urllib.parse.quote(r["nombre"])}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
+        with col2:
+            st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
+        mostrar_opiniones(r['id'], r['nombre'])
+        st.markdown("---")
+
+    # --- LÓGICA DE BÚSQUEDA AUTOMÁTICA ---
+    if busq:
         mask = (df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False) | df['ubicacion'].str.contains(busq, case=False) | df['reseña_willian'].str.contains(busq, case=False))
         df_busqueda = df[mask]
-    else:
-        df_busqueda = pd.DataFrame(columns=['id', 'nombre', 'categoria', 'ubicacion', 'foto_url', 'reseña_willian', 'estrellas_w'])
-
+        
+        if not df_busqueda.empty:
+            st.markdown(f"### 🎯 Resultados encontrados para: '{busq}'")
+            for _, row in df_busqueda.iterrows():
+                renderizar_tarjeta(row)
+        else:
+            st.warning("No se encontraron coincidencias exactas. Intenta con otra palabra clave.")
+    
+    # --- PESTAÑAS DE CATEGORÍAS ---
+    st.markdown("### 🗂️ Explorar por Categorías")
     tabs_negocios = st.tabs(lista_maestra_categorias)
     for i, cat_name in enumerate(lista_maestra_categorias):
         with tabs_negocios[i]:
-            def mostrar_opiniones(comercio_id, nombre_negocio):
-                st.markdown(f"---")
-                with st.expander(f"💬 Opiniones de {nombre_negocio}"):
-                    with st.form(f"form_op_{comercio_id}"):
-                        u_name = st.text_input("Tu Nombre", key=f"n_{comercio_id}")
-                        u_comment = st.text_area("Comentario", key=f"c_{comercio_id}")
-                        u_stars = st.slider("Nota", 1, 5, 5, key=f"s_{comercio_id}")
-                        if st.form_submit_button("Publicar"):
-                            if u_name and u_comment:
-                                c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", (comercio_id, u_name, u_comment, u_stars, datetime.now().strftime("%d/%m/%Y")))
-                                conn.commit()
-                                st.rerun()
-                    ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {comercio_id} ORDER BY id DESC", conn)
-                    for _, op in ops.iterrows():
-                        st.markdown(f'<div class="opinion-card"><b>{op["usuario"]}</b> ({op["fecha"]})<br>{"⭐"*op["estrellas_u"]}<br>{op["comentario"]}</div>', unsafe_allow_html=True)
-
-            if cat_name == "Dulces" and (not busq or "donas" in busq.lower()):
-                st.markdown(f"##### 🏢 **{mumu_data['nombre']}**")
-                c1, c2 = st.columns([1, 1])
-                with c1:
-                    st.image(mumu_data['foto_url'], use_container_width=True)
-                    st.write(f"📍 {mumu_data['ubicacion']}")
-                    st.markdown(f'<a href="http://google.com/maps?q={urllib.parse.quote(mumu_data["nombre"])}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
-                with c2:
-                    st.info(f"**Willian dice:** {mumu_data['reseña_willian']}")
-                mostrar_opiniones(mumu_data['id'], mumu_data['nombre'])
-                st.markdown("---")
-
-            filtrado_pestaña = df_busqueda[df_busqueda['categoria'] == cat_name]
-            for idx, r in filtrado_pestaña.iterrows():
-                if r['nombre'] == 'Donas Mumu': continue
-                st.markdown(f"##### 🏢 **{r['nombre']}**")
-                col1, col2 = st.columns([1, 1])
-                with col1:
-                    st.image(r['foto_url'], use_container_width=True)
-                    st.write(f"📍 {r['ubicacion']}")
-                    st.markdown(f'<a href="http://google.com/maps?q={urllib.parse.quote(r["nombre"])}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
-                with col2:
-                    st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
-                mostrar_opiniones(r['id'], r['nombre'])
-                st.markdown("---")
+            filtrado_pestaña = df[df['categoria'] == cat_name]
+            if filtrado_pestaña.empty:
+                st.write("Próximamente más comercios en esta sección...")
+            else:
+                for _, r in filtrado_pestaña.iterrows():
+                    renderizar_tarjeta(r)
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
 <div class='footer-willian'>
-<span class='gold-text'>© {datetime.now().year} - Diseñada por Willian Almenar</span><br>
+<span class='gold-text'>Creación de Willian Almenar. TODOS LOS DERECHOS RESERVADOS.</span><br>
+<span style='color: #ffffff; font-size: 0.8em;'>PROHIBIDA SU REPRODUCCIÓN PARCIAL O TOTAL. SANTA TERESA DEL TUY 2026.</span><br>
 <a href='#' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold;'>🔗 COMPARTIR GUÍA OFICIAL</a><br>
 <p style='margin-top:10px; font-size:0.9em; opacity:0.8;'>
-Aplicacion creada por Willian Almenar. SANTA TERESA DEL TUY 2026.
+Aplicación diseñada por Willian Almenar. Santa Teresa del Tuy, Venezuela.
 </p>
 </div>
 """, unsafe_allow_html=True)
