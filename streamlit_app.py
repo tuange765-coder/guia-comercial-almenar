@@ -1,5 +1,3 @@
-import streamlit as st
-import sqlite3
 import pandas as pd
 import os
 from datetime import datetime
@@ -80,21 +78,21 @@ text-align: center;
 margin: 20px 0;
 }
 
-.footer-willian { 
-    background: #000; 
-    color: #fff; 
-    padding: 30px; 
-    text-align: center; 
-    border-top: 4px solid #ffcc00; 
-    margin-top: 50px; 
+.footer-willian {
+background: #000;
+color: #fff;
+padding: 30px;
+text-align: center;
+border-top: 4px solid #ffcc00;
+margin-top: 50px;
 }
 .gold-text {
-    background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-weight: bold;
-    font-size: 1.2em;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+font-weight: bold;
+font-size: 1.2em;
+text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
 }
 
 .comment-box {
@@ -106,15 +104,15 @@ border-left: 5px solid #ffcc00;
 }
 
 .maps-button {
-    display: inline-block;
-    padding: 10px 20px;
-    background-color: #ea4335;
-    color: white !important;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-    margin-top: 10px;
-    text-align: center;
+display: inline-block;
+padding: 10px 20px;
+background-color: #ea4335;
+color: white !important;
+text-decoration: none;
+border-radius: 5px;
+font-weight: bold;
+margin-top: 10px;
+text-align: center;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -148,20 +146,18 @@ admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
 
 # Lista Maestra de Categorías
 lista_categorias = [
-    "Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos", 
-    "Supermercados", "Electrodomésticos y línea blanca", 
-    "Telefonía y Tecnología", "Servicios de Fibra Óptica", 
-    "Carnicerías", "Charcuterías", "Comida rápida", 
-    "Tienda de ropa", "Perfumerías", "Entes gubernamentales", 
+    "Salud", "Farmacias", "Ópticas", "Ferretería", "Abastos",
+    "Supermercados", "Electrodomésticos y línea blanca",
+    "Telefonía y Tecnología", "Servicios de Fibra Óptica",
+    "Carnicerías", "Charcuterías", "Comida rápida",
+    "Tienda de ropa", "Perfumerías", "Entes gubernamentales",
     "Taxis y mototaxis", "Servicios"
 ]
 
 if admin_pass == "Juan*316*":
     st.sidebar.markdown(f'<img src="{current_logo}" class="sidebar-logo-oval" width="200">', unsafe_allow_html=True)
-    
     # --- RECORDATORIO DE SEGURIDAD DE DATOS ---
     st.sidebar.warning("🔒 Los datos están vinculados a 'guia_santa_teresa.db'. No se borrarán al modificar el código ni al cerrar sesión.")
-    
     menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Ajustes Logo"])
     
     if menu == "Ajustes Logo":
@@ -219,21 +215,28 @@ if admin_pass == "Juan*316*":
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
+# --- ENLACE DE COMPARTIR ---
+st.markdown(f"""
+<div class="share-link-box">
+    <p style="margin:0; font-weight:bold; color:#3b82f6;">🔗 Comparte nuestra Guía:</p>
+    <code style="color:#ffffff; background:none;">https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app</code>
+</div>
+""", unsafe_allow_html=True)
+
 busq = st.text_input("🔍 ¿Qué buscas hoy?")
 df = pd.read_sql_query("SELECT * FROM comercios", conn)
 
 if not df.empty:
     # --- SISTEMA DE PESTAÑAS POR CATEGORÍA ---
     tabs = st.tabs(lista_categorias)
-    
     for i, categoria_nombre in enumerate(lista_categorias):
         with tabs[i]:
-            filtrado = df[(df['categoria'] == categoria_nombre) & 
+            filtrado = df[(df['categoria'] == categoria_nombre) &
                           (df['nombre'].str.contains(busq, case=False))]
-            
             if not filtrado.empty:
                 for idx, r in filtrado.iterrows():
-                    st.subheader(f"🏢 {r['nombre']}")
+                    # --- TITULO PEQUEÑO ---
+                    st.markdown(f"#### 🏢 **{r['nombre']}**")
                     with st.expander("Ver detalles y opiniones"):
                         col1, col2 = st.columns([1, 1])
                         with col1:
@@ -258,9 +261,9 @@ st.markdown(f"""
 <div class='footer-willian'>
     📍 Santa Teresa del Tuy, Venezuela.<br>
     <span class='gold-text'>
-        © {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar, 
-        Todos los derechos reservados, prohibida la reproduccion parcial o total. 
-        Santa Teresa del Tuy 2026
+    © {datetime.now().year} - Esta App fue creada y diseñada por Willian Almenar,
+    Todos los derechos reservados, prohibida la reproduccion parcial o total.
+    Santa Teresa del Tuy 2026
     </span>
 </div>
 """, unsafe_allow_html=True)
