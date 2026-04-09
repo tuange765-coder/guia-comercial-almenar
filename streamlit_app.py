@@ -3,11 +3,10 @@ import sqlite3
 import pandas as pd
 import os
 from datetime import datetime
-from PIL import Image, ImageFile
 import base64
 import urllib.parse
 
-# --- FUNCIÓN PARA MÚSICA DE FONDO (CONTROL MANUAL PARA COMPATIBILIDAD) ---
+# --- FUNCIÓN PARA MÚSICA DE FONDO ---
 def autoplay_music(file_path):
     if os.path.exists(file_path):
         with open(file_path, "rb") as f:
@@ -43,118 +42,37 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- ACTIVAR MÚSICA ---
 autoplay_music("música/musica1.mp3")
 
-# --- ESTILO VENEZUELA (DISEÑO ORIGINAL) ---
+# --- ESTILO VENEZUELA ---
 st.markdown("""
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 header {visibility: hidden;}
-.viewerBadge_container__1QSob {display: none !important;}
-.stDeployButton {display: none !important;}
-.stAppToolbar {visibility: hidden !important; display: none !important;}
-[data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
-button[title="Manage app"] {display: none !important;}
-div[data-testid="stStatusWidget"] {display: none !important;}
-.stAppDeployButton {display: none !important;}
-
 .stApp { background-color: #111827; color: #ffffff; }
-
-h1, h2, h3, h4, h5, h6, p, label, .stMarkdown {
-color: #ffffff !important;
-}
-
-button[data-baseweb="tab"] p {
-color: #ffcc00 !important;
-font-weight: bold !important;
-font-size: 1.1em !important;
-}
-
+h1, h2, h3, h4, h5, h6, p, label, .stMarkdown { color: #ffffff !important; }
+button[data-baseweb="tab"] p { color: #ffcc00 !important; font-weight: bold !important; font-size: 1.1em !important; }
 .venezuela-header {
-text-align: center;
-padding: 60px 10px 40px 10px;
-background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
-margin-bottom: 30px;
-box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
-}
-.stars-arc {
-color: white;
-font-size: 2.5em;
-letter-spacing: 15px;
-font-weight: bold;
-text-shadow: 3px 3px 6px #000;
-margin-top: -15px;
-}
-
-.logo-container {
-text-align: center;
-margin-top: -50px;
-margin-bottom: 20px;
-}
-.app-logo {
-border-radius: 50% / 30%;
-border: 3px solid #ffcc00;
-box-shadow: 0px 4px 10px rgba(0,0,0,0.5);
-}
-
-input, textarea, [data-baseweb="select"] {
-background-color: #ffffff !important;
-color: #000000 !important;
-font-weight: bold !important;
-}
-
-.footer-willian {
-background: #000;
-color: #fff;
-padding: 30px; text-align: center;
-border-top: 4px solid #ffcc00;
-margin-top: 50px;
-}
-.gold-text {
-background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%);
--webkit-background-clip: text;
--webkit-text-fill-color: transparent;
-font-weight: bold;
-font-size: 1.2em;
-}
-
-.maps-button {
-display: inline-block;
-padding: 10px 20px;
-background-color: #ea4335;
-color: white !important;
-text-decoration: none;
-border-radius: 5px;
-font-weight: bold;
-margin-top: 10px;
-text-align: center;
-}
-
-[data-testid="stSidebar"] {
-background-color: #1f2937;
-border-right: 2px solid #ffcc00;
-}
-
-.visitas-badge {
     text-align: center;
-    background: rgba(255, 204, 0, 0.1);
-    border: 1px solid #ffcc00;
-    border-radius: 10px;
-    padding: 10px;
-    margin-bottom: 20px;
+    padding: 60px 10px 40px 10px;
+    background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
+    border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
+    margin-bottom: 30px;
+    box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
 }
-
-.opinion-card {
-    background: #1f2937;
-    padding: 10px;
-    border-left: 4px solid #ffcc00;
-    margin-bottom: 10px;
-    border-radius: 0 10px 10px 0;
-}
+.stars-arc { color: white; font-size: 2.5em; letter-spacing: 15px; font-weight: bold; text-shadow: 3px 3px 6px #000; margin-top: -15px; }
+.logo-container { text-align: center; margin-top: -50px; margin-bottom: 20px; }
+.app-logo { border-radius: 50% / 30%; border: 3px solid #ffcc00; box-shadow: 0px 4px 10px rgba(0,0,0,0.5); }
+input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
+.footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+.gold-text { background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 1.2em; }
+.maps-button { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; text-align: center; }
+.visitas-badge { text-align: center; background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; border-radius: 10px; padding: 10px; margin-bottom: 20px; }
+.opinion-card { background: #1f2937; padding: 10px; border-left: 4px solid #ffcc00; margin-bottom: 10px; border-radius: 0 10px 10px 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- BASE DE DATOS ---
+# --- CONEXIÓN A BASE DE DATOS LOCAL (SQLITE) ---
+# Se elimina cualquier referencia a conectores de Google Sheets.
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
@@ -163,7 +81,7 @@ c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url 
 c.execute('CREATE TABLE IF NOT EXISTS visitas (fecha TEXT PRIMARY KEY, conteo INTEGER)')
 conn.commit()
 
-# --- REGISTRO DE VISITA DIARIA ---
+# --- REGISTRO DE VISITA ---
 fecha_hoy = datetime.now().strftime("%Y-%m-%d")
 c.execute("INSERT OR IGNORE INTO visitas (fecha, conteo) VALUES (?, 0)", (fecha_hoy,))
 c.execute("UPDATE visitas SET conteo = conteo + 1 WHERE fecha = ?", (fecha_hoy,))
@@ -179,7 +97,7 @@ st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ �
 st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="180"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
-# --- LISTA MAESTRA DE CATEGORÍAS ---
+# --- CATEGORÍAS ---
 lista_maestra_categorias = [
     "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
     "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
@@ -187,23 +105,19 @@ lista_maestra_categorias = [
     "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
 ]
 
-# --- CONTROL POR PESTAÑAS PRINCIPALES (TAB) ---
 tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
 
 if 'admin_logged_in' not in st.session_state:
     st.session_state.admin_logged_in = False
 
+# --- PANEL DE CONTROL (SOLO SQLITE) ---
 with tab_llave_admin:
     st.markdown("### ⚙️ Gestión de Sistema")
     with st.expander("Abrir Cerradura Administrativa", expanded=False):
         admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
         if admin_pass == "Juan*316*":
             st.session_state.admin_logged_in = True
-            st.success("🔒 MODO PRIVADO ACTIVADO: Los usuarios no verán tus ediciones en curso.")
-            
-            st.markdown("### 📊 Estadísticas de Visitas")
-            df_visitas = pd.read_sql_query("SELECT fecha as 'Fecha', conteo as 'Usuarios' FROM visitas ORDER BY fecha DESC LIMIT 7", conn)
-            st.table(df_visitas)
+            st.success("🔒 MODO PRIVADO ACTIVADO")
             
             accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
             
@@ -212,7 +126,7 @@ with tab_llave_admin:
                     n = st.text_input("Nombre del Negocio")
                     cat = st.selectbox("Categoría", lista_maestra_categorias)
                     ub = st.text_input("Ubicación")
-                    up_file = st.file_uploader("Subir foto de negocio (PC)", type=['png', 'jpg', 'jpeg'])
+                    up_file = st.file_uploader("Subir foto", type=['png', 'jpg', 'jpeg'])
                     url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
                     res = st.text_area("Escribir Reseña Inicial")
                     if st.form_submit_button("Guardar Negocio"):
@@ -220,35 +134,6 @@ with tab_llave_admin:
                         if up_file:
                             final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
                         c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, 5))
-                        conn.commit()
-                        st.rerun()
-            
-            elif accion == "Modificar/Quitar":
-                df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
-                if not df_mod.empty:
-                    target_mod = st.selectbox("Selecciona Negocio para editar", df_mod['nombre'].tolist())
-                    row = df_mod[df_mod['nombre'] == target_mod].iloc[0]
-                    with st.form("edit_form"):
-                        new_n = st.text_input("Editar Nombre", value=row['nombre'])
-                        new_cat = st.selectbox("Editar Categoría", lista_maestra_categorias, index=lista_maestra_categorias.index(row['categoria']) if row['categoria'] in lista_maestra_categorias else 0)
-                        new_ub = st.text_input("Editar Ubicación", value=row['ubicacion'])
-                        new_res = st.text_area("Modificar Reseña", value=row['reseña_willian'])
-                        new_up_file = st.file_uploader("Cambiar Foto", type=['png', 'jpg', 'jpeg'])
-                        if st.form_submit_button("Actualizar Cambios"):
-                            if new_up_file:
-                                img_data = f"data:image/png;base64,{base64.b64encode(new_up_file.read()).decode()}"
-                                c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_cat, new_ub, new_res, img_data, int(row['id'])))
-                            else:
-                                c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_cat, new_ub, new_res, int(row['id'])))
-                            conn.commit()
-                            st.rerun()
-
-            elif accion == "Borrar Negocio":
-                df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
-                if not df_del.empty:
-                    target = st.selectbox("Negocio a eliminar permanentemente:", df_del['nombre'].tolist())
-                    if st.button("🔴 Confirmar Eliminación"):
-                        c.execute("DELETE FROM comercios WHERE nombre=?", (target,))
                         conn.commit()
                         st.rerun()
 
@@ -262,82 +147,45 @@ with tab_llave_admin:
         else:
             st.session_state.admin_logged_in = False
 
+# --- VISTA PÚBLICA ---
 with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
-    total_visitas = total_visitas_res if total_visitas_res else 0
-    st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span></div>', unsafe_allow_html=True)
 
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
-    # --- FUNCIÓN AUXILIAR DE RENDERIZADO ---
-    def mostrar_opiniones(comercio_id, nombre_negocio):
-        st.markdown(f"---")
-        with st.expander(f"💬 Opiniones de {nombre_negocio}"):
-            with st.form(f"form_op_{comercio_id}"):
-                u_name = st.text_input("Tu Nombre", key=f"n_{comercio_id}")
-                u_comment = st.text_area("Comentario", key=f"c_{comercio_id}")
-                u_stars = st.slider("Nota", 1, 5, 5, key=f"s_{comercio_id}")
-                if st.form_submit_button("Publicar"):
-                    if u_name and u_comment:
-                        c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", (comercio_id, u_name, u_comment, u_stars, datetime.now().strftime("%d/%m/%Y")))
-                        conn.commit()
-                        st.rerun()
-            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {comercio_id} ORDER BY id DESC", conn)
-            for _, op in ops.iterrows():
-                st.markdown(f'<div class="opinion-card"><b>{op["usuario"]}</b> ({op["fecha"]})<br>{"⭐"*op["estrellas_u"]}<br>{op["comentario"]}</div>', unsafe_allow_html=True)
-
     def renderizar_tarjeta(r):
         st.markdown(f"##### 🏢 **{r['nombre']}**")
         col1, col2 = st.columns([1, 1])
         with col1:
             st.image(r['foto_url'], use_container_width=True)
             st.write(f"📍 {r['ubicacion']}")
-            st.markdown(f'<a href="http://google.com/maps?q={urllib.parse.quote(r["nombre"])}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
+            st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
         with col2:
             st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
-        mostrar_opiniones(r['id'], r['nombre'])
         st.markdown("---")
 
-    # --- LÓGICA DE BÚSQUEDA AUTOMÁTICA MEJORADA (GENERAL) ---
     if busq:
-        mask = (
-            df['nombre'].str.contains(busq, case=False, na=False) | 
-            df['categoria'].str.contains(busq, case=False, na=False) | 
-            df['ubicacion'].str.contains(busq, case=False, na=False) | 
-            df['reseña_willian'].str.contains(busq, case=False, na=False)
-        )
-        df_busqueda = df[mask]
-        
-        if not df_busqueda.empty:
-            if len(df_busqueda) == 1:
-                st.markdown(f"### 🎯 ¡Coincidencia Encontrada!")
-            else:
-                st.markdown(f"### 🔍 Resultados para: '{busq}'")
-            
-            for _, row in df_busqueda.iterrows():
-                renderizar_tarjeta(row)
-        else:
-            st.warning("No se encontraron coincidencias. Prueba con otra palabra.")
+        df_busqueda = df[df['nombre'].str.contains(busq, case=False, na=False) | df['categoria'].str.contains(busq, case=False, na=False)]
+        for _, row in df_busqueda.iterrows():
+            renderizar_tarjeta(row)
     
-    # --- PESTAÑAS DE CATEGORÍAS ---
     st.markdown("### 🗂️ Explorar por Categorías")
     tabs_negocios = st.tabs(lista_maestra_categorias)
     for i, cat_name in enumerate(lista_maestra_categorias):
         with tabs_negocios[i]:
-            filtrado_pestaña = df[df['categoria'] == cat_name]
-            if filtrado_pestaña.empty:
-                st.write("Próximamente más comercios en esta sección...")
+            filtrado = df[df['categoria'] == cat_name]
+            if filtrado.empty:
+                st.write("Próximamente más comercios...")
             else:
-                for _, r in filtrado_pestaña.iterrows():
+                for _, r in filtrado.iterrows():
                     renderizar_tarjeta(r)
 
 # --- PIE DE PÁGINA ---
-st.markdown(f"""
+st.markdown("""
 <div class='footer-willian'>
-<span class='gold-text'>Creación de Willian Almenar. TODOS LOS DERECHOS RESERVADOS.</span><br>
-<span style='color: #ffffff; font-size: 0.85em; font-weight: bold;'>PROHIBIDA SU REPRODUCCIÓN PARCIAL O TOTAL.</span><br>
-<span style='color: #ffcc00; font-size: 0.9em;'>SANTA TERESA DEL TUY 2026.</span><br><br>
-<a href='#' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold; border: 1px solid #ffcc00; padding: 5px 10px; border-radius: 5px;'>🔗 COMPARTIR GUÍA OFICIAL</a>
+<span class='gold-text'>Reflexiones de Willian Almenar. TODOS LOS DERECHOS RESERVADOS.</span><br>
+<span style='color: #ffcc00; font-size: 0.9em;'>SANTA TERESA DEL TUY 2026.</span>
 </div>
 """, unsafe_allow_html=True)
