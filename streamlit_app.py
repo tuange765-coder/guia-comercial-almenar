@@ -6,7 +6,6 @@ import shutil  # Nueva librería para copiar el archivo
 from datetime import datetime
 import base64
 import urllib.parse
-import io # Añadido para exportación Excel
 
 # --- FUNCIÓN DE RESPALDO AUTOMÁTICO ---
 def crear_respaldo():
@@ -22,15 +21,6 @@ def crear_respaldo():
         return nombre_respaldo
     except Exception as e:
         return None
-
-# --- FUNCIÓN OPCIÓN B: EXCEL ---
-def exportar_a_excel():
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        pd.read_sql_query("SELECT * FROM comercios", conn).to_excel(writer, sheet_name='Comercios', index=False)
-        pd.read_sql_query("SELECT * FROM opiniones", conn).to_excel(writer, sheet_name='Opiniones', index=False)
-        pd.read_sql_query("SELECT * FROM visitas", conn).to_excel(writer, sheet_name='Estadisticas', index=False)
-    return output.getvalue()
 
 # --- FUNCIÓN PARA MÚSICA DE FONDO ---
 def autoplay_music(file_path):
@@ -181,28 +171,17 @@ with tab_llave_admin:
     if st.session_state.admin_logged_in:
         st.warning("⚠️ MODO EDICIÓN: El sistema creará respaldos automáticos ante cambios.")
         
-        # --- NUEVA SECCIÓN: GESTIÓN DE RESPALDOS MANUAL (OPCIONES A Y B) ---
-        with st.expander("📁 Bóveda de Seguridad (Opciones A y B)", expanded=True):
+        # --- NUEVA SECCIÓN: GESTIÓN DE RESPALDOS MANUAL ---
+        with st.expander("📁 Base de Datos y Respaldos"):
             col_b1, col_b2 = st.columns(2)
             with col_b1:
-                st.write("**Opción A: Copia Local (.db)**")
-                if st.button("🔄 Generar Respaldo en Carpeta"):
+                if st.button("🔄 Crear Respaldo Ahora"):
                     ruta = crear_respaldo()
-                    if ruta: st.success(f"Copia creada en carpeta /respaldos")
-                
-                with open("guia_santa_teresa.db", "rb") as f:
-                    st.download_button("💾 Bajar archivo .DB a la Laptop", f, file_name=f"respaldo_full_{fecha_hoy}.db")
-                    
+                    if ruta: st.success(f"Copia creada: {ruta}")
             with col_b2:
-                st.write("**Opción B: Exportar a Excel**")
-                st.write("Ideal para ver datos sin programa.")
-                excel_file = exportar_a_excel()
-                st.download_button(
-                    label="📊 Descargar Base de Datos en Excel",
-                    data=excel_file,
-                    file_name=f"Guia_Santa_Teresa_{fecha_hoy}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
+                # Opción para descargar la base de datos directamente al PC del usuario
+                with open("guia_santa_teresa.db", "rb") as f:
+                    st.download_button("💾 Descargar DB Actual", f, file_name="guia_santa_teresa.db")
 
         if st.button("Cerrar Sesión"):
             crear_respaldo() # Respaldo al salir
