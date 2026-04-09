@@ -299,22 +299,26 @@ with tab_publico:
         mostrar_opiniones(r['id'], r['nombre'])
         st.markdown("---")
 
-    # --- LÓGICA DE BÚSQUEDA AUTOMÁTICA MEJORADA ---
+    # --- LÓGICA DE BÚSQUEDA AUTOMÁTICA MEJORADA (GENERAL) ---
     if busq:
-        mask = (df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False) | df['ubicacion'].str.contains(busq, case=False) | df['reseña_willian'].str.contains(busq, case=False))
+        mask = (
+            df['nombre'].str.contains(busq, case=False, na=False) | 
+            df['categoria'].str.contains(busq, case=False, na=False) | 
+            df['ubicacion'].str.contains(busq, case=False, na=False) | 
+            df['reseña_willian'].str.contains(busq, case=False, na=False)
+        )
         df_busqueda = df[mask]
         
         if not df_busqueda.empty:
-            # Si hay una coincidencia exacta o solo un resultado, lo mostramos con énfasis
             if len(df_busqueda) == 1:
-                st.markdown(f"### 🎯 ¡Encontrado!")
+                st.markdown(f"### 🎯 ¡Coincidencia Encontrada!")
             else:
                 st.markdown(f"### 🔍 Resultados para: '{busq}'")
             
             for _, row in df_busqueda.iterrows():
                 renderizar_tarjeta(row)
         else:
-            st.warning("No se encontraron coincidencias exactas. Intenta con otra palabra clave.")
+            st.warning("No se encontraron coincidencias. Prueba con otra palabra.")
     
     # --- PESTAÑAS DE CATEGORÍAS ---
     st.markdown("### 🗂️ Explorar por Categorías")
