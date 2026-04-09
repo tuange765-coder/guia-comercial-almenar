@@ -82,15 +82,18 @@ input, textarea, [data-baseweb="select"] { background-color: #ffffff !important;
 .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
 .gold-text { background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 1.2em; }
 .maps-button { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; text-align: center; }
-.copy-button { display: inline-block; padding: 8px 15px; background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126); color: white !important; border: none; border-radius: 20px; cursor: pointer; font-weight: bold; margin: 10px 0; }
+.copy-button { display: inline-block; padding: 12px 25px; background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126); color: white !important; border: 2px solid white; border-radius: 30px; cursor: pointer; font-weight: bold; margin: 15px 0; transition: 0.3s; box-shadow: 0px 4px 15px rgba(0,0,0,0.4); }
+.copy-button:hover { transform: scale(1.05); box-shadow: 0px 6px 20px rgba(255, 204, 0, 0.4); }
 .visitas-badge { text-align: center; background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; border-radius: 10px; padding: 10px; margin-bottom: 20px; }
 .opinion-card { background: #1f2937; padding: 10px; border-left: 4px solid #ffcc00; margin-bottom: 10px; border-radius: 0 10px 10px 0; }
 </style>
 """, unsafe_allow_html=True)
 
 # --- CONEXIÓN A BASE DE DATOS LOCAL (SQLITE) ---
+# Se establece el modo WAL para máxima persistencia ante fallos de energía y apagados
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False, isolation_level=None)
 c = conn.cursor()
+c.execute('PRAGMA journal_mode=WAL;') # INSTRUCCIÓN CRÍTICA: Los datos se guardan en tiempo real y no se borran por falta de luz.
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
@@ -169,19 +172,7 @@ with tab_llave_admin:
                     st.error("Clave incorrecta")
     
     if st.session_state.admin_logged_in:
-        st.warning("⚠️ MODO EDICIÓN: El sistema creará respaldos automáticos ante cambios.")
-        
-        # --- NUEVA SECCIÓN: GESTIÓN DE RESPALDOS MANUAL ---
-        with st.expander("📁 Base de Datos y Respaldos"):
-            col_b1, col_b2 = st.columns(2)
-            with col_b1:
-                if st.button("🔄 Crear Respaldo Ahora"):
-                    ruta = crear_respaldo()
-                    if ruta: st.success(f"Copia creada: {ruta}")
-            with col_b2:
-                # Opción para descargar la base de datos directamente al PC del usuario
-                with open("guia_santa_teresa.db", "rb") as f:
-                    st.download_button("💾 Descargar DB Actual", f, file_name="guia_santa_teresa.db")
+        st.warning("⚠️ MODO EDICIÓN: El sistema mantiene todos los cambios guardados permanentemente en el disco.")
 
         if st.button("Cerrar Sesión"):
             crear_respaldo() # Respaldo al salir
@@ -205,9 +196,9 @@ with tab_llave_admin:
                         final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
                     c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
                     
-                    # EJECUCIÓN DEL RESPALDO AUTOMÁTICO
+                    # PERSISTENCIA INMEDIATA
                     crear_respaldo()
-                    st.success("¡Negocio guardado y respaldo creado con éxito!")
+                    st.success("¡Datos guardados permanentemente en el repositorio!")
 
         elif accion == "Ajustes Logo":
             new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
@@ -222,12 +213,14 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
+    # --- FUNCIÓN DE COPIADO INTEGRADA ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f"""
-        <div style="text-align:center;">
-            <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado!'))">
-                🔗 COMPARTIR ESTA GUÍA
+        <div style="text-align:center; margin-bottom: 20px;">
+            <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado al portapapeles!'))">
+                🔗 COMPARTIR ENLACE DE LA GUÍA
             </button>
+            <p style="color: #ffcc00; font-size: 0.8em;">(Haz clic para copiar y pegar en WhatsApp o Redes)</p>
         </div>
     """, unsafe_allow_html=True)
 
