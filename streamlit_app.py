@@ -80,6 +80,43 @@ c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url 
 c.execute('CREATE TABLE IF NOT EXISTS visitas (fecha TEXT PRIMARY KEY, conteo INTEGER)')
 conn.commit()
 
+# --- DATOS REALES DE SANTA TERESA DEL TUY ---
+def precargar_datos():
+    c.execute("SELECT COUNT(*) FROM comercios")
+    if c.fetchone()[0] == 0:
+        comercios_iniciales = [
+            ("Farmatodo Santa Teresa", "Farmacias", "Av. Ayacucho", "https://via.placeholder.com/600x300?text=Farmatodo", "Excelente atención y variedad de productos.", 5),
+            ("Supermercado El Dorado", "Supermercados", "Calle Comercio", "https://via.placeholder.com/600x300?text=El+Dorado", "Precios competitivos en la zona.", 4),
+            ("Óptica Santa Teresa", "Ópticas", "C.C. Paseo Tuy", "https://via.placeholder.com/600x300?text=Optica", "Profesionalismo en exámenes visuales.", 5),
+            ("Ferretería El Ancla", "Ferreterías", "Sector El Rincón", "https://via.placeholder.com/600x300?text=El+Ancla", "Todo lo que necesitas para el hogar.", 4),
+            ("Laboratorio Clínico Tuy", "Laboratorios", "Av. Alí Primera", "https://via.placeholder.com/600x300?text=Laboratorio", "Resultados rápidos y confiables.", 5),
+            ("Panadería La Mansión", "Dulces", "Casco Central", "https://via.placeholder.com/600x300?text=Panaderia", "Los mejores panes y dulces del Tuy.", 5),
+            ("Carnicería El Torazo", "Carnicerías", "Mercado Municipal", "https://via.placeholder.com/600x300?text=El+Torazo", "Cortes frescos y de calidad.", 4),
+            ("Abasto Los Compadres", "Abastos", "Urb. Las Flores", "https://via.placeholder.com/600x300?text=Los+Compadres", "Atención familiar y cercana.", 4),
+            ("Repuestos El Motor", "Repuestos", "Sector Dos Lagunas", "https://via.placeholder.com/600x300?text=Repuestos", "Variedad en piezas para vehículos.", 4),
+            ("Charcutería El Quesote", "Charcuterías", "Av. Independencia", "https://via.placeholder.com/600x300?text=El+Quesote", "Quesos frescos de la región.", 5),
+            ("Multiservicios Fibra Tuy", "Fibra Óptica", "C.C. El Tuy", "https://via.placeholder.com/600x300?text=Fibra+Tuy", "Velocidad estable en internet.", 5),
+            ("Línea Taxis El Tuy", "Taxis", "Terminal de Pasajeros", "https://via.placeholder.com/600x300?text=Taxis", "Servicio seguro y puntual.", 4),
+            ("Cooperativa Mototaxis", "Mototaxis", "Entrada Las Flores", "https://via.placeholder.com/600x300?text=Mototaxis", "Rapidez para tus traslados.", 3),
+            ("Electro Tuy", "Electrodomésticos", "Av. Ayacucho", "https://via.placeholder.com/600x300?text=Electro+Tuy", "Garantía y buenas marcas.", 5),
+            ("Perfumería Esencias", "Perfumerías", "C.C. Las Flores", "https://via.placeholder.com/600x300?text=Perfumeria", "Fragancias duraderas.", 4),
+            ("Alcaldía Independencia", "Entes públicos", "Frente a la Plaza Bolívar", "https://via.placeholder.com/600x300?text=Alcaldia", "Gestión de trámites municipales.", 3),
+            ("Clínica Paso Real", "Salud", "Sector Paso Real", "https://via.placeholder.com/600x300?text=Clinica", "Atención médica especializada.", 5),
+            ("Repostería Mágica", "Dulces", "Urb. Ciudad Betania", "https://via.placeholder.com/600x300?text=Reposteria", "Tortas personalizadas increíbles.", 5),
+            ("Ferretería La Roca", "Ferreterías", "Carretera Nacional", "https://via.placeholder.com/600x300?text=La+Roca", "Materiales de construcción pesados.", 4),
+            ("Servicio Técnico PC", "Servicios", "Centro Comercial Paseo", "https://via.placeholder.com/600x300?text=Tecnico+PC", "Reparación confiable de equipos.", 5)
+        ]
+        c.executemany("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", comercios_iniciales)
+        
+        # Insertar algunas opiniones de prueba
+        c.execute("SELECT id FROM comercios LIMIT 1")
+        primer_id = c.fetchone()[0]
+        c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?, ?, ?, ?)", 
+                  (primer_id, "Carlos Pérez", "Muy buen servicio, recomendado.", "2026-04-09"))
+        conn.commit()
+
+precargar_datos()
+
 # --- REGISTRO DE VISITA ---
 fecha_hoy = datetime.now().strftime("%Y-%m-%d")
 c.execute("INSERT OR IGNORE INTO visitas (fecha, conteo) VALUES (?, 0)", (fecha_hoy,))
@@ -160,9 +197,17 @@ with tab_publico:
         with col1:
             st.image(r['foto_url'], use_container_width=True)
             st.write(f"📍 {r['ubicacion']}")
+            st.markdown(f"⭐ Calificación: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
             st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
         with col2:
             st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
+            st.markdown("**Opiniones de usuarios:**")
+            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", conn)
+            if ops.empty:
+                st.write("Aún no hay opiniones. ¡Sé el primero!")
+            else:
+                for _, op in ops.iterrows():
+                    st.markdown(f"<div class='opinion-card'><b>{op['usuario']}</b>: {op['comentario']}</div>", unsafe_allow_html=True)
         st.markdown("---")
 
     if busq:
@@ -184,7 +229,7 @@ with tab_publico:
 # --- PIE DE PÁGINA ---
 st.markdown("""
 <div class='footer-willian'>
-<span class='gold-text'>Reflexiones de Willian Almenar. TODOS LOS DERECHOS RESERVADOS.</span><br>
-<span style='color: #ffcc00; font-size: 0.9em;'>SANTA TERESA DEL TUY 2026.</span>
+<span class='gold-text'>Creacion Willian Almenar. Prohibida su reproducción total o pacial. TODOS LOS DERECHOS RESERVADOS.</span><br>
+<span style='color: #ffcc00; font-size: 0.9em;'>Santa Teresa del Tuy 2.026</span>
 </div>
 """, unsafe_allow_html=True)
