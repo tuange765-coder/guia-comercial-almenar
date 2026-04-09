@@ -3,232 +3,188 @@ import sqlite3
 import pandas as pd
 import os
 from datetime import datetime
-from PIL import Image, ImageFile
 import base64
+import urllib.parse
 
-# --- CONFIGURACIÓN ---
-st.set_page_config(page_title="Guía Comercial Almenar",
-layout="wide", page_icon="🚀")
- 
-# --- ESTILO VENEZUELA
-# (FONDO OSCURO Y ARCO TRICOLOR) ---
+# --- FUNCIÓN PARA MÚSICA DE FONDO ---
+def autoplay_music(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, "rb") as f:
+            data = f.read()
+            b64 = base64.b64encode(data).decode()
+            md = f"""
+                <audio id="audio-player" loop>
+                    <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+                </audio>
+                <div id="music-control" onclick="playAudio()" style="text-align:center; padding:15px; background:#1f2937; border:2px solid #ffcc00; border-radius:15px; cursor:pointer; margin-bottom:20px; transition: 0.3s;">
+                    <p style="color:#ffcc00; margin:0; font-weight:bold; font-size:1.1em;">🎵 ACTIVAR MÚSICA AMBIENTAL 🎵</p>
+                    <small style="color:white;">(Haz clic aquí para iniciar el sonido)</small>
+                </div>
+                <script>
+                    var audio = document.getElementById("audio-player");
+                    audio.volume = 0.3;
+                    
+                    function playAudio() {{
+                        audio.play().then(() => {{
+                            document.getElementById("music-control").style.display = "none";
+                        }}).catch(function(error) {{
+                            console.log("Error al reproducir:", error);
+                        }});
+                    }}
+                    document.body.addEventListener('click', playAudio, {{ once: true }});
+                </script>
+                """
+            st.markdown(md, unsafe_allow_html=True)
+
+# --- CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
+
+# --- ACTIVAR MÚSICA ---
+autoplay_music("música/musica1.mp3")
+
+# --- ESTILO VENEZUELA ---
 st.markdown("""
-    <style>
-    /* Fondo general */
-    .stApp { background-color:
-#111827; color: #ffffff; }
-    
-    /* Panel lateral */
-    [data-testid="stSidebar"] { background-color: #1f2937; }
-    [data-testid="stSidebar"] p,
-[data-testid="stSidebar"] span, [data-testid="stSidebar"]
-label {
-        color: #ffffff !important;
-        font-weight: bold;
-    }
- 
-    /* Encabezado Tricolor en forma de ARCO
-PROFESIONAL */
-    .venezuela-header {
-        text-align: center;
-        padding: 60px 10px 40px
-10px;
-        background:
-linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-     border-radius: 100% 100% 25px 25px / 120%
-120% 25px 25px;
-        margin-bottom: 30px;
-        box-shadow: 0px 10px 20px
-rgba(0,0,0,0.6);
-        border: 1px solid
-rgba(255,255,255,0.1);
-    }
-    .stars-arc { 
-        color: white; 
-        font-size: 2.5em; 
-        letter-spacing: 15px; 
-        font-weight: bold; 
-        text-shadow: 3px 3px 6px
-#000;
-        margin-top: -15px;
-    }
-    
-    /* RECUADROS DE TEXTO: Letras Negras sobre
-Fondo Blanco */
-    input, textarea,
-[data-baseweb="select"] { 
-        background-color: #ffffff !important; 
-        color: #000000 !important;
-        font-weight: bold !important;
-    }
-    
-    /* Forzar visibilidad del texto escrito */
-    .stTextInput input, .stTextArea
-textarea {
-        color: #000000 !important;
-    }
- 
-    .share-link-box {
-        background-color: #1f2937;
-        border: 2px dashed
-#3b82f6;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
-        margin: 20px 0;
-    }
- 
-    .footer-willian { background:
-#000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid
-#ffcc00; margin-top: 50px; }
+<style>
+#MainMenu {visibility: hidden;}
+footer {visibility: hidden;}
+header {visibility: hidden;}
+.stApp { background-color: #111827; color: #ffffff; }
+h1, h2, h3, h4, h5, h6, p, label, .stMarkdown { color: #ffffff !important; }
+button[data-baseweb="tab"] p { color: #ffcc00 !important; font-weight: bold !important; font-size: 1.1em !important; }
+.venezuela-header {
+    text-align: center;
+    padding: 60px 10px 40px 10px;
+    background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
+    border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
+    margin-bottom: 30px;
+    box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+}
+.stars-arc { color: white; font-size: 2.5em; letter-spacing: 15px; font-weight: bold; text-shadow: 3px 3px 6px #000; margin-top: -15px; }
+.logo-container { text-align: center; margin-top: -50px; margin-bottom: 20px; }
+.app-logo { border-radius: 50% / 30%; border: 3px solid #ffcc00; box-shadow: 0px 4px 10px rgba(0,0,0,0.5); }
+input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
+.footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+.gold-text { background: linear-gradient(to bottom, #cf9710 22%, #ffcc00 24%, #f1c40f 26%, #fff700 27%, #ffcc00 40%, #e1aa33 78%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: bold; font-size: 1.2em; }
+.maps-button { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; text-align: center; }
+.visitas-badge { text-align: center; background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; border-radius: 10px; padding: 10px; margin-bottom: 20px; }
+.opinion-card { background: #1f2937; padding: 10px; border-left: 4px solid #ffcc00; margin-bottom: 10px; border-radius: 0 10px 10px 0; }
+</style>
+""", unsafe_allow_html=True)
 
-    .logo-container { text-align: center; margin-top: -80px; margin-bottom: 20px; }
-    .app-logo { border-radius: 50%; border: 3px solid #ffcc00; background: white; }
-    </style>
-    """,
-unsafe_allow_html=True)
- 
-# --- BASE DE DATOS ---
+# --- CONEXIÓN A BASE DE DATOS LOCAL (SQLITE) ---
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
-# Nueva tabla para ajustes como el logo
-c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_data TEXT)')
+c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
+c.execute('CREATE TABLE IF NOT EXISTS visitas (fecha TEXT PRIMARY KEY, conteo INTEGER)')
 conn.commit()
 
-# --- CARGAR LOGO PERSONALIZADO ---
-c.execute("SELECT logo_data FROM ajustes WHERE id=1")
+# --- REGISTRO DE VISITA ---
+fecha_hoy = datetime.now().strftime("%Y-%m-%d")
+c.execute("INSERT OR IGNORE INTO visitas (fecha, conteo) VALUES (?, 0)", (fecha_hoy,))
+c.execute("UPDATE visitas SET conteo = conteo + 1 WHERE fecha = ?", (fecha_hoy,))
+conn.commit()
+
+# --- CARGA DE LOGO ---
+c.execute("SELECT logo_url FROM ajustes WHERE id=1")
 res_logo = c.fetchone()
 current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
- 
-# --- PANEL ADMIN (AÑADIR Y MODIFICAR) ---
-st.sidebar.title("🛠️ Administración")
-admin_pass = st.sidebar.text_input("Clave de Acceso",
-type="password")
- 
-if admin_pass == "Juan*316*":
-    menu = st.sidebar.radio("Acción:", ["Ver/Buscar", "Añadir", "Modificar", "Borrar", "Gestionar Comentarios", "Personalizar Logo"])
-    
-    if menu == "Añadir":
-        with st.sidebar.form("add_form"):
-            n = st.text_input("Nombre del Negocio")
-            cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
-            ub = st.text_input("Ubicación")
-            # Opción de subir foto desde PC
-            foto_file = st.file_uploader("Subir foto del negocio", type=['png', 'jpg', 'jpeg'])
-            res = st.text_area("Reseña")
-            est = st.slider("Estrellas", 1, 5, 5)
-            if st.form_submit_button("Guardar Negocio"):
-                img_str = "https://via.placeholder.com/150"
-                if foto_file:
-                    img_str = f"data:image/png;base64,{base64.b64encode(foto_file.read()).decode()}"
-                c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, img_str, res, est))
-                conn.commit()
-                st.sidebar.success("¡Guardado!")
-                st.rerun()
- 
-    elif menu == "Modificar":
-        df_mod = pd.read_sql_query("SELECT * FROM comercios", conn)
-        if not df_mod.empty:
-            target = st.sidebar.selectbox("Elegir Negocio para Editar", df_mod['nombre'].tolist())
-            row = df_mod[df_mod['nombre'] == target].iloc[0]
-            with st.sidebar.form("edit_form"):
-                new_n = st.text_input("Nombre", value=row['nombre'])
-                new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"].index(row['categoria']))
-                new_ub = st.text_input("Ubicación", value=row['ubicacion'])
-                new_res = st.text_area("Reseña", value=row['reseña_willian'])
-                new_foto = st.file_uploader("Cambiar foto (Opcional)", type=['png', 'jpg', 'jpeg'])
-                if st.form_submit_button("Actualizar"):
-                    if new_foto:
-                        new_img_str = f"data:image/png;base64,{base64.b64encode(new_foto.read()).decode()}"
-                        c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=?, foto_url=? WHERE id=?", (new_n, new_cat, new_ub, new_res, new_img_str, int(row['id'])))
-                    else:
-                        c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=? WHERE id=?", (new_n, new_cat, new_ub, new_res, int(row['id'])))
-                    conn.commit()
-                    st.sidebar.success("¡Actualizado!")
-                    st.rerun()
 
-    elif menu == "Borrar":
-        df_del = pd.read_sql_query("SELECT * FROM comercios", conn)
-        if not df_del.empty:
-            target_del = st.sidebar.selectbox("Elegir Negocio para ELIMINAR", df_del['nombre'].tolist())
-            if st.sidebar.button("🔴 ELIMINAR PERMANENTEMENTE"):
-                c.execute("DELETE FROM comercios WHERE nombre=?", (target_del,))
-                conn.commit()
-                st.sidebar.warning(f"{target_del} eliminado.")
-                st.rerun()
-
-    elif menu == "Gestionar Comentarios":
-        st.sidebar.markdown("### Borrar Comentarios")
-        df_ops = pd.read_sql_query("SELECT opiniones.id, comercios.nombre, opiniones.usuario, opiniones.comentario FROM opiniones JOIN comercios ON opiniones.comercio_id = comercios.id", conn)
-        if not df_ops.empty:
-            op_id = st.sidebar.selectbox("Selecciona comentario a eliminar", df_ops['id'].tolist(), format_func=lambda x: f"De: {df_ops[df_ops['id']==x]['usuario'].values[0]}")
-            if st.sidebar.button("Eliminar Comentario"):
-                c.execute("DELETE FROM opiniones WHERE id=?", (op_id,))
-                conn.commit()
-                st.rerun()
-
-    elif menu == "Personalizar Logo":
-        st.sidebar.markdown("### Cambiar Logo de la App")
-        new_logo_file = st.sidebar.file_uploader("Sube tu logo desde la PC", type=['png', 'jpg', 'jpeg'])
-        if new_logo_file and st.sidebar.button("Aplicar nuevo logo"):
-            encoded_logo = base64.b64encode(new_logo_file.read()).decode()
-            logo_data = f"data:image/png;base64,{encoded_logo}"
-            c.execute("INSERT OR REPLACE INTO ajustes (id, logo_data) VALUES (1, ?)", (logo_data,))
-            conn.commit()
-            st.rerun()
- 
-# --- CUERPO PRINCIPAL ---
-st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>',
-unsafe_allow_html=True)
-# Mostrar Logo
-st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="150"></div>', unsafe_allow_html=True)
-
+# --- CABECERA ---
+st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
+st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="180"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
-st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
- 
-# --- SECCIÓN PARA COMPARTIR ---
-link_app = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
-whatsapp_url = f"https://api.whatsapp.com/send?text=¡Mira la Guía Comercial de Santa Teresa! 🚀 Accede aquí: {link_app}"
- 
-col_s1, col_s2 = st.columns(2)
-with col_s1:
-    st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:15px; border-radius:10px; text-align:center; font-weight:bold; font-size:1.1em;">📲 Compartir por WhatsApp</div></a>', unsafe_allow_html=True)
-with col_s2:
-    st.markdown(f'<div class="share-link-box"><small>🔗 Enlace Directo:</small><br><b style="color:#ffcc00;">{link_app}</b></div>', unsafe_allow_html=True)
- 
-# --- BUSCADOR ---
-busq = st.text_input("🔍 ¿Qué estás buscando hoy?", placeholder="Ej: Farmacia, Repuestos...")
-df = pd.read_sql_query("SELECT * FROM comercios", conn)
- 
-if not df.empty:
-    filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
-    for _, r in filtrado.iterrows():
-        with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
-            col_img, col_txt = st.columns([1, 2])
-            with col_img:
-                st.image(r['foto_url'])
-            with col_txt:
-                st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                st.write(f"⭐ **Calificación:** {'⭐' * r['estrellas_w']}")
-                st.info(f"**Reseña:** {r['reseña_willian']}")
+
+# --- CATEGORÍAS ---
+lista_maestra_categorias = [
+    "Salud", "Ópticas", "Laboratorios", "Farmacias", "Dulces", 
+    "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
+    "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
+    "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
+]
+
+tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
+
+if 'admin_logged_in' not in st.session_state:
+    st.session_state.admin_logged_in = False
+
+# --- PANEL DE CONTROL (SOLO SQLITE) ---
+with tab_llave_admin:
+    st.markdown("### ⚙️ Gestión de Sistema")
+    with st.expander("Abrir Cerradura Administrativa", expanded=False):
+        admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
+        if admin_pass == "Juan*316*":
+            st.session_state.admin_logged_in = True
+            st.success("🔒 MODO PRIVADO ACTIVADO")
             
-            # --- SECCIÓN DE COMENTARIOS ---
-            st.markdown("---")
-            st.write("💬 **Opiniones de la comunidad:**")
-            with st.form(f"comentario_{r['id']}"):
-                u_name = st.text_input("Tu Nombre", key=f"user_{r['id']}")
-                u_msg = st.text_area("Deja tu comentario", key=f"msg_{r['id']}")
-                if st.form_submit_button("Publicar Comentario"):
-                    if u_name and u_msg:
-                        c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, fecha) VALUES (?,?,?,?)", (r['id'], u_name, u_msg, datetime.now().strftime("%d/%m/%Y")))
+            accion = st.radio("Acción:", ["Añadir", "Modificar/Quitar", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
+            
+            if accion == "Añadir":
+                with st.form("admin_add"):
+                    n = st.text_input("Nombre del Negocio")
+                    cat = st.selectbox("Categoría", lista_maestra_categorias)
+                    ub = st.text_input("Ubicación")
+                    up_file = st.file_uploader("Subir foto", type=['png', 'jpg', 'jpeg'])
+                    url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
+                    res = st.text_area("Escribir Reseña Inicial")
+                    if st.form_submit_button("Guardar Negocio"):
+                        final_img = url_img
+                        if up_file:
+                            final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
+                        c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, 5))
                         conn.commit()
                         st.rerun()
-            
-            # Mostrar comentarios existentes
-            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY id DESC", conn)
-            for _, op in ops.iterrows():
-                st.markdown(f"**{op['usuario']}** ({op['fecha']}): {op['comentario']}")
- 
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Reflexiones de Willian Almenar</div>", unsafe_allow_html=True)
+
+            elif accion == "Ajustes Logo":
+                new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
+                if new_logo and st.button("Aplicar Logo"):
+                    encoded_logo = base64.b64encode(new_logo.read()).decode()
+                    c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
+                    conn.commit()
+                    st.rerun()
+        else:
+            st.session_state.admin_logged_in = False
+
+# --- VISTA PÚBLICA ---
+with tab_publico:
+    total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
+    st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span></div>', unsafe_allow_html=True)
+
+    busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
+    df = pd.read_sql_query("SELECT * FROM comercios", conn)
+    
+    def renderizar_tarjeta(r):
+        st.markdown(f"##### 🏢 **{r['nombre']}**")
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.image(r['foto_url'], use_container_width=True)
+            st.write(f"📍 {r['ubicacion']}")
+            st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
+        with col2:
+            st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
+        st.markdown("---")
+
+    if busq:
+        df_busqueda = df[df['nombre'].str.contains(busq, case=False, na=False) | df['categoria'].str.contains(busq, case=False, na=False)]
+        for _, row in df_busqueda.iterrows():
+            renderizar_tarjeta(row)
+    
+    st.markdown("### 🗂️ Explorar por Categorías")
+    tabs_negocios = st.tabs(lista_maestra_categorias)
+    for i, cat_name in enumerate(lista_maestra_categorias):
+        with tabs_negocios[i]:
+            filtrado = df[df['categoria'] == cat_name]
+            if filtrado.empty:
+                st.write("Próximamente más comercios...")
+            else:
+                for _, r in filtrado.iterrows():
+                    renderizar_tarjeta(r)
+
+# --- PIE DE PÁGINA ---
+st.markdown("""
+<div class='footer-willian'>
+<span class='gold-text'>Reflexiones de Willian Almenar. TODOS LOS DERECHOS RESERVADOS.</span><br>
+<span style='color: #ffcc00; font-size: 0.9em;'>SANTA TERESA DEL TUY 2026.</span>
+</div>
+""", unsafe_allow_html=True)
