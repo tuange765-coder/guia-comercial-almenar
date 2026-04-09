@@ -190,7 +190,6 @@ lista_maestra_categorias = [
 # --- CONTROL POR PESTAÑAS PRINCIPALES (TAB) ---
 tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
 
-# Estado de sesión para control de visibilidad
 if 'admin_logged_in' not in st.session_state:
     st.session_state.admin_logged_in = False
 
@@ -264,7 +263,6 @@ with tab_llave_admin:
             st.session_state.admin_logged_in = False
 
 with tab_publico:
-    # EL USUARIO NAVEGA AQUÍ CON TOTAL INDEPENDENCIA
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     total_visitas = total_visitas_res if total_visitas_res else 0
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas} Visitas</span></div>', unsafe_allow_html=True)
@@ -301,13 +299,18 @@ with tab_publico:
         mostrar_opiniones(r['id'], r['nombre'])
         st.markdown("---")
 
-    # --- LÓGICA DE BÚSQUEDA AUTOMÁTICA ---
+    # --- LÓGICA DE BÚSQUEDA AUTOMÁTICA MEJORADA ---
     if busq:
         mask = (df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False) | df['ubicacion'].str.contains(busq, case=False) | df['reseña_willian'].str.contains(busq, case=False))
         df_busqueda = df[mask]
         
         if not df_busqueda.empty:
-            st.markdown(f"### 🎯 Resultados encontrados para: '{busq}'")
+            # Si hay una coincidencia exacta o solo un resultado, lo mostramos con énfasis
+            if len(df_busqueda) == 1:
+                st.markdown(f"### 🎯 ¡Encontrado!")
+            else:
+                st.markdown(f"### 🔍 Resultados para: '{busq}'")
+            
             for _, row in df_busqueda.iterrows():
                 renderizar_tarjeta(row)
         else:
@@ -329,10 +332,8 @@ with tab_publico:
 st.markdown(f"""
 <div class='footer-willian'>
 <span class='gold-text'>Creación de Willian Almenar. TODOS LOS DERECHOS RESERVADOS.</span><br>
-<span style='color: #ffffff; font-size: 0.8em;'>PROHIBIDA SU REPRODUCCIÓN PARCIAL O TOTAL. SANTA TERESA DEL TUY 2026.</span><br>
-<a href='#' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold;'>🔗 COMPARTIR GUÍA OFICIAL</a><br>
-<p style='margin-top:10px; font-size:0.9em; opacity:0.8;'>
-Aplicación diseñada por Willian Almenar. Santa Teresa del Tuy, Venezuela.
-</p>
+<span style='color: #ffffff; font-size: 0.85em; font-weight: bold;'>PROHIBIDA SU REPRODUCCIÓN PARCIAL O TOTAL.</span><br>
+<span style='color: #ffcc00; font-size: 0.9em;'>SANTA TERESA DEL TUY 2026.</span><br><br>
+<a href='#' target='_blank' style='color: #ffcc00; text-decoration: none; font-weight: bold; border: 1px solid #ffcc00; padding: 5px 10px; border-radius: 5px;'>🔗 COMPARTIR GUÍA OFICIAL</a>
 </div>
 """, unsafe_allow_html=True)
