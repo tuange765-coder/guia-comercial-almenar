@@ -6,9 +6,9 @@ import shutil  # Nueva librería para copiar el archivo
 from datetime import datetime
 import base64
 import urllib.parse
-import io # Para manejo de archivos en memoria (Opción B)
+import io # Añadido para exportación Excel
 
-# --- FUNCIÓN DE RESPALDO AUTOMÁTICO (OPCIÓN A) ---
+# --- FUNCIÓN DE RESPALDO AUTOMÁTICO ---
 def crear_respaldo():
     if not os.path.exists('respaldos'):
         os.makedirs('respaldos')
@@ -23,11 +23,10 @@ def crear_respaldo():
     except Exception as e:
         return None
 
-# --- FUNCIÓN DE EXPORTACIÓN EXCEL (OPCIÓN B - Blindaje Externo) ---
-def generar_excel_respaldo():
+# --- FUNCIÓN OPCIÓN B: EXCEL ---
+def exportar_a_excel():
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        # Guardamos todas las tablas importantes en un solo Excel
         pd.read_sql_query("SELECT * FROM comercios", conn).to_excel(writer, sheet_name='Comercios', index=False)
         pd.read_sql_query("SELECT * FROM opiniones", conn).to_excel(writer, sheet_name='Opiniones', index=False)
         pd.read_sql_query("SELECT * FROM visitas", conn).to_excel(writer, sheet_name='Estadisticas', index=False)
@@ -180,8 +179,116 @@ with tab_llave_admin:
                     st.error("Clave incorrecta")
     
     if st.session_state.admin_logged_in:
-        st.warning("⚠️ PROTECCIÓN ACTIVA: Opciones A (Local) y B (Universal) habilitadas.")
+        st.warning("⚠️ MODO EDICIÓN: El sistema creará respaldos automáticos ante cambios.")
         
-        # --- GESTIÓN DE RESPALDOS (A y B) ---
-        with st.expander("📁 Bóveda de Seguridad (Respaldos A y B)", expanded=True):
-            st.markdown("##### **Opción A: Copia Local (.db)**")
+        # --- NUEVA SECCIÓN: GESTIÓN DE RESPALDOS MANUAL (OPCIONES A Y B) ---
+        with st.expander("📁 Bóveda de Seguridad (Opciones A y B)", expanded=True):
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                st.write("**Opción A: Copia Local (.db)**")
+                if st.button("🔄 Generar Respaldo en Carpeta"):
+                    ruta = crear_respaldo()
+                    if ruta: st.success(f"Copia creada en carpeta /respaldos")
+                
+                with open("guia_santa_teresa.db", "rb") as f:
+                    st.download_button("💾 Bajar archivo .DB a la Laptop", f, file_name=f"respaldo_full_{fecha_hoy}.db")
+                    
+            with col_b2:
+                st.write("**Opción B: Exportar a Excel**")
+                st.write("Ideal para ver datos sin programa.")
+                excel_file = exportar_a_excel()
+                st.download_button(
+                    label="📊 Descargar Base de Datos en Excel",
+                    data=excel_file,
+                    file_name=f"Guia_Santa_Teresa_{fecha_hoy}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+
+        if st.button("Cerrar Sesión"):
+            crear_respaldo() # Respaldo al salir
+            st.session_state.admin_logged_in = False
+            st.rerun()
+            
+        accion = st.radio("Acción:", ["Añadir", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
+        
+        if accion == "Añadir":
+            with st.form("admin_add"):
+                n = st.text_input("Nombre del Negocio")
+                cat = st.selectbox("Categoría", lista_maestra_categorias)
+                ub = st.text_input("Ubicación")
+                up_file = st.file_uploader("Subir foto", type=['png', 'jpg', 'jpeg'])
+                url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
+                res = st.text_area("Escribir Reseña Inicial")
+                est = st.slider("Estrellas Willian", 1, 5, 5)
+                if st.form_submit_button("Guardar Negocio"):
+                    final_img = url_img
+                    if up_file:
+                        final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
+                    c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
+                    
+                    # EJECUCIÓN DEL RESPALDO AUTOMÁTICO
+                    crear_respaldo()
+                    st.success("¡Negocio guardado y respaldo creado con éxito!")
+
+        elif accion == "Ajustes Logo":
+            new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
+            if new_logo and st.button("Aplicar Logo"):
+                encoded_logo = base64.b64encode(new_logo.read()).decode()
+                c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
+                crear_respaldo()
+                st.rerun()
+
+# --- VISTA PÚBLICA ---
+with tab_publico:
+    total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
+    st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
+    
+    app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
+    st.markdown(f"""
+        <div style="text-align:center;">
+            <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado!'))">
+                🔗 COMPARTIR ESTA GUÍA
+            </button>
+        </div>
+    """, unsafe_allow_html=True)
+
+    busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
+    df = pd.read_sql_query("SELECT * FROM comercios", conn)
+    
+    def renderizar_tarjeta(r):
+        st.markdown(f"##### 🏢 **{r['nombre']}**")
+        col1, col2 = st.columns([1, 1])
+        with col1:
+            st.image(r['foto_url'], use_container_width=True)
+            st.write(f"📍 {r['ubicacion']}")
+            st.markdown(f"⭐ Calificación: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
+            st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
+        with col2:
+            st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
+            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", conn)
+            if not ops.empty:
+                for _, op in ops.iterrows():
+                    st.markdown(f"<div class='opinion-card'><b>{op['usuario']}</b>: {op['comentario']}</div>", unsafe_allow_html=True)
+        st.markdown("---")
+
+    if busq:
+        df_busqueda = df[df['nombre'].str.contains(busq, case=False, na=False) | df['categoria'].str.contains(busq, case=False, na=False)]
+        for _, row in df_busqueda.iterrows():
+            renderizar_tarjeta(row)
+    
+    st.markdown("### 🗂️ Explorar por Categorías")
+    tabs_negocios = st.tabs(lista_maestra_categorias)
+    for i, cat_name in enumerate(lista_maestra_categorias):
+        with tabs_negocios[i]:
+            filtrado = df[df['categoria'] == cat_name]
+            if not filtrado.empty:
+                for _, r in filtrado.iterrows():
+                    renderizar_tarjeta(r)
+
+# --- PIE DE PÁGINA ---
+st.markdown("""
+<div class='footer-willian'>
+<span class='gold-text'>Creacion Willian Almenar. Prohibida su reproducción total o pacial. TODOS LOS DERECHOS RESERVADOS.</span><br>
+<span style='color: #ffcc00; font-size: 0.9em;'>Santa Teresa del Tuy 2.026</span>
+</div>
+""", unsafe_allow_html=True)
