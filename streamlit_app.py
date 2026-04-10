@@ -210,6 +210,7 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
+    # --- BOTÓN PARA COPIAR LINK DE LA APP ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f"""
         <div style="text-align:center; margin-bottom: 20px;">
@@ -232,7 +233,7 @@ with tab_publico:
             st.markdown(f"⭐ Calificación Willian: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
             st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
             
-            # --- NUEVA OPCIÓN PARA QUE LOS USUARIOS DEJEN SU OPINIÓN ---
+            # --- OPCIÓN DE OPINIÓN ---
             with st.expander("✍️ Dejar mi opinión"):
                 with st.form(f"form_op_{r['id']}"):
                     u_nombre = st.text_input("Tu Nombre", key=f"user_{r['id']}")
