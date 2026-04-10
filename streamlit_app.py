@@ -90,10 +90,9 @@ input, textarea, [data-baseweb="select"] { background-color: #ffffff !important;
 """, unsafe_allow_html=True)
 
 # --- CONEXIÓN A BASE DE DATOS LOCAL (SQLITE) ---
-# Se establece el modo WAL para máxima persistencia ante fallos de energía y apagados
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False, isolation_level=None)
 c = conn.cursor()
-c.execute('PRAGMA journal_mode=WAL;') # INSTRUCCIÓN CRÍTICA: Los datos se guardan en tiempo real y no se borran por falta de luz.
+c.execute('PRAGMA journal_mode=WAL;') 
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
 c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
@@ -175,7 +174,7 @@ with tab_llave_admin:
         st.warning("⚠️ MODO EDICIÓN: El sistema mantiene todos los cambios guardados permanentemente en el disco.")
 
         if st.button("Cerrar Sesión"):
-            crear_respaldo() # Respaldo al salir
+            crear_respaldo() 
             st.session_state.admin_logged_in = False
             st.rerun()
             
@@ -195,8 +194,6 @@ with tab_llave_admin:
                     if up_file:
                         final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
                     c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
-                    
-                    # PERSISTENCIA INMEDIATA
                     crear_respaldo()
                     st.success("¡Datos guardados permanentemente en el repositorio!")
 
@@ -213,7 +210,6 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
-    # --- FUNCIÓN DE COPIADO INTEGRADA ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f"""
         <div style="text-align:center; margin-bottom: 20px;">
@@ -233,14 +229,39 @@ with tab_publico:
         with col1:
             st.image(r['foto_url'], use_container_width=True)
             st.write(f"📍 {r['ubicacion']}")
-            st.markdown(f"⭐ Calificación: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
+            st.markdown(f"⭐ Calificación Willian: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
             st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
+            
+            # --- NUEVA OPCIÓN PARA QUE LOS USUARIOS DEJEN SU OPINIÓN ---
+            with st.expander("✍️ Dejar mi opinión"):
+                with st.form(f"form_op_{r['id']}"):
+                    u_nombre = st.text_input("Tu Nombre", key=f"user_{r['id']}")
+                    u_comentario = st.text_area("Tu comentario", key=f"comm_{r['id']}")
+                    u_estrellas = st.select_slider("Calificación", options=[1, 2, 3, 4, 5], value=5, key=f"star_{r['id']}")
+                    if st.form_submit_button("Publicar Opinión"):
+                        if u_nombre and u_comentario:
+                            fecha_op = datetime.now().strftime("%d/%m/%Y %H:%M")
+                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
+                                      (r['id'], u_nombre, u_comentario, u_estrellas, fecha_op))
+                            st.success("¡Gracias por tu opinión!")
+                            st.rerun()
+                        else:
+                            st.warning("Por favor rellena los campos.")
         with col2:
             st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
-            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", conn)
+            st.markdown("**Comentarios de la comunidad:**")
+            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY id DESC", conn)
             if not ops.empty:
                 for _, op in ops.iterrows():
-                    st.markdown(f"<div class='opinion-card'><b>{op['usuario']}</b>: {op['comentario']}</div>", unsafe_allow_html=True)
+                    st.markdown(f"""
+                    <div class='opinion-card'>
+                        <span style='color:#ffcc00;'>{'★' * op['estrellas_u']}</span><br>
+                        <b>{op['usuario']}</b>: {op['comentario']}<br>
+                        <small style='color:gray;'>{op['fecha']}</small>
+                    </div>
+                    """, unsafe_allow_html=True)
+            else:
+                st.write("Sé el primero en opinar.")
         st.markdown("---")
 
     if busq:
