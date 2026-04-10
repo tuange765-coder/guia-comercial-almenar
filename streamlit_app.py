@@ -1,3 +1,6 @@
+import streamlit as st
+from streamlit_gsheets import GSheetsConnection
+import pandas as pd
 import os
 import shutil  
 from datetime import datetime
@@ -9,7 +12,7 @@ def crear_respaldo():
     if not os.path.exists('respaldos'):
         os.makedirs('respaldos')
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    nombre_respaldo = f"respaldos/respaldo_guia_{timestamp}.csv" # Cambiado a CSV para compatibilidad
+    nombre_respaldo = f"respaldos/respaldo_guia_{timestamp}.csv" 
     try:
         df_comercios.to_csv(nombre_respaldo)
         return nombre_respaldo
@@ -90,16 +93,32 @@ try:
     df_comercios = conn.read(worksheet="Comercios", ttl="0")
     df_opiniones = conn.read(worksheet="Opiniones", ttl="0")
 except:
-    st.error("Por favor, verifica la conexión con Google Sheets.")
     df_comercios = pd.DataFrame()
     df_opiniones = pd.DataFrame()
 
 # --- FUNCIÓN DE PRECARGA DE LOS 20 NEGOCIOS ---
 def ejecutar_precarga():
     datos = [
-        {"Nombre": "Panadería La Mansión", "Categoria": "Panadería", "Ubicacion": "Casco Central", "Foto_URL": "https://images.unsplash.com/photo-1509440159596-0249088772ff", "Reseña_Willian": "El aroma del pan recién horneado es la bienvenida a nuestro pueblo.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps/search/Panaderia+La+Mansion+Santa+Teresa+del+Tuy"},
-        {"Nombre": "Farmacia San José", "Categoria": "Farmacias", "Ubicacion": "Frente a la Plaza", "Foto_URL": "https://images.unsplash.com/photo-1586015555751-63bb77f4322a", "Reseña_Willian": "Atención humana y siempre con lo que necesitas.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps/search/Farmacia+San+Jose+Santa+Teresa+del+Tuy"},
-        # ... El sistema inyectará la lista completa al presionar el botón
+        {"Nombre": "Panadería La Mansión", "Categoria": "Panadería", "Ubicacion": "Casco Central", "Foto_URL": "https://images.unsplash.com/photo-1509440159596-0249088772ff", "Reseña_Willian": "El aroma del pan recién horneado es la bienvenida a nuestro pueblo.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Panaderia"},
+        {"Nombre": "Farmacia San José", "Categoria": "Farmacias", "Ubicacion": "Frente a la Plaza", "Foto_URL": "https://images.unsplash.com/photo-1586015555751-63bb77f4322a", "Reseña_Willian": "Atención humana y siempre con lo que necesitas.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Farmacia"},
+        {"Nombre": "Ferretería El Tuy", "Categoria": "Ferreterías", "Ubicacion": "Av. Ayacucho", "Foto_URL": "https://images.unsplash.com/photo-1581244276894-0e737233288a", "Reseña_Willian": "Todo para el hogar en un solo lugar.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Ferreteria"},
+        {"Nombre": "Óptica Santa Teresa", "Categoria": "Ópticas", "Ubicacion": "C.C. Paseo Tuy", "Foto_URL": "https://images.unsplash.com/photo-1511499767350-a4561f334810", "Reseña_Willian": "Claridad y salud para tus ojos.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Optica"},
+        {"Nombre": "Supermercado El Dorado", "Categoria": "Supermercados", "Ubicacion": "Calle Comercio", "Foto_URL": "https://images.unsplash.com/photo-1542838132-92c53300491e", "Reseña_Willian": "Abastecimiento completo para la familia.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Supermercado"},
+        {"Nombre": "Laboratorio Clínico Tuy", "Categoria": "Laboratorios", "Ubicacion": "Av. Alí Primera", "Foto_URL": "https://images.unsplash.com/photo-1579152276503-39049a4632c0", "Reseña_Willian": "Resultados precisos para tu salud.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Laboratorio"},
+        {"Nombre": "Carnicería El Torazo", "Categoria": "Carnicerías", "Ubicacion": "Mercado Municipal", "Foto_URL": "https://images.unsplash.com/photo-1607623198457-7aad0d6a8348", "Reseña_Willian": "Cortes de primera calidad.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Carniceria"},
+        {"Nombre": "Abasto Los Compadres", "Categoria": "Abastos", "Ubicacion": "Urb. Las Flores", "Foto_URL": "https://images.unsplash.com/photo-1534723452862-4c874018d66d", "Reseña_Willian": "Siempre cerca de ti con lo básico.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Abasto"},
+        {"Nombre": "Repuestos El Motor", "Categoria": "Repuestos", "Ubicacion": "Sector Dos Lagunas", "Foto_URL": "https://images.unsplash.com/photo-1486006396113-ad73019e300b", "Reseña_Willian": "La pieza que tu vehículo necesita.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Repuestos"},
+        {"Nombre": "Charcutería El Quesote", "Categoria": "Charcuterías", "Ubicacion": "Av. Independencia", "Foto_URL": "https://images.unsplash.com/photo-1485962391905-dc37bb367de4", "Reseña_Willian": "Frescura en quesos y embutidos.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Charcuteria"},
+        {"Nombre": "Multiservicios Fibra Tuy", "Categoria": "Fibra Óptica", "Ubicacion": "C.C. El Tuy", "Foto_URL": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8", "Reseña_Willian": "Conectividad veloz para todos.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Fibra"},
+        {"Nombre": "Línea Taxis El Tuy", "Categoria": "Taxis", "Ubicacion": "Terminal", "Foto_URL": "https://images.unsplash.com/photo-1549190106-122987923393", "Reseña_Willian": "Tu traslado seguro por el pueblo.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Taxis"},
+        {"Nombre": "Cooperativa Mototaxis", "Categoria": "Mototaxis", "Ubicacion": "Entrada Las Flores", "Foto_URL": "https://images.unsplash.com/photo-1558981403-c5f97cb94ad2", "Reseña_Willian": "Rapidez para vencer el tráfico.", "Estrellas": 3, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Mototaxis"},
+        {"Nombre": "Electro Tuy", "Categoria": "Electrodomésticos", "Ubicacion": "Av. Ayacucho", "Foto_URL": "https://images.unsplash.com/photo-1584622650111-993a426fbf0a", "Reseña_Willian": "Equipa tu casa con calidad.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Electrodomesticos"},
+        {"Nombre": "Perfumería Esencias", "Categoria": "Perfumerías", "Ubicacion": "C.C. Las Flores", "Foto_URL": "https://images.unsplash.com/photo-1541643600914-78b084683601", "Reseña_Willian": "Fragancias que dejan huella.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Perfumeria"},
+        {"Nombre": "Alcaldía Independencia", "Categoria": "Entes públicos", "Ubicacion": "Plaza Bolívar", "Foto_URL": "https://images.unsplash.com/photo-1577086664693-894d8405334a", "Reseña_Willian": "Gestión municipal al servicio del Tuy.", "Estrellas": 3, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Alcaldia"},
+        {"Nombre": "Clínica Paso Real", "Categoria": "Salud", "Ubicacion": "Sector Paso Real", "Foto_URL": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d", "Reseña_Willian": "Salud integral para tu familia.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Clinica"},
+        {"Nombre": "Repostería Mágica", "Categoria": "Dulces", "Ubicacion": "Betania", "Foto_URL": "https://images.unsplash.com/photo-1578985545062-69928b1d9587", "Reseña_Willian": "Tortas que son obras de arte.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Reposteria"},
+        {"Nombre": "Ferretería La Roca", "Categoria": "Ferreterías", "Ubicacion": "Carretera Nacional", "Foto_URL": "https://images.unsplash.com/photo-1530124560676-44b2911f4158", "Reseña_Willian": "Materiales pesados y confiables.", "Estrellas": 4, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Ferreteria"},
+        {"Nombre": "Servicio Técnico PC", "Categoria": "Servicios", "Ubicacion": "C.C. Paseo", "Foto_URL": "https://images.unsplash.com/photo-1597733336794-12d05021d510", "Reseña_Willian": "Tu tecnología en buenas manos.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Computacion"}
     ]
     df_inicial = pd.DataFrame(datos)
     conn.update(worksheet="Comercios", data=df_inicial)
@@ -123,22 +142,26 @@ with tab_llave_admin:
             if admin_pass == "Juan*316*":
                 st.session_state.admin_logged_in = True
                 st.rerun()
+            else:
+                st.error("Clave Incorrecta")
     
     if st.session_state.admin_logged_in:
+        st.success("✅ Acceso Autorizado")
         if st.button("Cerrar Sesión"):
             st.session_state.admin_logged_in = False
             st.rerun()
             
+        st.write("---")
+        # EL BOTÓN AHORA ES VISIBLE Y FUNCIONAL
+        st.subheader("Carga Inicial de Datos")
         if st.button("🚀 Cargar 20 Negocios Iniciales"):
             ejecutar_precarga()
-            st.rerun()
 
 # --- VISTA PÚBLICA ---
 with tab_publico:
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     
     if not df_comercios.empty:
-        # Filtro de búsqueda
         df_mostrar = df_comercios
         if busq:
             df_mostrar = df_comercios[df_comercios['Nombre'].str.contains(busq, case=False) | df_comercios['Categoria'].str.contains(busq, case=False)]
@@ -156,9 +179,10 @@ with tab_publico:
                     st.write(f"Valoración: {'⭐' * int(row['Estrellas'])}")
                     
                     with st.expander("💬 Ver opiniones / Dejar reseña"):
-                        ops = df_opiniones[df_opiniones['Negocio'] == row['Nombre']]
-                        for _, op in ops.iterrows():
-                            st.markdown(f"<div class='opinion-card'><b>{op['Usuario']}</b>: {op['Comentario']} ({'⭐'*int(op['Puntaje'])})</div>", unsafe_allow_html=True)
+                        if not df_opiniones.empty:
+                            ops = df_opiniones[df_opiniones['Negocio'] == row['Nombre']]
+                            for _, op in ops.iterrows():
+                                st.markdown(f"<div class='opinion-card'><b>{op['Usuario']}</b>: {op['Comentario']} ({'⭐'*int(op['Puntaje'])})</div>", unsafe_allow_html=True)
                         
                         with st.form(key=f"form_{i}"):
                             u_n = st.text_input("Tu nombre")
@@ -166,7 +190,10 @@ with tab_publico:
                             u_p = st.slider("Puntaje", 1, 5, 5)
                             if st.form_submit_button("Enviar"):
                                 nueva_op = pd.DataFrame([{"Negocio": row['Nombre'], "Usuario": u_n, "Comentario": u_c, "Puntaje": u_p, "Fecha": str(datetime.now())}])
-                                df_total_ops = pd.concat([df_opiniones, nueva_op], ignore_index=True)
+                                if df_opiniones.empty:
+                                    df_total_ops = nueva_op
+                                else:
+                                    df_total_ops = pd.concat([df_opiniones, nueva_op], ignore_index=True)
                                 conn.update(worksheet="Opiniones", data=df_total_ops)
                                 st.success("¡Gracias!")
                                 st.rerun()
