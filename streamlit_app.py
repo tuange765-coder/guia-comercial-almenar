@@ -210,14 +210,14 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
-    # --- OPCIÓN ÚNICA: COPIAR LINK DIRECTO ---
+    # --- BOTÓN PARA COMPARTIR ENLACE DIRECTO ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f"""
         <div style="text-align:center; margin-bottom: 20px;">
             <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado al portapapeles!'))">
-                🔗 COPIAR LINK DE LA APP
+                🔗 COMPARTIR ENLACE DE LA GUÍA
             </button>
-            <p style="color: #ffcc00; font-size: 0.8em;">(Haz clic para copiar el acceso directo)</p>
+            <p style="color: #ffcc00; font-size: 0.8em;">(Haz clic para copiar y pegar en WhatsApp o Redes)</p>
         </div>
     """, unsafe_allow_html=True)
 
@@ -254,9 +254,12 @@ with tab_publico:
             ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY id DESC", conn)
             if not ops.empty:
                 for _, op in ops.iterrows():
+                    # --- CORRECCIÓN DEL ERROR DE TIPO (TypeError) ---
+                    # Nos aseguramos de que estrellas sea un número antes de multiplicar
+                    cant_estrellas = int(op['estrellas_u']) if op['estrellas_u'] else 0
                     st.markdown(f"""
                     <div class='opinion-card'>
-                        <span style='color:#ffcc00;'>{'★' * op['estrellas_u']}</span><br>
+                        <span style='color:#ffcc00;'>{'★' * cant_estrellas}</span><br>
                         <b>{op['usuario']}</b>: {op['comentario']}<br>
                         <small style='color:gray;'>{op['fecha']}</small>
                     </div>
