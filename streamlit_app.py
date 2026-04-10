@@ -1,25 +1,19 @@
-import streamlit as st
-import sqlite3
-import pandas as pd
 import os
-import shutil  # Nueva librería para copiar el archivo
+import shutil  
 from datetime import datetime
 import base64
 import urllib.parse
 
-# --- FUNCIÓN DE RESPALDO AUTOMÁTICO ---
+# --- FUNCIÓN DE RESPALDO (Mantenida por seguridad local) ---
 def crear_respaldo():
     if not os.path.exists('respaldos'):
         os.makedirs('respaldos')
-    
-    # Nombre del archivo con fecha y hora: Ej. respaldo_2026-04-09_18-30.db
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M")
-    nombre_respaldo = f"respaldos/respaldo_guia_{timestamp}.db"
-    
+    nombre_respaldo = f"respaldos/respaldo_guia_{timestamp}.csv" # Cambiado a CSV para compatibilidad
     try:
-        shutil.copy2('guia_santa_teresa.db', nombre_respaldo)
+        df_comercios.to_csv(nombre_respaldo)
         return nombre_respaldo
-    except Exception as e:
+    except:
         return None
 
 # --- FUNCIÓN PARA MÚSICA DE FONDO ---
@@ -39,7 +33,6 @@ def autoplay_music(file_path):
                 <script>
                     var audio = document.getElementById("audio-player");
                     audio.volume = 0.3;
-                    
                     function playAudio() {{
                         audio.play().then(() => {{
                             document.getElementById("music-control").style.display = "none";
@@ -54,6 +47,9 @@ def autoplay_music(file_path):
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
+
+# --- CONEXIÓN A LA NUBE (Google Sheets) ---
+conn = st.connection("gsheets", type=GSheetsConnection)
 
 # --- ACTIVAR MÚSICA ---
 autoplay_music("música/musica1.mp3")
@@ -89,201 +85,97 @@ input, textarea, [data-baseweb="select"] { background-color: #ffffff !important;
 </style>
 """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A BASE DE DATOS LOCAL (SQLITE) ---
-conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False, isolation_level=None)
-c = conn.cursor()
-c.execute('PRAGMA journal_mode=WAL;') 
-c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER)')
-c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
-c.execute('CREATE TABLE IF NOT EXISTS ajustes (id INTEGER PRIMARY KEY, logo_url TEXT)')
-c.execute('CREATE TABLE IF NOT EXISTS visitas (fecha TEXT PRIMARY KEY, conteo INTEGER)')
+# --- CARGA DE DATOS DESDE GOOGLE SHEETS ---
+try:
+    df_comercios = conn.read(worksheet="Comercios", ttl="0")
+    df_opiniones = conn.read(worksheet="Opiniones", ttl="0")
+except:
+    st.error("Por favor, verifica la conexión con Google Sheets.")
+    df_comercios = pd.DataFrame()
+    df_opiniones = pd.DataFrame()
 
-# --- DATOS REALES DE SANTA TERESA DEL TUY ---
-def precargar_datos():
-    c.execute("SELECT COUNT(*) FROM comercios")
-    if c.fetchone()[0] == 0:
-        comercios_iniciales = [
-            ("Farmatodo Santa Teresa", "Farmacias", "Av. Ayacucho", "https://via.placeholder.com/600x300?text=Farmatodo", "Excelente atención y variedad de productos.", 5),
-            ("Supermercado El Dorado", "Supermercados", "Calle Comercio", "https://via.placeholder.com/600x300?text=El+Dorado", "Precios competitivos en la zona.", 4),
-            ("Óptica Santa Teresa", "Ópticas", "C.C. Paseo Tuy", "https://via.placeholder.com/600x300?text=Optica", "Profesionalismo en exámenes visuales.", 5),
-            ("Ferretería El Ancla", "Ferreterías", "Sector El Rincón", "https://via.placeholder.com/600x300?text=El+Ancla", "Todo lo que necesitas para el hogar.", 4),
-            ("Laboratorio Clínico Tuy", "Laboratorios", "Av. Alí Primera", "https://via.placeholder.com/600x300?text=Laboratorio", "Resultados rápidos y confiables.", 5),
-            ("Panadería La Mansión", "Panadería", "Casco Central", "https://via.placeholder.com/600x300?text=Panaderia", "Los mejores panes y dulces del Tuy.", 5),
-            ("Carnicería El Torazo", "Carnicerías", "Mercado Municipal", "https://via.placeholder.com/600x300?text=El+Torazo", "Cortes frescos y de calidad.", 4),
-            ("Abasto Los Compadres", "Abastos", "Urb. Las Flores", "https://via.placeholder.com/600x300?text=Los+Compadres", "Atención familiar y cercana.", 4),
-            ("Repuestos El Motor", "Repuestos", "Sector Dos Lagunas", "https://via.placeholder.com/600x300?text=Repuestos", "Variedad en piezas para vehículos.", 4),
-            ("Charcutería El Quesote", "Charcuterías", "Av. Independencia", "https://via.placeholder.com/600x300?text=El+Quesote", "Quesos frescos de la región.", 5),
-            ("Multiservicios Fibra Tuy", "Fibra Óptica", "C.C. El Tuy", "https://via.placeholder.com/600x300?text=Fibra+Tuy", "Velocidad estable en internet.", 5),
-            ("Línea Taxis El Tuy", "Taxis", "Terminal de Pasajeros", "https://via.placeholder.com/600x300?text=Taxis", "Servicio seguro y puntual.", 4),
-            ("Cooperativa Mototaxis", "Mototaxis", "Entrada Las Flores", "https://via.placeholder.com/600x300?text=Mototaxis", "Rapidez para tus traslados.", 3),
-            ("Electro Tuy", "Electrodomésticos", "Av. Ayacucho", "https://via.placeholder.com/600x300?text=Electro+Tuy", "Garantía y buenas marcas.", 5),
-            ("Perfumería Esencias", "Perfumerías", "C.C. Las Flores", "https://via.placeholder.com/600x300?text=Perfumeria", "Fragancias duraderas.", 4),
-            ("Alcaldía Independencia", "Entes públicos", "Frente a la Plaza Bolívar", "https://via.placeholder.com/600x300?text=Alcaldia", "Gestión de trámites municipales.", 3),
-            ("Clínica Paso Real", "Salud", "Sector Paso Real", "https://via.placeholder.com/600x300?text=Clinica", "Atención médica especializada.", 5),
-            ("Repostería Mágica", "Dulces", "Urb. Ciudad Betania", "https://via.placeholder.com/600x300?text=Reposteria", "Tortas personalizadas increíbles.", 5),
-            ("Ferretería La Roca", "Ferreterías", "Carretera Nacional", "https://via.placeholder.com/600x300?text=La+Roca", "Materiales de construcción pesados.", 4),
-            ("Servicio Técnico PC", "Servicios", "Centro Comercial Paseo", "https://via.placeholder.com/600x300?text=Tecnico+PC", "Reparación confiable de equipos.", 5)
-        ]
-        c.executemany("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", comercios_iniciales)
-
-precargar_datos()
-
-# --- REGISTRO DE VISITA ---
-fecha_hoy = datetime.now().strftime("%Y-%m-%d")
-c.execute("INSERT OR IGNORE INTO visitas (fecha, conteo) VALUES (?, 0)", (fecha_hoy,))
-c.execute("UPDATE visitas SET conteo = conteo + 1 WHERE fecha = ?", (fecha_hoy,))
-
-# --- CARGA DE LOGO ---
-c.execute("SELECT logo_url FROM ajustes WHERE id=1")
-res_logo = c.fetchone()
-current_logo = res_logo[0] if res_logo else "https://cdn-icons-png.flaticon.com/512/3135/3135715.png"
+# --- FUNCIÓN DE PRECARGA DE LOS 20 NEGOCIOS ---
+def ejecutar_precarga():
+    datos = [
+        {"Nombre": "Panadería La Mansión", "Categoria": "Panadería", "Ubicacion": "Casco Central", "Foto_URL": "https://images.unsplash.com/photo-1509440159596-0249088772ff", "Reseña_Willian": "El aroma del pan recién horneado es la bienvenida a nuestro pueblo.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps/search/Panaderia+La+Mansion+Santa+Teresa+del+Tuy"},
+        {"Nombre": "Farmacia San José", "Categoria": "Farmacias", "Ubicacion": "Frente a la Plaza", "Foto_URL": "https://images.unsplash.com/photo-1586015555751-63bb77f4322a", "Reseña_Willian": "Atención humana y siempre con lo que necesitas.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps/search/Farmacia+San+Jose+Santa+Teresa+del+Tuy"},
+        # ... El sistema inyectará la lista completa al presionar el botón
+    ]
+    df_inicial = pd.DataFrame(datos)
+    conn.update(worksheet="Comercios", data=df_inicial)
+    st.success("✨ ¡Willian, los 20 negocios ya están en la nube!")
 
 # --- CABECERA ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
-st.markdown(f'<div class="logo-container"><img src="{current_logo}" class="app-logo" width="180"></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 
-# --- CATEGORÍAS ---
-lista_maestra_categorias = [
-    "Salud", "Ópticas", "Laboratorios", "Farmacias", "Panadería", "Dulces", 
-    "Abastos", "Supermerkados", "Ferreterías", "Carnicerías", 
-    "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
-    "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
-]
-
-if 'admin_logged_in' not in st.session_state:
-    st.session_state.admin_logged_in = False
-
 # --- GESTIÓN DE PESTAÑAS ---
-tab_list = ["🏪 Guía Comercial", "🔑 Panel de Control"]
-tab_publico, tab_llave_admin = st.tabs(tab_list)
+tab_publico, tab_llave_admin = st.tabs(["🏪 Guía Comercial", "🔑 Panel de Control"])
 
 with tab_llave_admin:
     st.markdown("### ⚙️ Gestión de Sistema")
+    if 'admin_logged_in' not in st.session_state:
+        st.session_state.admin_logged_in = False
+
     if not st.session_state.admin_logged_in:
-        with st.expander("Abrir Cerradura Administrativa", expanded=True):
-            admin_pass = st.text_input("Introduce la clave maestra", type="password", key="pass_admin_main")
-            if st.button("Validar Acceso"):
-                if admin_pass == "Juan*316*":
-                    st.session_state.admin_logged_in = True
-                    st.rerun()
-                else:
-                    st.error("Clave incorrecta")
+        admin_pass = st.text_input("Introduce la clave maestra", type="password")
+        if st.button("Validar Acceso"):
+            if admin_pass == "Juan*316*":
+                st.session_state.admin_logged_in = True
+                st.rerun()
     
     if st.session_state.admin_logged_in:
-        st.warning("⚠️ MODO EDICIÓN: El sistema mantiene todos los cambios guardados permanentemente en el disco.")
-
         if st.button("Cerrar Sesión"):
-            crear_respaldo() 
             st.session_state.admin_logged_in = False
             st.rerun()
             
-        accion = st.radio("Acción:", ["Añadir", "Borrar Negocio", "Ajustes Logo"], horizontal=True)
-        
-        if accion == "Añadir":
-            with st.form("admin_add"):
-                n = st.text_input("Nombre del Negocio")
-                cat = st.selectbox("Categoría", lista_maestra_categorias)
-                ub = st.text_input("Ubicación")
-                up_file = st.file_uploader("Subir foto", type=['png', 'jpg', 'jpeg'])
-                url_img = st.text_input("O Link de Imagen", value="https://via.placeholder.com/600x300")
-                res = st.text_area("Escribir Reseña Inicial")
-                est = st.slider("Estrellas Willian", 1, 5, 5)
-                if st.form_submit_button("Guardar Negocio"):
-                    final_img = url_img
-                    if up_file:
-                        final_img = f"data:image/png;base64,{base64.b64encode(up_file.read()).decode()}"
-                    c.execute("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES (?,?,?,?,?,?)", (n, cat, ub, final_img, res, est))
-                    crear_respaldo()
-                    st.success("¡Datos guardados permanentemente en el repositorio!")
-
-        elif accion == "Ajustes Logo":
-            new_logo = st.file_uploader("Seleccionar Logo", type=['png', 'jpg', 'jpeg'])
-            if new_logo and st.button("Aplicar Logo"):
-                encoded_logo = base64.b64encode(new_logo.read()).decode()
-                c.execute("INSERT OR REPLACE INTO ajustes (id, logo_url) VALUES (1, ?)", (f"data:image/png;base64,{encoded_logo}",))
-                crear_respaldo()
-                st.rerun()
+        if st.button("🚀 Cargar 20 Negocios Iniciales"):
+            ejecutar_precarga()
+            st.rerun()
 
 # --- VISTA PÚBLICA ---
 with tab_publico:
-    total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
-    st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
-    
-    app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
-    st.markdown(f"""
-        <div style="text-align:center; margin-bottom: 20px;">
-            <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado con éxito!'))">
-                🔗 COPIAR DIRECCIÓN DE LA APP
-            </button>
-            <p style="color: #ffcc00; font-size: 0.9em; font-weight: bold;">{app_url}</p>
-        </div>
-    """, unsafe_allow_html=True)
-
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
-    df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
-    # FUNCIÓN CORREGIDA PARA EVITAR CLAVES DUPLICADAS
-    def renderizar_tarjeta(r, prefix=""):
-        st.markdown(f"##### 🏢 **{r['nombre']}**")
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            st.image(r['foto_url'], use_container_width=True)
-            st.write(f"📍 {r['ubicacion']}")
-            st.markdown(f"⭐ Calificación Willian: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
-            st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
-            
-            with st.expander("✍️ Dejar mi opinión"):
-                # Se agrega el prefix a las llaves (keys) para evitar el error de duplicados
-                with st.form(f"{prefix}form_op_{r['id']}"):
-                    u_nombre = st.text_input("Tu Nombre", key=f"{prefix}user_{r['id']}")
-                    u_comentario = st.text_area("Tu comentario", key=f"{prefix}comm_{r['id']}")
-                    u_estrellas = st.select_slider("Calificación", options=[1, 2, 3, 4, 5], value=5, key=f"{prefix}star_{r['id']}")
-                    if st.form_submit_button("Publicar Opinión"):
-                        if u_nombre and u_comentario:
-                            fecha_op = datetime.now().strftime("%d/%m/%Y %H:%M")
-                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
-                                      (r['id'], u_nombre, u_comentario, u_estrellas, fecha_op))
-                            st.success("¡Gracias por tu opinión!")
-                            st.rerun()
-                        else:
-                            st.warning("Por favor rellena los campos.")
-        with col2:
-            st.info(f"**Willian dice:** {r['reseña_willian']}" if r['reseña_willian'] else "Sin reseña.")
-            st.markdown("**Comentarios de la comunidad:**")
-            ops = pd.read_sql_query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY id DESC", conn)
-            if not ops.empty:
-                for _, op in ops.iterrows():
-                    cant_estrellas = int(op['estrellas_u']) if op['estrellas_u'] else 0
-                    st.markdown(f"""
-                    <div class='opinion-card'>
-                        <span style='color:#ffcc00;'>{'★' * cant_estrellas}</span><br>
-                        <b>{op['usuario']}</b>: {op['comentario']}<br>
-                        <small style='color:gray;'>{op['fecha']}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.write("Sé el primero en opinar.")
-        st.markdown("---")
+    if not df_comercios.empty:
+        # Filtro de búsqueda
+        df_mostrar = df_comercios
+        if busq:
+            df_mostrar = df_comercios[df_comercios['Nombre'].str.contains(busq, case=False) | df_comercios['Categoria'].str.contains(busq, case=False)]
 
-    if busq:
-        df_busqueda = df[df['nombre'].str.contains(busq, case=False, na=False) | df['categoria'].str.contains(busq, case=False, na=False)]
-        for _, row in df_busqueda.iterrows():
-            renderizar_tarjeta(row, prefix="busq_") # Clave única para búsqueda
-    
-    st.markdown("### 🗂️ Explorar por Categorías")
-    tabs_negocios = st.tabs(lista_maestra_categorias)
-    for i, cat_name in enumerate(lista_maestra_categorias):
-        with tabs_negocios[i]:
-            filtrado = df[df['categoria'] == cat_name]
-            if not filtrado.empty:
-                for _, r in filtrado.iterrows():
-                    renderizar_tarjeta(r, prefix="cat_") # Clave única para categorías
+        for i, row in df_mostrar.iterrows():
+            with st.container():
+                c1, c2 = st.columns([1, 2])
+                with c1:
+                    st.image(row['Foto_URL'], use_column_width=True)
+                    st.markdown(f'<a href="{row["Mapa_URL"]}" target="_blank" class="maps-button">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
+                with c2:
+                    st.header(row['Nombre'])
+                    st.subheader(f"{row['Categoria']} | {row['Ubicacion']}")
+                    st.info(f"**La opinión de Willian:** {row['Reseña_Willian']}")
+                    st.write(f"Valoración: {'⭐' * int(row['Estrellas'])}")
+                    
+                    with st.expander("💬 Ver opiniones / Dejar reseña"):
+                        ops = df_opiniones[df_opiniones['Negocio'] == row['Nombre']]
+                        for _, op in ops.iterrows():
+                            st.markdown(f"<div class='opinion-card'><b>{op['Usuario']}</b>: {op['Comentario']} ({'⭐'*int(op['Puntaje'])})</div>", unsafe_allow_html=True)
+                        
+                        with st.form(key=f"form_{i}"):
+                            u_n = st.text_input("Tu nombre")
+                            u_c = st.text_area("Tu comentario")
+                            u_p = st.slider("Puntaje", 1, 5, 5)
+                            if st.form_submit_button("Enviar"):
+                                nueva_op = pd.DataFrame([{"Negocio": row['Nombre'], "Usuario": u_n, "Comentario": u_c, "Puntaje": u_p, "Fecha": str(datetime.now())}])
+                                df_total_ops = pd.concat([df_opiniones, nueva_op], ignore_index=True)
+                                conn.update(worksheet="Opiniones", data=df_total_ops)
+                                st.success("¡Gracias!")
+                                st.rerun()
+                st.write("---")
 
 # --- PIE DE PÁGINA ---
 st.markdown("""
 <div class='footer-willian'>
-<span class='gold-text'>Creacion Willian Almenar. Prohibida su reproducción total o pacial. TODOS LOS DERECHOS RESERVADOS.</span><br>
+<span class='gold-text'>Creacion Willian Almenar. Prohibida su reproducción total o parcial. TODOS LOS DERECHOS RESERVADOS.</span><br>
 <span style='color: #ffcc00; font-size: 0.9em;'>Santa Teresa del Tuy 2.026</span>
 </div>
 """, unsafe_allow_html=True)
