@@ -80,12 +80,14 @@ input, textarea, [data-baseweb="select"] { background-color: #ffffff !important;
 .maps-button { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; text-align: center; }
 .copy-button { display: inline-block; padding: 12px 25px; background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126); color: white !important; border: 2px solid white; border-radius: 30px; cursor: pointer; font-weight: bold; margin: 15px 0; transition: 0.3s; box-shadow: 0px 4px 15px rgba(0,0,0,0.4); }
 .copy-button:hover { transform: scale(1.05); box-shadow: 0px 6px 20px rgba(255, 204, 0, 0.4); }
+.share-button { display: inline-block; padding: 12px 25px; background-color: #0033a0; color: white !important; border: 2px solid #ffcc00; border-radius: 30px; text-decoration: none; font-weight: bold; margin: 10px 0; transition: 0.3s; }
+.share-button:hover { background-color: #ffcc00; color: #0033a0 !important; }
 .visitas-badge { text-align: center; background: rgba(255, 204, 0, 0.1); border: 1px solid #ffcc00; border-radius: 10px; padding: 10px; margin-bottom: 20px; }
 .opinion-card { background: #1f2937; padding: 10px; border-left: 4px solid #ffcc00; margin-bottom: 10px; border-radius: 0 10px 10px 0; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- CONEXIÓN A BASE DE DATOS LOCAL ---
+# --- CONEXIÓN A BASE DE DATOS ---
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False, isolation_level=None)
 c = conn.cursor()
 c.execute('PRAGMA journal_mode=WAL;') 
@@ -174,7 +176,6 @@ with tab_llave_admin:
             
         accion = st.selectbox("Seleccione Función:", ["Añadir Negocio", "Modificar/Quitar Negocio", "Gestionar Comentarios", "Ajustes de Logo"])
         
-        # --- FUNCIÓN AÑADIR ---
         if accion == "Añadir Negocio":
             with st.form("admin_add"):
                 n = st.text_input("Nombre del Negocio")
@@ -192,32 +193,23 @@ with tab_llave_admin:
                     crear_respaldo()
                     st.success("¡Negocio añadido exitosamente!")
 
-        # --- FUNCIÓN MODIFICAR / QUITAR ---
         elif accion == "Modificar/Quitar Negocio":
             comercios_df = pd.read_sql_query("SELECT id, nombre FROM comercios", conn)
             negocio_sel = st.selectbox("Seleccione Negocio para editar o eliminar:", comercios_df['nombre'])
             id_negocio = comercios_df[comercios_df['nombre'] == negocio_sel]['id'].iloc[0]
-            
             detalles = pd.read_sql_query(f"SELECT * FROM comercios WHERE id = {id_negocio}", conn).iloc[0]
-            
             with st.form("edit_form"):
                 nuevo_n = st.text_input("Nombre", value=detalles['nombre'])
                 nueva_cat = st.selectbox("Categoría", lista_maestra_categorias, index=lista_maestra_categorias.index(detalles['categoria']))
                 nueva_ub = st.text_input("Ubicación", value=detalles['ubicacion'])
                 nueva_res = st.text_area("Reseña", value=detalles['reseña_willian'])
                 nuevas_est = st.slider("Estrellas", 1, 5, int(detalles['estrellas_w']))
-                
-                col_btn1, col_btn2 = st.columns(2)
-                with col_btn1:
-                    if st.form_submit_button("Actualizar Datos"):
-                        c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=?, estrellas_w=? WHERE id=?", 
-                                 (nuevo_n, nueva_cat, nueva_ub, nueva_res, nuevas_est, id_negocio))
-                        crear_respaldo()
-                        st.success("¡Datos actualizados!")
-                        st.rerun()
-                with col_btn2:
-                    pass # Espacio para el botón de borrar fuera del form por seguridad
-            
+                if st.form_submit_button("Actualizar Datos"):
+                    c.execute("UPDATE comercios SET nombre=?, categoria=?, ubicacion=?, reseña_willian=?, estrellas_w=? WHERE id=?", 
+                             (nuevo_n, nueva_cat, nueva_ub, nueva_res, nuevas_est, id_negocio))
+                    crear_respaldo()
+                    st.success("¡Datos actualizados!")
+                    st.rerun()
             if st.button("❌ ELIMINAR NEGOCIO PERMANENTEMENTE"):
                 c.execute(f"DELETE FROM comercios WHERE id = {id_negocio}")
                 c.execute(f"DELETE FROM opiniones WHERE comercio_id = {id_negocio}")
@@ -225,7 +217,6 @@ with tab_llave_admin:
                 st.error("Negocio eliminado.")
                 st.rerun()
 
-        # --- FUNCIÓN GESTIONAR COMENTARIOS ---
         elif accion == "Gestionar Comentarios":
             st.write("Seleccione un comentario para eliminarlo:")
             comentarios_all = pd.read_sql_query("""
@@ -242,7 +233,6 @@ with tab_llave_admin:
             else:
                 st.write("No hay comentarios registrados.")
 
-        # --- FUNCIÓN AJUSTES LOGO ---
         elif accion == "Ajustes de Logo":
             new_logo = st.file_uploader("Seleccionar Nuevo Logo de Empresa", type=['png', 'jpg', 'jpeg'])
             if new_logo and st.button("Subir y Aplicar Logo"):
@@ -257,14 +247,23 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
+    # --- BLOQUE DE COMPARTIR Y COPIAR ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
-    st.markdown(f"""
-        <div style="text-align:center; margin-bottom: 20px;">
-            <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado con éxito!'))">
-                🔗 COPIAR DIRECCIÓN DE LA APP
-            </button>
-        </div>
-    """, unsafe_allow_html=True)
+    col_share1, col_share2 = st.columns(2)
+    with col_share1:
+        st.markdown(f"""
+            <div style="text-align:center;">
+                <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado con éxito!'))">
+                    🔗 COPIAR DIRECCIÓN DE LA APP
+                </button>
+            </div>
+        """, unsafe_allow_html=True)
+    with col_share2:
+        st.markdown(f"""
+            <div style="text-align:center;">
+                <a href="{app_url}" class="share-button" target="_blank">📤 COMPARTIR GUÍA</a>
+            </div>
+        """, unsafe_allow_html=True)
 
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
@@ -277,7 +276,6 @@ with tab_publico:
             st.write(f"📍 {r['ubicacion']}")
             st.markdown(f"⭐ Calificación Willian: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
             st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
-            
             with st.expander("✍️ Dejar mi opinión"):
                 with st.form(f"form_op_{r['id']}"):
                     u_nombre = st.text_input("Tu Nombre", key=f"user_{r['id']}")
@@ -286,8 +284,7 @@ with tab_publico:
                     if st.form_submit_button("Publicar Opinión"):
                         if u_nombre and u_comentario:
                             fecha_op = datetime.now().strftime("%d/%m/%Y %H:%M")
-                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", 
-                                      (r['id'], u_nombre, u_comentario, u_estrellas, fecha_op))
+                            c.execute("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (?,?,?,?,?)", (r['id'], u_nombre, u_comentario, u_estrellas, fecha_op))
                             st.success("¡Gracias por tu opinión!")
                             st.rerun()
                         else:
@@ -299,13 +296,7 @@ with tab_publico:
             if not ops.empty:
                 for _, op in ops.iterrows():
                     cant_estrellas = int(op['estrellas_u']) if op['estrellas_u'] else 0
-                    st.markdown(f"""
-                    <div class='opinion-card'>
-                        <span style='color:#ffcc00;'>{'★' * cant_estrellas}</span><br>
-                        <b>{op['usuario']}</b>: {op['comentario']}<br>
-                        <small style='color:gray;'>{op['fecha']}</small>
-                    </div>
-                    """, unsafe_allow_html=True)
+                    st.markdown(f"<div class='opinion-card'><span style='color:#ffcc00;'>{'★' * cant_estrellas}</span><br><b>{op['usuario']}</b>: {op['comentario']}<br><small style='color:gray;'>{op['fecha']}</small></div>", unsafe_allow_html=True)
             else:
                 st.write("Sé el primero en opinar.")
         st.markdown("---")
