@@ -210,14 +210,14 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
-    # --- BOTÓN PARA COPIAR LINK DE LA APP ---
+    # --- OPCIÓN ÚNICA: COPIAR LINK DIRECTO ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f"""
         <div style="text-align:center; margin-bottom: 20px;">
             <button class="copy-button" onclick="navigator.clipboard.writeText('{app_url}').then(() => alert('✅ ¡Enlace de la Guía copiado al portapapeles!'))">
-                🔗 COMPARTIR ENLACE DE LA GUÍA
+                🔗 COPIAR LINK DE LA APP
             </button>
-            <p style="color: #ffcc00; font-size: 0.8em;">(Haz clic para copiar y pegar en WhatsApp o Redes)</p>
+            <p style="color: #ffcc00; font-size: 0.8em;">(Haz clic para copiar el acceso directo)</p>
         </div>
     """, unsafe_allow_html=True)
 
