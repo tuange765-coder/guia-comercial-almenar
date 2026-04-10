@@ -146,7 +146,7 @@ st.title("🚀 Guía Comercial Almenar")
 # --- CATEGORÍAS ---
 lista_maestra_categorias = [
     "Salud", "Ópticas", "Laboratorios", "Farmacias", "Panadería", "Dulces", 
-    "Abastos", "Supermercados", "Ferreterías", "Carnicerías", 
+    "Abastos", "Supermerkados", "Ferreterías", "Carnicerías", 
     "Charcuterías", "Electrodomésticos", "Perfumerías", "Repuestos", 
     "Fibra Óptica", "Taxis", "Mototaxis", "Entes públicos", "Servicios"
 ]
@@ -210,7 +210,6 @@ with tab_publico:
     total_visitas_res = pd.read_sql_query("SELECT SUM(conteo) as total FROM visitas", conn)['total'].iloc[0]
     st.markdown(f'<div class="visitas-badge"><span style="color: #ffcc00; font-weight: bold; font-size: 1.2em;">👥 COMUNIDAD ACTIVA: {total_visitas_res if total_visitas_res else 0} Visitas</span>', unsafe_allow_html=True)
     
-    # --- BLOQUE AGREGADO: COPIAR ENLACE DE LA APP ---
     app_url = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f"""
         <div style="text-align:center; margin-bottom: 20px;">
@@ -224,7 +223,8 @@ with tab_publico:
     busq = st.text_input("🔍 ¿Qué buscas hoy en Santa Teresa?")
     df = pd.read_sql_query("SELECT * FROM comercios", conn)
     
-    def renderizar_tarjeta(r):
+    # FUNCIÓN CORREGIDA PARA EVITAR CLAVES DUPLICADAS
+    def renderizar_tarjeta(r, prefix=""):
         st.markdown(f"##### 🏢 **{r['nombre']}**")
         col1, col2 = st.columns([1, 1])
         with col1:
@@ -233,12 +233,12 @@ with tab_publico:
             st.markdown(f"⭐ Calificación Willian: {'★' * r['estrellas_w']}{'☆' * (5 - r['estrellas_w'])}")
             st.markdown(f'<a href="https://www.google.com/maps/search/{urllib.parse.quote(r["nombre"] + " Santa Teresa del Tuy")}" target="_blank" class="maps-button">📍 Ver Mapa</a>', unsafe_allow_html=True)
             
-            # --- OPCIÓN DE OPINIÓN ---
             with st.expander("✍️ Dejar mi opinión"):
-                with st.form(f"form_op_{r['id']}"):
-                    u_nombre = st.text_input("Tu Nombre", key=f"user_{r['id']}")
-                    u_comentario = st.text_area("Tu comentario", key=f"comm_{r['id']}")
-                    u_estrellas = st.select_slider("Calificación", options=[1, 2, 3, 4, 5], value=5, key=f"star_{r['id']}")
+                # Se agrega el prefix a las llaves (keys) para evitar el error de duplicados
+                with st.form(f"{prefix}form_op_{r['id']}"):
+                    u_nombre = st.text_input("Tu Nombre", key=f"{prefix}user_{r['id']}")
+                    u_comentario = st.text_area("Tu comentario", key=f"{prefix}comm_{r['id']}")
+                    u_estrellas = st.select_slider("Calificación", options=[1, 2, 3, 4, 5], value=5, key=f"{prefix}star_{r['id']}")
                     if st.form_submit_button("Publicar Opinión"):
                         if u_nombre and u_comentario:
                             fecha_op = datetime.now().strftime("%d/%m/%Y %H:%M")
@@ -269,7 +269,7 @@ with tab_publico:
     if busq:
         df_busqueda = df[df['nombre'].str.contains(busq, case=False, na=False) | df['categoria'].str.contains(busq, case=False, na=False)]
         for _, row in df_busqueda.iterrows():
-            renderizar_tarjeta(row)
+            renderizar_tarjeta(row, prefix="busq_") # Clave única para búsqueda
     
     st.markdown("### 🗂️ Explorar por Categorías")
     tabs_negocios = st.tabs(lista_maestra_categorias)
@@ -278,7 +278,7 @@ with tab_publico:
             filtrado = df[df['categoria'] == cat_name]
             if not filtrado.empty:
                 for _, r in filtrado.iterrows():
-                    renderizar_tarjeta(r)
+                    renderizar_tarjeta(r, prefix="cat_") # Clave única para categorías
 
 # --- PIE DE PÁGINA ---
 st.markdown("""
