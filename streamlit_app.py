@@ -7,6 +7,12 @@ from datetime import datetime
 import base64
 import urllib.parse
 
+# --- CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
+
+# --- ENLACE DIRECTO A LA HOJA (Para evitar PermissionError) ---
+URL_HOJA = "https://docs.google.com/spreadsheets/d/1uzHKtRI6w34Vu1LCu3PXHvnjRKRZhh0a-5pl8hKTrzY/edit"
+
 # --- FUNCIÓN DE RESPALDO (Mantenida por seguridad local) ---
 def crear_respaldo():
     if not os.path.exists('respaldos'):
@@ -48,9 +54,6 @@ def autoplay_music(file_path):
                 """
             st.markdown(md, unsafe_allow_html=True)
 
-# --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_icon="🚀")
-
 # --- CONEXIÓN A LA NUBE (Google Sheets) ---
 conn = st.connection("gsheets", type=GSheetsConnection)
 
@@ -90,8 +93,8 @@ input, textarea, [data-baseweb="select"] { background-color: #ffffff !important;
 
 # --- CARGA DE DATOS DESDE GOOGLE SHEETS ---
 try:
-    df_comercios = conn.read(worksheet="Comercios", ttl="0")
-    df_opiniones = conn.read(worksheet="Opiniones", ttl="0")
+    df_comercios = conn.read(spreadsheet=URL_HOJA, worksheet="Comercios", ttl="0")
+    df_opiniones = conn.read(spreadsheet=URL_HOJA, worksheet="Opiniones", ttl="0")
 except:
     df_comercios = pd.DataFrame()
     df_opiniones = pd.DataFrame()
@@ -121,7 +124,7 @@ def ejecutar_precarga():
         {"Nombre": "Servicio Técnico PC", "Categoria": "Servicios", "Ubicacion": "C.C. Paseo", "Foto_URL": "https://images.unsplash.com/photo-1597733336794-12d05021d510", "Reseña_Willian": "Tu tecnología en buenas manos.", "Estrellas": 5, "Mapa_URL": "https://www.google.com/maps?q=Santa+Teresa+del+Tuy+Computacion"}
     ]
     df_inicial = pd.DataFrame(datos)
-    conn.update(worksheet="Comercios", data=df_inicial)
+    conn.update(spreadsheet=URL_HOJA, worksheet="Comercios", data=df_inicial)
     st.success("✨ ¡Willian, los 20 negocios ya están en la nube!")
 
 # --- CABECERA ---
@@ -152,7 +155,6 @@ with tab_llave_admin:
             st.rerun()
             
         st.write("---")
-        # EL BOTÓN AHORA ES VISIBLE Y FUNCIONAL
         st.subheader("Carga Inicial de Datos")
         if st.button("🚀 Cargar 20 Negocios Iniciales"):
             ejecutar_precarga()
@@ -194,7 +196,7 @@ with tab_publico:
                                     df_total_ops = nueva_op
                                 else:
                                     df_total_ops = pd.concat([df_opiniones, nueva_op], ignore_index=True)
-                                conn.update(worksheet="Opiniones", data=df_total_ops)
+                                conn.update(spreadsheet=URL_HOJA, worksheet="Opiniones", data=df_total_ops)
                                 st.success("¡Gracias!")
                                 st.rerun()
                 st.write("---")
