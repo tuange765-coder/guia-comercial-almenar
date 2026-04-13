@@ -1,2 +1,5 @@
-st-gsheets-connection
+streamlit
 pandas
+sqlalchemy
+psycopg2-binary
+st-postgresql
