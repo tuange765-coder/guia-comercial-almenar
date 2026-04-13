@@ -80,6 +80,13 @@ st.markdown("""
 conn = sqlite3.connect('guia_santa_teresa.db', check_same_thread=False)
 c = conn.cursor()
 c.execute('CREATE TABLE IF NOT EXISTS comercios (id INTEGER PRIMARY KEY AUTOINCREMENT, nombre TEXT, categoria TEXT, ubicacion TEXT, foto_url TEXT, reseña_willian TEXT, estrellas_w INTEGER, maps_url TEXT)')
+
+# CORRECCIÓN DE SEGURIDAD: Verifica si falta la columna maps_url por versiones viejas
+try:
+    c.execute('ALTER TABLE comercios ADD COLUMN maps_url TEXT')
+except:
+    pass
+
 c.execute('CREATE TABLE IF NOT EXISTS opiniones (id INTEGER PRIMARY KEY AUTOINCREMENT, comercio_id INTEGER, usuario TEXT, comentario TEXT, estrellas_u INTEGER, fecha TEXT)')
 conn.commit()
 
@@ -88,26 +95,26 @@ def precargar_datos():
     check = c.execute("SELECT count(*) FROM comercios").fetchone()[0]
     if check == 0:
         datos = [
-            ("Panadería El Gran Paseo", "Otros", "Av. Ayacucho, frente a la Plaza Bolívar", "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", "Tradición tereseña con el mejor pan de banquete y dulces frescos.", 5, "https://maps.app.goo.gl/uXpB6TqGq6Wv7R5S8"),
-            ("Farmatodo Santa Teresa", "Farmacias", "Carretera Nacional, entrada a la ciudad", "https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=400", "El punto de referencia para medicinas y artículos personales 24h.", 5, "https://maps.app.goo.gl/JpYwA8G8p2Y6p7S8"),
-            ("Pollos El Samán", "Otros", "Av. Bolívar, sector El Centro", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400", "Los mejores pollos a la brasa con el sabor típico de la zona.", 4, "https://maps.app.goo.gl/mXpB6TqGq6Wv7R5S8"),
-            ("Centro Médico Tuy", "Salud", "Calle principal, Casco Central", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400", "Atención médica integral y laboratorios con años de servicio.", 4, "https://maps.app.goo.gl/kXpB6TqGq6Wv7R5S8"),
-            ("Ferretería El Águila", "Ferreterias", "Av. Alí Primera", "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=400", "Todo para la construcción y el hogar con excelente asesoría.", 5, "https://maps.app.goo.gl/pXpB6TqGq6Wv7R5S8"),
-            ("Súper Mercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400", "Comodidad y variedad para las compras grandes de la familia.", 4, "https://maps.app.goo.gl/rXpB6TqGq6Wv7R5S8"),
-            ("Óptica Tuy", "Salud", "Calle Falcón", "https://images.unsplash.com/photo-1511499767390-90342f16b20f?w=400", "Exámenes de la vista y marcos modernos en pleno centro.", 5, "https://maps.app.goo.gl/tXpB6TqGq6Wv7R5S8"),
-            ("Repuestos Tuy-Motor", "Otros", "Calle Rafael Alfonzo", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400", "Especialistas en repuestos para motos y carros con stock variado.", 4, "https://maps.app.goo.gl/uXpB6TqGq6Wv7R5S8"),
-            ("Liceo Juan Antonio Pérez Bonalde", "Otros", "Sector El Habanero", "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400", "Institución educativa emblemática formando generaciones.", 5, "https://maps.app.goo.gl/vXpB6TqGq6Wv7R5S8"),
-            ("Centro Comercial El Tuy", "Otros", "Av. Ayacucho", "https://images.unsplash.com/photo-1519205186411-203847e937d2?w=400", "El punto de encuentro para compras, ropa y tecnología.", 3, "https://maps.app.goo.gl/wXpB6TqGq6Wv7R5S8"),
-            ("Agua Mineral El Manantial", "Otros", "Salida hacia San Francisco", "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400", "Purificadora de confianza para el llenado de botellones.", 5, "https://maps.app.goo.gl/xXpB6TqGq6Wv7R5S8"),
-            ("Taller Mecánico El Gocho", "Otros", "Sector El Vizcaíno", "https://images.unsplash.com/photo-1507702553912-a15641e72718?w=400", "Honestidad y rapidez en mecánica general para tu vehículo.", 5, "https://maps.app.goo.gl/yXpB6TqGq6Wv7R5S8"),
-            ("Restaurante La Casona", "Otros", "Vía La Raisa", "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "Comida criolla excelente para compartir los domingos.", 4, "https://maps.app.goo.gl/zXpB6TqGq6Wv7R5S8"),
-            ("Zapatería La Bota Roja", "Otros", "Calle Comercio", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", "Calzado para el colegio y diario a precios solidarios.", 4, "https://maps.app.goo.gl/aXpB6TqGq6Wv7R5S8"),
-            ("Cyber El Estudiante", "Otros", "Cerca del Liceo Pérez Bonalde", "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400", "Impresiones, tareas dirigidas y conexión rápida a internet.", 4, "https://maps.app.goo.gl/bXpB6TqGq6Wv7R5S8"),
-            ("Banco de Venezuela", "Otros", "Av. Ayacucho (Frente a la Plaza)", "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=400", "Sede principal para trámites financieros en el municipio.", 3, "https://maps.app.goo.gl/cXpB6TqGq6Wv7R5S8"),
-            ("Licorería El Punto", "Otros", "Entrada de Mopia", "https://images.unsplash.com/photo-1534527489986-3e339d1716ec?w=400", "Variedad en bebidas y atención rápida para tus reuniones.", 3, "https://maps.app.goo.gl/dXpB6TqGq6Wv7R5S8"),
-            ("Inversiones El Chamo", "Otros", "Mercado Municipal", "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=400", "Frutas y verduras frescas directo del campo a tu mesa.", 4, "https://maps.app.goo.gl/eXpB6TqGq6Wv7R5S8"),
-            ("Peluquería Las Chicas", "Otros", "Sector Las Flores", "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400", "Cortes y peinados con la mejor atención femenina de la zona.", 4, "https://maps.app.goo.gl/fXpB6TqGq6Wv7R5S8"),
-            ("Cordonería Almenar", "Otros", "Casco Central", "https://images.unsplash.com/photo-1516478177764-9fe5bd7e9717?w=400", "Servicio artesanal de reparación de calzado con años en el Tuy.", 5, "https://maps.app.goo.gl/gXpB6TqGq6Wv7R5S8")
+            ("Panadería El Gran Paseo", "Otros", "Av. Ayacucho, frente a la Plaza Bolívar", "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", "Tradición tereseña con el mejor pan de banquete y dulces frescos.", 5, "https://maps.google.com"),
+            ("Farmatodo Santa Teresa", "Farmacias", "Carretera Nacional, entrada a la ciudad", "https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=400", "El punto de referencia para medicinas y artículos personales 24h.", 5, "https://maps.google.com"),
+            ("Pollos El Samán", "Otros", "Av. Bolívar, sector El Centro", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400", "Los mejores pollos a la brasa con el sabor típico de la zona.", 4, "https://maps.google.com"),
+            ("Centro Médico Tuy", "Salud", "Calle principal, Casco Central", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400", "Atención médica integral y laboratorios con años de servicio.", 4, "https://maps.google.com"),
+            ("Ferretería El Águila", "Ferreterias", "Av. Alí Primera", "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=400", "Todo para la construcción y el hogar con excelente asesoría.", 5, "https://maps.google.com"),
+            ("Súper Mercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400", "Comodidad y variedad para las compras grandes de la familia.", 4, "https://maps.google.com"),
+            ("Óptica Tuy", "Salud", "Calle Falcón", "https://images.unsplash.com/photo-1511499767390-90342f16b20f?w=400", "Exámenes de la vista y marcos modernos en pleno centro.", 5, "https://maps.google.com"),
+            ("Repuestos Tuy-Motor", "Otros", "Calle Rafael Alfonzo", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400", "Especialistas en repuestos para motos y carros con stock variado.", 4, "https://maps.google.com"),
+            ("Liceo Juan Antonio Pérez Bonalde", "Otros", "Sector El Habanero", "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=400", "Institución educativa emblemática formando generaciones.", 5, "https://maps.google.com"),
+            ("Centro Comercial El Tuy", "Otros", "Av. Ayacucho", "https://images.unsplash.com/photo-1519205186411-203847e937d2?w=400", "El punto de encuentro para compras, ropa y tecnología.", 3, "https://maps.google.com"),
+            ("Agua Mineral El Manantial", "Otros", "Salida hacia San Francisco", "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400", "Purificadora de confianza para el llenado de botellones.", 5, "https://maps.google.com"),
+            ("Taller Mecánico El Gocho", "Otros", "Sector El Vizcaíno", "https://images.unsplash.com/photo-1507702553912-a15641e72718?w=400", "Honestidad y rapidez en mecánica general para tu vehículo.", 5, "https://maps.google.com"),
+            ("Restaurante La Casona", "Otros", "Vía La Raisa", "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=400", "Comida criolla excelente para compartir los domingos.", 4, "https://maps.google.com"),
+            ("Zapatería La Bota Roja", "Otros", "Calle Comercio", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400", "Calzado para el colegio y diario a precios solidarios.", 4, "https://maps.google.com"),
+            ("Cyber El Estudiante", "Otros", "Cerca del Liceo Pérez Bonalde", "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=400", "Impresiones, tareas dirigidas y conexión rápida a internet.", 4, "https://maps.google.com"),
+            ("Banco de Venezuela", "Otros", "Av. Ayacucho (Frente a la Plaza)", "https://images.unsplash.com/photo-1501167786227-4cba60f6d58f?w=400", "Sede principal para trámites financieros en el municipio.", 3, "https://maps.google.com"),
+            ("Licorería El Punto", "Otros", "Entrada de Mopia", "https://images.unsplash.com/photo-1534527489986-3e339d1716ec?w=400", "Variedad en bebidas y atención rápida para tus reuniones.", 3, "https://maps.google.com"),
+            ("Inversiones El Chamo", "Otros", "Mercado Municipal", "https://images.unsplash.com/photo-1550989460-0adf9ea622e2?w=400", "Frutas y verduras frescas directo del campo a tu mesa.", 4, "https://maps.google.com"),
+            ("Peluquería Las Chicas", "Otros", "Sector Las Flores", "https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400", "Cortes y peinados con la mejor atención femenina de la zona.", 4, "https://maps.google.com"),
+            ("Cordonería Almenar", "Otros", "Casco Central", "https://images.unsplash.com/photo-1516478177764-9fe5bd7e9717?w=400", "Servicio artesanal de reparación de calzado con años en el Tuy.", 5, "https://maps.google.com")
         ]
         c.executemany("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (?,?,?,?,?,?,?)", datos)
         conn.commit()
