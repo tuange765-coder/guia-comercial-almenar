@@ -150,21 +150,42 @@ st.markdown("""
     }
 
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
-    .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+    
+    /* PIE DE PÁGINA - PLACA DE BRONCE CON LETRAS DORADAS */
+    .footer-willian { 
+        background: #000; 
+        padding: 50px 20px; 
+        text-align: center; 
+        margin-top: 50px; 
+    }
     
     .copyright-box {
-        margin-top: 15px;
-        padding: 15px;
-        border: 1px solid #ffcc00;
-        border-radius: 10px;
+        margin: 0 auto;
+        padding: 30px;
+        border: 3px solid #8e5a2d;
+        border-radius: 5px;
         display: inline-block;
-        background: rgba(255, 204, 0, 0.1);
+        background: linear-gradient(145deg, #4e2c0a, #8e5a2d, #4e2c0a);
+        box-shadow: inset 0px 0px 15px rgba(0,0,0,0.5), 0px 5px 15px rgba(0,0,0,0.8);
+        position: relative;
     }
+    
+    /* Efecto de tornillos en las esquinas de la placa */
+    .copyright-box::before {
+        content: "•"; color: #222; position: absolute; top: 5px; left: 10px; font-size: 20px;
+    }
+    .copyright-box::after {
+        content: "•"; color: #222; position: absolute; bottom: 5px; right: 10px; font-size: 20px;
+    }
+
     .copyright-text {
         font-weight: bold;
-        letter-spacing: 1px;
-        color: #ffcc00;
+        letter-spacing: 2px;
+        color: #ffcc00; /* Letras Doradas */
         text-transform: uppercase;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8), 0px 0px 5px rgba(255, 204, 0, 0.4);
+        font-family: 'Georgia', serif;
+        line-height: 1.6;
     }
 
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
@@ -346,10 +367,9 @@ if not df.empty:
                             s.commit()
                         st.rerun()
 
-# --- PIE DE PÁGINA ACTUALIZADO ---
+# --- PIE DE PÁGINA CON PLACA DE BRONCE Y LETRAS DORADAS ---
 st.markdown(f"""
     <div class='footer-willian'>
-        📍 Santa Teresa del Tuy, Miranda.<br>
         <div class='copyright-box'>
             <span class='copyright-text'>
                 Desarrollador Willian Almenar<br>
