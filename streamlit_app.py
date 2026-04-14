@@ -91,7 +91,6 @@ if 'logo_data' not in st.session_state:
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# Mostrar Logo si existe
 if st.session_state.logo_data:
     st.image(st.session_state.logo_data, width=150)
 
@@ -146,20 +145,54 @@ if clave == "Juan*316*":
             target_edit = st.selectbox("Comercio a editar:", df_edit['nombre'].tolist())
             row = df_edit[df_edit['nombre'] == target_edit].iloc[0]
             
-            with st.form("form_edit"):
-                new_n = st.text_input("Nombre", value=row['nombre'])
-                new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"].index(row['categoria']))
+            # --- SUB-SECCIÓN DE MODIFICACIÓN INTEGRAL ---
+            st.markdown("---")
+            with st.form("form_edit_full"):
+                st.write(f"🔧 **Datos Principales de {target_edit}**")
+                col_mod1, col_mod2 = st.columns(2)
+                new_n = col_mod1.text_input("Nombre", value=row['nombre'])
+                new_cat = col_mod2.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"].index(row['categoria']))
                 new_ub = st.text_input("Ubicación", value=row['ubicacion'])
-                new_res = st.text_area("Reseña", value=row['reseña_willian'])
-                new_est = st.slider("Estrellas", 1, 5, int(row['estrellas_w']))
+                new_res = st.text_area("Reseña del Autor", value=row['reseña_willian'])
+                new_est = st.slider("Calificación Willian (Estrellas)", 1, 5, int(row['estrellas_w']))
                 new_m = st.text_input("URL Maps", value=row['maps_url'])
-                if st.form_submit_button("Actualizar"):
+                
+                st.write("🖼️ **Modificar Foto**")
+                new_foto_file = st.file_uploader("Cargar nueva foto (deja vacío para mantener la actual)", type=["png", "jpg", "jpeg"])
+                
+                if st.form_submit_button("💾 Actualizar Comercio y Foto"):
+                    foto_final = imagen_a_base64(new_foto_file) if new_foto_file else row['foto_url']
                     with conn.session as s:
-                        s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, reseña_willian=:r, estrellas_w=:e, maps_url=:m WHERE id=:id"),
-                                  {"n": new_n, "c": new_cat, "u": new_ub, "r": new_res, "e": new_est, "m": new_m, "id": int(row['id'])})
+                        s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, foto_url=:f, reseña_willian=:r, estrellas_w=:e, maps_url=:m WHERE id=:id"),
+                                  {"n": new_n, "c": new_cat, "u": new_ub, "f": foto_final, "r": new_res, "e": new_est, "m": new_m, "id": int(row['id'])})
                         s.commit()
-                    st.success("Cambios guardados.")
+                    st.success("¡Datos y foto actualizados!")
                     st.rerun()
+            
+            # --- MODIFICAR OPINIONES ESPECÍFICAS DE ESTE COMERCIO ---
+            st.write("💬 **Gestión de Opiniones para este Comercio**")
+            df_opi_loc = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {row['id']}", ttl=0)
+            if not df_opi_loc.empty:
+                for _, opi in df_opi_loc.iterrows():
+                    with st.expander(f"Editar opinión de: {opi['usuario']}"):
+                        with st.form(f"f_opi_{opi['id']}"):
+                            ed_u = st.text_input("Usuario", value=opi['usuario'])
+                            ed_c = st.text_area("Comentario", value=opi['comentario'])
+                            ed_e = st.slider("Calificación", 1, 5, int(opi['estrellas_u']))
+                            c_o1, c_o2 = st.columns(2)
+                            if c_o1.form_submit_button("Guardar Cambios"):
+                                with conn.session as s:
+                                    s.execute(text("UPDATE opiniones SET usuario=:u, comentario=:c, estrellas_u=:e WHERE id=:id"),
+                                              {"u": ed_u, "c": ed_c, "e": ed_e, "id": opi['id']})
+                                    s.commit()
+                                st.rerun()
+                            if c_o2.form_submit_button("🗑️ Eliminar Opinión"):
+                                with conn.session as s:
+                                    s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id": opi['id']})
+                                    s.commit()
+                                st.rerun()
+            else:
+                st.info("No hay opiniones que modificar para este comercio.")
 
         elif accion == "Quitar":
             df_del = conn.query("SELECT id, nombre FROM comercios", ttl=0)
@@ -171,14 +204,14 @@ if clave == "Juan*316*":
                 st.warning(f"Se ha eliminado {target_del}")
                 st.rerun()
 
-    # 3. Gestión de OPINIONES
+    # 3. Gestión de OPINIONES (Global)
     with tabs[2]:
-        st.write("### Listado de Opiniones de Usuarios")
+        st.write("### Listado General de Opiniones")
         df_opi = conn.query("SELECT * FROM opiniones", ttl=0)
         if not df_opi.empty:
             st.dataframe(df_opi)
             opi_id = st.number_input("ID de Opinión a quitar:", step=1)
-            if st.button("Eliminar Opinión"):
+            if st.button("Eliminar Opinión Seleccionada"):
                 with conn.session as s:
                     s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id": opi_id})
                     s.commit()
@@ -187,9 +220,9 @@ if clave == "Juan*316*":
         else:
             st.write("No hay opiniones aún.")
 
-    # 4. Gestión de CALIFICACIONES (Resumen Técnico)
+    # 4. Resumen
     with tabs[3]:
-        st.write("### Promedio de Calificaciones por Negocio")
+        st.write("### Promedio de Calificaciones")
         resumen = conn.query("""
             SELECT c.nombre, c.estrellas_w as estrellas_autor, AVG(o.estrellas_u) as promedio_usuarios 
             FROM comercios c 
@@ -219,7 +252,6 @@ if not df.empty:
                 if r['maps_url']:
                     st.markdown(f'<a href="{r["maps_url"]}" target="_blank" class="maps-btn">📍 Ver en Maps</a>', unsafe_allow_html=True)
                 
-                # SECCIÓN DE OPINIONES DE USUARIOS
                 st.write("---")
                 st.write("💬 **Opiniones de la comunidad:**")
                 df_op = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
