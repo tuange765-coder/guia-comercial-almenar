@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timedelta  # Añadido timedelta para ajuste de zona horaria
 from sqlalchemy import text
 from PIL import Image, ImageFile
 import base64
@@ -104,20 +104,20 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* Panel de Estadísticas Tricolor - CONTADOR PERSISTENTE */
+    /* Panel de Estadísticas Tricolor - COMPACTO */
     .stats-panel {
         background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126);
-        padding: 25px;
-        border-radius: 20px;
-        border: 4px solid white;
+        padding: 10px 20px;
+        border-radius: 15px;
+        border: 2px solid white;
         text-align: center;
-        margin: 20px auto;
-        max-width: 850px;
-        box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
+        margin: 10px auto;
+        max-width: 600px;
+        box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
     }
-    .stats-stars { color: white; font-size: 2em; margin-bottom: 10px; text-shadow: 2px 2px 4px black; }
-    .stats-content { font-size: 1.4em; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; font-family: 'Arial', sans-serif; }
-    .visit-number { font-size: 1.8em; color: #ffcc00; text-decoration: underline; }
+    .stats-stars { color: white; font-size: 1.2em; margin-bottom: 5px; }
+    .stats-content { font-size: 1em; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; font-family: 'Arial', sans-serif; }
+    .visit-number { font-size: 1.2em; color: #ffcc00; }
 
     /* Estilo para el Logo Centrado y Grande */
     .logo-container {
@@ -266,15 +266,15 @@ if 'logo_data' not in st.session_state:
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# MÓDULO DE RELOJ, FECHA Y VISITAS (TRICOLOR CON 8 ESTRELLAS)
-ahora = datetime.now()
+# MÓDULO DE RELOJ, FECHA Y VISITAS (AJUSTADO A VENEZUELA Y COMPACTO)
+# Se usa UTC-4 para la hora de Venezuela
+hora_venezuela = datetime.utcnow() - timedelta(hours=4)
 st.markdown(f"""
     <div class="stats-panel">
         <div class="stats-stars">★ ★ ★ ★ ★ ★ ★ ★</div>
         <div class="stats-content">
-            📅 HOY ES: {ahora.strftime('%d/%m/%Y')} | ⏰ HORA: {ahora.strftime('%I:%M:%S %p')}<br>
-            <span style="letter-spacing: 2px;">VENEZUELA UNIDA EN LA RED</span><br>
-            <span class="visit-number">🚀 VISITAS REGISTRADAS: {total_visitas}</span>
+            📅 {hora_venezuela.strftime('%d/%m/%Y')} | ⏰ {hora_venezuela.strftime('%I:%M:%S %p')} VZLA<br>
+            <span class="visit-number">🚀 VISITAS: {total_visitas}</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -424,7 +424,7 @@ with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS"):
             if d_comercio and d_motivo:
                 with conn.session as s:
                     s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
-                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": datetime.now().strftime("%d/%m/%Y %H:%M")})
+                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": hora_venezuela.strftime("%d/%m/%Y %H:%M")})
                     s.commit()
                 st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
             else:
@@ -459,7 +459,7 @@ if not df.empty:
                     if st.form_submit_button("Enviar Opinión"):
                         with conn.session as s:
                             s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
-                                      {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": datetime.now().strftime("%d/%m/%Y")})
+                                      {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": hora_venezuela.strftime("%d/%m/%Y")})
                             s.commit()
                         st.rerun()
 
