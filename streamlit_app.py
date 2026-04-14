@@ -151,6 +151,22 @@ st.markdown("""
 
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
+    
+    .copyright-box {
+        margin-top: 15px;
+        padding: 15px;
+        border: 1px solid #ffcc00;
+        border-radius: 10px;
+        display: inline-block;
+        background: rgba(255, 204, 0, 0.1);
+    }
+    .copyright-text {
+        font-weight: bold;
+        letter-spacing: 1px;
+        color: #ffcc00;
+        text-transform: uppercase;
+    }
+
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
     .admin-zone { background: #1f2937; padding: 25px; border: 3px solid #ffcc00; border-radius: 15px; margin: 20px 0; box-shadow: 0px 0px 15px #ffcc00; }
     
@@ -330,4 +346,17 @@ if not df.empty:
                             s.commit()
                         st.rerun()
 
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Miranda.<br>© {datetime.now().year} - Reflexiones de Willian Almenar</div>", unsafe_allow_html=True)
+# --- PIE DE PÁGINA ACTUALIZADO ---
+st.markdown(f"""
+    <div class='footer-willian'>
+        📍 Santa Teresa del Tuy, Miranda.<br>
+        <div class='copyright-box'>
+            <span class='copyright-text'>
+                Desarrollador Willian Almenar<br>
+                Prohibida su reproducción total o parcial.<br>
+                TODOS LOS DERECHOS RESERVADOS.<br>
+                SANTA TERESA DEL TUY 2026
+            </span>
+        </div>
+    </div>
+""", unsafe_allow_html=True)
