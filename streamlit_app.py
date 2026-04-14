@@ -44,20 +44,66 @@ def imagen_a_base64(uploaded_file):
         return f"data:image/png;base64,{base64.b64encode(bytes_data).decode()}"
     return None
 
-# --- ESTILO VENEZUELA ---
+# --- ESTILO VENEZUELA (MODIFICADO PARA IMPACTO VISUAL) ---
 st.markdown("""
     <style>
     .stApp { background-color: #111827; color: #ffffff; }
     [data-testid="stSidebar"] { background-color: #1f2937; }
+    
+    /* Encabezado Tricolor llamativo */
     .venezuela-header {
         text-align: center;
-        padding: 40px 10px 40px 10px;
-        background: linear-gradient(to bottom, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-        border-radius: 100% 100% 25px 25px / 120% 120% 25px 25px;
-        margin-bottom: 30px;
-        box-shadow: 0px 10px 20px rgba(0,0,0,0.6);
+        padding: 60px 10px;
+        background: linear-gradient(135deg, #ffcc00 0%, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%, #ce1126 100%);
+        border-radius: 0px 0px 50px 50px;
+        margin-bottom: 40px;
+        box-shadow: 0px 15px 30px rgba(0,0,0,0.7);
+        border-bottom: 5px solid #ffffff;
     }
-    .stars-arc { color: white; font-size: 2.5em; letter-spacing: 15px; font-weight: bold; text-shadow: 3px 3px 6px #000; margin-top: -15px;}
+    
+    .stars-arc { 
+        color: white; 
+        font-size: 3em; 
+        letter-spacing: 20px; 
+        font-weight: bold; 
+        text-shadow: 4px 4px 8px #000; 
+        margin-bottom: 20px;
+    }
+
+    /* Estilo para el Logo Centrado y Grande */
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        margin-top: -100px; /* Sube el logo para que traslape el color */
+        margin-bottom: 20px;
+    }
+    .logo-img {
+        border-radius: 50%;
+        border: 8px solid #111827;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.8);
+        background-color: white;
+        transition: transform 0.3s;
+    }
+    .logo-img:hover { transform: scale(1.05); }
+
+    /* Títulos Impactantes */
+    .main-title {
+        text-align: center;
+        font-size: 4em !important;
+        font-weight: 900 !important;
+        color: #ffcc00;
+        text-shadow: 2px 2px 4px #000;
+        margin-bottom: 0px;
+    }
+    .sub-title {
+        text-align: center;
+        font-size: 1.8em !important;
+        color: #ffffff;
+        letter-spacing: 2px;
+        margin-top: -10px;
+        font-style: italic;
+    }
+
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
@@ -88,14 +134,23 @@ precargar_datos()
 if 'logo_data' not in st.session_state:
     st.session_state.logo_data = None
 
-# --- CUERPO PRINCIPAL ---
+# --- CUERPO PRINCIPAL (PANTALLA DE INICIO LLAMATIVA) ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
+# Logo Centrado y Grande
 if st.session_state.logo_data:
-    st.image(st.session_state.logo_data, width=150)
+    st.markdown(f'''
+        <div class="logo-container">
+            <img src="{st.session_state.logo_data}" class="logo-img" width="250">
+        </div>
+    ''', unsafe_allow_html=True)
+else:
+    # Espaciador si no hay logo para mantener el diseño
+    st.markdown('<div style="margin-top: 50px;"></div>', unsafe_allow_html=True)
 
-st.title("🚀 Guía Comercial Almenar")
-st.write("#### Santa Teresa del Tuy")
+st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
+st.markdown('<br>', unsafe_allow_html=True)
 
 # --- ACCESO DE ADMINISTRADOR ---
 clave = st.text_input("🔑 Acceso de Autor (Willian):", type="password", placeholder="Escribe tu clave aquí para gestionar la guía...")
@@ -145,7 +200,6 @@ if clave == "Juan*316*":
             target_edit = st.selectbox("Comercio a editar:", df_edit['nombre'].tolist())
             row = df_edit[df_edit['nombre'] == target_edit].iloc[0]
             
-            # --- SUB-SECCIÓN DE MODIFICACIÓN INTEGRAL ---
             st.markdown("---")
             with st.form("form_edit_full"):
                 st.write(f"🔧 **Datos Principales de {target_edit}**")
@@ -169,7 +223,6 @@ if clave == "Juan*316*":
                     st.success("¡Datos y foto actualizados!")
                     st.rerun()
             
-            # --- MODIFICAR OPINIONES ESPECÍFICAS DE ESTE COMERCIO ---
             st.write("💬 **Gestión de Opiniones para este Comercio**")
             df_opi_loc = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {row['id']}", ttl=0)
             if not df_opi_loc.empty:
@@ -204,7 +257,6 @@ if clave == "Juan*316*":
                 st.warning(f"Se ha eliminado {target_del}")
                 st.rerun()
 
-    # 3. Gestión de OPINIONES (Global)
     with tabs[2]:
         st.write("### Listado General de Opiniones")
         df_opi = conn.query("SELECT * FROM opiniones", ttl=0)
@@ -220,7 +272,6 @@ if clave == "Juan*316*":
         else:
             st.write("No hay opiniones aún.")
 
-    # 4. Resumen
     with tabs[3]:
         st.write("### Promedio de Calificaciones")
         resumen = conn.query("""
