@@ -111,6 +111,8 @@ st.markdown("""
         margin: 20px auto;
         max-width: 700px;
         box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
+        position: relative;
+        z-index: 1;
     }
     .stats-stars { color: white; font-size: 1.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px black; }
     .stats-content { font-size: 1.2em; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; font-family: 'Arial', sans-serif; }
@@ -119,8 +121,10 @@ st.markdown("""
     .logo-container {
         display: flex;
         justify-content: center;
-        margin-top: -100px; 
-        margin-bottom: 20px;
+        margin-top: -140px; /* Logo más arriba */
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 2;
     }
     .logo-img {
         border-radius: 50%;
@@ -137,6 +141,7 @@ st.markdown("""
         font-weight: 900 !important;
         color: #ffcc00;
         text-shadow: 2px 2px 4px #000;
+        margin-top: 20px !important; /* Espacio para que el logo no tape el título */
         margin-bottom: 0px;
     }
     .sub-title {
@@ -250,7 +255,7 @@ if 'logo_data' not in st.session_state:
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# MÓDULO DE RELOJ, FECHA Y VISITAS (AJUSTADO A VENEZUELA UTC-4)
+# MÓDULO DE RELOJ, FECHA Y VISITAS
 ahora_vzla = datetime.utcnow() - timedelta(hours=4)
 st.markdown(f"""
     <div class="stats-panel">
@@ -263,7 +268,7 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 if st.session_state.logo_data:
-    st.markdown(f'<div class="logo-container"><img src="{st.session_state.logo_data}" class="logo-img" width="250"></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="logo-container"><img src="{st.session_state.logo_data}" class="logo-img" width="230"></div>', unsafe_allow_html=True)
 else:
     st.markdown('<div style="margin-top: 50px;"></div>', unsafe_allow_html=True)
 
