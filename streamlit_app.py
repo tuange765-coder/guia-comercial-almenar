@@ -80,13 +80,15 @@ def imagen_a_base64(uploaded_file):
 # --- ESTILO VENEZUELA (AJUSTADO PARA MÓVIL) ---
 st.markdown("""
     <style>
-    /* OCULTAR GITHUB Y MENÚS DE STREAMLIT */
+    /* OCULTAR GITHUB Y ENLACES SIN BLOQUEAR EL PANEL */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
     .stDeployButton {display:none;}
     [data-testid="stStatusWidget"] {visibility: hidden;}
     
+    /* Mantenemos el header visible pero sin elementos de Github */
+    header { background-color: rgba(0,0,0,0) !important; }
+
     .stApp { background-color: #111827; color: #ffffff; }
     [data-testid="stSidebar"] { background-color: #1f2937; border-right: 2px solid #ffcc00; }
     
