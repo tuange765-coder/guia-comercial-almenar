@@ -53,19 +53,21 @@ with conn.session as s:
             estatus VARCHAR(50) DEFAULT 'Pendiente'
         )
     """))
-    # Inicializar contador si no existe
+    # Inicializar contador si no existe (Persistencia garantizada)
     res_v = s.execute(text("SELECT conteo FROM visitas WHERE id = 1")).fetchone()
     if not res_v:
         s.execute(text("INSERT INTO visitas (id, conteo) VALUES (1, 0)"))
     s.commit()
 
 # --- LÓGICA DE VISITAS (PERSISTENTE) ---
+# Se incrementa solo una vez por sesión de navegador para no inflar el número artificialmente
 if 'visitado' not in st.session_state:
     with conn.session as s:
         s.execute(text("UPDATE visitas SET conteo = conteo + 1 WHERE id = 1"))
         s.commit()
     st.session_state.visitado = True
 
+# Recuperar el total de la base de datos
 res_visitas = conn.query("SELECT conteo FROM visitas WHERE id = 1", ttl=0)
 total_visitas = res_visitas.iloc[0,0] if not res_visitas.empty else 0
 
@@ -102,19 +104,20 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* Panel de Estadísticas Tricolor */
+    /* Panel de Estadísticas Tricolor - CONTADOR PERSISTENTE */
     .stats-panel {
         background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126);
-        padding: 20px;
-        border-radius: 15px;
-        border: 3px solid white;
+        padding: 25px;
+        border-radius: 20px;
+        border: 4px solid white;
         text-align: center;
         margin: 20px auto;
-        max-width: 800px;
-        box-shadow: 0px 10px 20px rgba(0,0,0,0.5);
+        max-width: 850px;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
     }
-    .stats-stars { color: white; font-size: 1.5em; margin-bottom: 10px; }
-    .stats-content { font-size: 1.2em; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
+    .stats-stars { color: white; font-size: 2em; margin-bottom: 10px; text-shadow: 2px 2px 4px black; }
+    .stats-content { font-size: 1.4em; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; font-family: 'Arial', sans-serif; }
+    .visit-number { font-size: 1.8em; color: #ffcc00; text-decoration: underline; }
 
     /* Estilo para el Logo Centrado y Grande */
     .logo-container {
@@ -263,14 +266,15 @@ if 'logo_data' not in st.session_state:
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# MÓDULO DE RELOJ, FECHA Y VISITAS
+# MÓDULO DE RELOJ, FECHA Y VISITAS (TRICOLOR CON 8 ESTRELLAS)
 ahora = datetime.now()
 st.markdown(f"""
     <div class="stats-panel">
         <div class="stats-stars">★ ★ ★ ★ ★ ★ ★ ★</div>
         <div class="stats-content">
-            📅 {ahora.strftime('%A, %d de %B de %Y')} | ⏰ {ahora.strftime('%I:%M %p')}<br>
-            🚀 VISITAS TOTALES: {total_visitas}
+            📅 HOY ES: {ahora.strftime('%d/%m/%Y')} | ⏰ HORA: {ahora.strftime('%I:%M:%S %p')}<br>
+            <span style="letter-spacing: 2px;">VENEZUELA UNIDA EN LA RED</span><br>
+            <span class="visit-number">🚀 VISITAS REGISTRADAS: {total_visitas}</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
@@ -320,7 +324,7 @@ with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
                 with st.form("form_add"):
                     col1, col2 = st.columns(2)
                     nombre = col1.text_input("Nombre del Negocio")
-                    cat = col2.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
+                    cat = col2.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
                     ubi = st.text_input("Ubicación")
                     res = st.text_area("Tu Reseña")
                     maps = st.text_input("URL Google Maps")
@@ -340,7 +344,7 @@ with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
                 row = df_edit[df_edit['nombre'] == target_edit].iloc[0]
                 with st.form("form_edit_full"):
                     new_n = st.text_input("Nombre", value=row['nombre'])
-                    new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"].index(row['categoria']))
+                    new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"].index(row['categoria']))
                     new_ub = st.text_input("Ubicación", value=row['ubicacion'])
                     new_res = st.text_area("Tu Reseña", value=row['reseña_willian'])
                     new_est = st.slider("Estrellas", 1, 5, int(row['estrellas_w']))
@@ -414,7 +418,7 @@ with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS"):
     
     with st.form("form_denuncia"):
         d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
-        d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermercado Central")
+        d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermerkado Central")
         d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
         if st.form_submit_button("Enviar Denuncia"):
             if d_comercio and d_motivo:
