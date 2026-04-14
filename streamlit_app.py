@@ -125,6 +125,29 @@ st.markdown("""
         transform: scale(1.1);
         box-shadow: 0px 6px 20px rgba(206, 17, 38, 0.6);
     }
+    
+    /* Botón Compartir WhatsApp Tricolor */
+    .btn-whatsapp-tricolor {
+        display: block;
+        width: fit-content;
+        margin: 10px auto;
+        padding: 12px 25px;
+        background: linear-gradient(135deg, #ffcc00, #0033a0, #ce1126);
+        color: white !important;
+        text-decoration: none;
+        font-weight: bold;
+        border-radius: 10px;
+        border: 2px solid #fff;
+        text-align: center;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+    }
+    .url-display {
+        text-align: center;
+        font-family: monospace;
+        color: #ffcc00;
+        margin-top: 5px;
+        font-size: 0.9em;
+    }
 
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
@@ -172,6 +195,16 @@ st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del
 
 # Botón Bandera de Venezuela con el enlace solicitado
 st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
+
+# Link Tricolor para WhatsApp
+mensaje_wa = "¡Mira la Guía Comercial Almenar de Santa Teresa del Tuy! 🇻🇪 🚀"
+link_guia = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
+st.markdown(f'''
+    <a href="https://wa.me/?text={mensaje_wa} {link_guia}" target="_blank" class="btn-whatsapp-tricolor">
+        ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐<br>📲 COMPARTIR POR WHATSAPP
+    </a>
+    <div class="url-display">{link_guia}</div>
+''', unsafe_allow_html=True)
 
 st.markdown('<br>', unsafe_allow_html=True)
 
