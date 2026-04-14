@@ -77,11 +77,11 @@ def imagen_a_base64(uploaded_file):
         return f"data:image/png;base64,{base64.b64encode(bytes_data).decode()}"
     return None
 
-# --- ESTILO VENEZUELA ---
+# --- ESTILO VENEZUELA (AJUSTADO PARA MÓVIL) ---
 st.markdown("""
     <style>
     .stApp { background-color: #111827; color: #ffffff; }
-    [data-testid="stSidebar"] { background-color: #1f2937; }
+    [data-testid="stSidebar"] { background-color: #1f2937; border-right: 2px solid #ffcc00; }
     
     .venezuela-header {
         text-align: center;
@@ -226,6 +226,20 @@ st.markdown("""
     .admin-zone { background: #1f2937; padding: 25px; border: 3px solid #ffcc00; border-radius: 15px; margin: 20px 0; box-shadow: 0px 0px 15px #ffcc00; }
     .nav-divider { border-top: 2px dashed #ffcc00; margin: 40px 0; padding-top: 20px; }
     .denuncia-box { background: #ce1126; padding: 20px; border-radius: 15px; border: 2px solid #ffcc00; margin-top: 20px; }
+
+    /* --- AJUSTES PARA MÓVIL (MEDIA QUERIES) --- */
+    @media (max-width: 768px) {
+        .main-title { font-size: 2.2em !important; }
+        .sub-title { font-size: 1.2em !important; }
+        .stars-arc { font-size: 1.5em !important; letter-spacing: 10px !important; }
+        .venezuela-header { padding: 30px 5px !important; }
+        .stats-panel { max-width: 95% !important; padding: 10px !important; }
+        .stats-content { font-size: 1em !important; }
+        .btn-venezuela, .btn-whatsapp-tricolor { width: 90% !important; font-size: 1em !important; }
+        .logo-img { width: 160px !important; }
+        .copyright-box { padding: 15px !important; width: 90% !important; }
+        .copyright-text { font-size: 0.8em !important; }
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -252,9 +266,12 @@ precargar_datos()
 if 'logo_data' not in st.session_state:
     st.session_state.logo_data = None
 
-# --- NAVEGACIÓN (CONTROL DE VISIBILIDAD) ---
-st.sidebar.title("🇻🇪 Menú de Navegación")
-opcion_menu = st.sidebar.radio("Ir a:", ["🏢 Guía Comercial", "📢 Denuncias", "🔐 Administración"])
+# --- NAVEGACIÓN LATERAL (IZQUIERDA) ---
+with st.sidebar:
+    st.title("🇻🇪 Menú de Gestión")
+    opcion_menu = st.radio("Seleccione una opción:", ["🏢 Ver Guía Comercial", "🔐 Administración", "📢 Página de Denuncias"])
+    st.markdown("---")
+    st.info("Desarrollado por Willian Almenar")
 
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
@@ -276,13 +293,16 @@ if st.session_state.logo_data:
 else:
     st.markdown('<div style="margin-top: 50px;"></div>', unsafe_allow_html=True)
 
-# --- SECCIÓN: ADMINISTRACIÓN ---
+# --- LÓGICA DE VISUALIZACIÓN SEGÚN MENÚ LATERAL ---
+
+# 1. SECCIÓN ADMINISTRACIÓN
 if opcion_menu == "🔐 Administración":
-    with st.expander("🔐 Gestión Administrativa (Solo Autor)", expanded=True):
+    st.markdown('<h1 class="main-title">Panel de Control</h1>', unsafe_allow_html=True)
+    with st.expander("🔐 Acceso Restringido (Solo Autor)", expanded=True):
         clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
         if clave == "Juan*316*":
             st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
-            st.subheader("👨‍💻 Panel de Control Total")
+            st.subheader("👨‍💻 Gestión del Sistema")
             tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones", "📢 Denuncias Recibidas"])
             
             with tabs[0]:
@@ -381,36 +401,37 @@ if opcion_menu == "🔐 Administración":
         else:
             if clave != "": st.error("Clave incorrecta")
 
-# --- SECCIÓN: DENUNCIAS ---
-elif opcion_menu == "📢 Denuncias":
-    st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
-    with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS", expanded=True):
-        st.markdown("""
-            <div class="denuncia-box">
-                <h2 style="color: white; text-align: center;">🛡️ Centro de Atención al Ciudadano</h2>
-                <p style="color: white; text-align: center;">Si has tenido una mala experiencia o quieres reportar una irregularidad, infórmanos aquí.</p>
-            </div>
-        """, unsafe_allow_html=True)
-        with st.form("form_denuncia"):
-            d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
-            d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermerkado Central")
-            d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
-            if st.form_submit_button("Enviar Denuncia"):
-                if d_comercio and d_motivo:
-                    with conn.session as s:
-                        s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
-                                  {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": ahora_vzla.strftime("%d/%m/%Y %H:%M")})
-                        s.commit()
-                    st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
-                else:
-                    st.warning("Por favor, indica el comercio y el motivo.")
+# 2. SECCIÓN DENUNCIAS
+elif opcion_menu == "📢 Página de Denuncias":
+    st.markdown('<h1 class="main-title">Centro de Denuncias</h1>', unsafe_allow_html=True)
+    st.markdown("""
+        <div class="denuncia-box">
+            <h2 style="color: white; text-align: center;">🛡️ Centro de Atención al Ciudadano</h2>
+            <p style="color: white; text-align: center;">Si has tenido una mala experiencia o quieres reportar una irregularidad, infórmanos aquí.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    with st.form("form_denuncia"):
+        d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
+        d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermerkado Central")
+        d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
+        if st.form_submit_button("Enviar Denuncia"):
+            if d_comercio and d_motivo:
+                with conn.session as s:
+                    s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
+                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": ahora_vzla.strftime("%d/%m/%Y %H:%M")})
+                    s.commit()
+                st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
+            else:
+                st.warning("Por favor, indica el comercio y el motivo.")
 
-# --- SECCIÓN: GUÍA COMERCIAL (BUSCADOR) ---
-elif opcion_menu == "🏢 Guía Comercial":
+# 3. SECCIÓN BUSCADOR (POR DEFECTO)
+elif opcion_menu == "🏢 Ver Guía Comercial":
     st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
+
     st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
-    
+
     mensaje_wa = "¡Mira la Guía Comercial Almenar de Santa Teresa del Tuy! 🇻🇪 🚀"
     link_guia = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
     st.markdown(f'''
@@ -420,7 +441,6 @@ elif opcion_menu == "🏢 Guía Comercial":
         <div class="url-display">{link_guia}</div>
     ''', unsafe_allow_html=True)
 
-    st.markdown('<br>', unsafe_allow_html=True)
     st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
     busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería, Farmacia...", key="user_search")
     df = conn.query("SELECT * FROM comercios", ttl=0)
@@ -440,6 +460,7 @@ elif opcion_menu == "🏢 Guía Comercial":
                     df_op = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
                     for _, op in df_op.iterrows():
                         st.caption(f"**{op['usuario']}** ({op['fecha']}): {op['comentario']} - {'⭐'*op['estrellas_u']}")
+                    
                     with st.form(f"opi_form_{r['id']}"):
                         u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
                         u_com = st.text_area("Tu Opinión", key=f"uc_{r['id']}")
