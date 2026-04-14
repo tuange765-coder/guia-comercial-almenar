@@ -35,7 +35,39 @@ with conn.session as s:
             fecha VARCHAR(50)
         )
     """))
+    # Tabla para el contador de visitas persistente
+    s.execute(text("""
+        CREATE TABLE IF NOT EXISTS visitas (
+            id INTEGER PRIMARY KEY,
+            conteo INTEGER
+        )
+    """))
+    # Tabla para Denuncias Ciudadanas
+    s.execute(text("""
+        CREATE TABLE IF NOT EXISTS denuncias (
+            id SERIAL PRIMARY KEY,
+            denunciante VARCHAR(255),
+            comercio_afectado VARCHAR(255),
+            motivo TEXT,
+            fecha VARCHAR(50),
+            estatus VARCHAR(50) DEFAULT 'Pendiente'
+        )
+    """))
+    # Inicializar contador si no existe
+    res_v = s.execute(text("SELECT conteo FROM visitas WHERE id = 1")).fetchone()
+    if not res_v:
+        s.execute(text("INSERT INTO visitas (id, conteo) VALUES (1, 0)"))
     s.commit()
+
+# --- LÓGICA DE VISITAS (PERSISTENTE) ---
+if 'visitado' not in st.session_state:
+    with conn.session as s:
+        s.execute(text("UPDATE visitas SET conteo = conteo + 1 WHERE id = 1"))
+        s.commit()
+    st.session_state.visitado = True
+
+res_visitas = conn.query("SELECT conteo FROM visitas WHERE id = 1", ttl=0)
+total_visitas = res_visitas.iloc[0,0] if not res_visitas.empty else 0
 
 # --- FUNCIONES DE APOYO ---
 def imagen_a_base64(uploaded_file):
@@ -69,6 +101,20 @@ st.markdown("""
         text-shadow: 4px 4px 8px #000; 
         margin-bottom: 20px;
     }
+
+    /* Panel de Estadísticas Tricolor */
+    .stats-panel {
+        background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126);
+        padding: 20px;
+        border-radius: 15px;
+        border: 3px solid white;
+        text-align: center;
+        margin: 20px auto;
+        max-width: 800px;
+        box-shadow: 0px 10px 20px rgba(0,0,0,0.5);
+    }
+    .stats-stars { color: white; font-size: 1.5em; margin-bottom: 10px; }
+    .stats-content { font-size: 1.2em; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; }
 
     /* Estilo para el Logo Centrado y Grande */
     .logo-container {
@@ -170,18 +216,13 @@ st.markdown("""
         position: relative;
     }
     
-    /* Efecto de tornillos en las esquinas de la placa */
-    .copyright-box::before {
-        content: "•"; color: #222; position: absolute; top: 5px; left: 10px; font-size: 20px;
-    }
-    .copyright-box::after {
-        content: "•"; color: #222; position: absolute; bottom: 5px; right: 10px; font-size: 20px;
-    }
+    .copyright-box::before { content: "•"; color: #222; position: absolute; top: 5px; left: 10px; font-size: 20px; }
+    .copyright-box::after { content: "•"; color: #222; position: absolute; bottom: 5px; right: 10px; font-size: 20px; }
 
     .copyright-text {
         font-weight: bold;
         letter-spacing: 2px;
-        color: #ffcc00; /* Letras Doradas */
+        color: #ffcc00; 
         text-transform: uppercase;
         text-shadow: 1px 1px 2px rgba(0,0,0,0.8), 0px 0px 5px rgba(255, 204, 0, 0.4);
         font-family: 'Georgia', serif;
@@ -190,9 +231,9 @@ st.markdown("""
 
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
     .admin-zone { background: #1f2937; padding: 25px; border: 3px solid #ffcc00; border-radius: 15px; margin: 20px 0; box-shadow: 0px 0px 15px #ffcc00; }
-    
-    /* Separador para navegación fluida */
     .nav-divider { border-top: 2px dashed #ffcc00; margin: 40px 0; padding-top: 20px; }
+    
+    .denuncia-box { background: #ce1126; padding: 20px; border-radius: 15px; border: 2px solid #ffcc00; margin-top: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -219,8 +260,20 @@ precargar_datos()
 if 'logo_data' not in st.session_state:
     st.session_state.logo_data = None
 
-# --- CUERPO PRINCIPAL (PANTALLA DE INICIO LLAMATIVA) ---
+# --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
+
+# MÓDULO DE RELOJ, FECHA Y VISITAS
+ahora = datetime.now()
+st.markdown(f"""
+    <div class="stats-panel">
+        <div class="stats-stars">★ ★ ★ ★ ★ ★ ★ ★</div>
+        <div class="stats-content">
+            📅 {ahora.strftime('%A, %d de %B de %Y')} | ⏰ {ahora.strftime('%I:%M %p')}<br>
+            🚀 VISITAS TOTALES: {total_visitas}
+        </div>
+    </div>
+""", unsafe_allow_html=True)
 
 if st.session_state.logo_data:
     st.markdown(f'<div class="logo-container"><img src="{st.session_state.logo_data}" class="logo-img" width="250"></div>', unsafe_allow_html=True)
@@ -230,10 +283,8 @@ else:
 st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
 
-# Botón Bandera de Venezuela con el enlace solicitado
 st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
 
-# Link Tricolor para WhatsApp
 mensaje_wa = "¡Mira la Guía Comercial Almenar de Santa Teresa del Tuy! 🇻🇪 🚀"
 link_guia = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
 st.markdown(f'''
@@ -245,15 +296,14 @@ st.markdown(f'''
 
 st.markdown('<br>', unsafe_allow_html=True)
 
-# --- ACCESO DE ADMINISTRADOR (Aislado) ---
+# --- ACCESO DE ADMINISTRADOR ---
 with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
     clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
     
     if clave == "Juan*316*":
         st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
         st.subheader("👨‍💻 Panel de Control Total")
-        
-        tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones"])
+        tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones", "📢 Denuncias Recibidas"])
         
         with tabs[0]:
             st.write("### Modificar Logo")
@@ -284,7 +334,6 @@ with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
                             s.commit()
                         st.success("Agregado.")
                         st.rerun()
-
             elif accion == "Modificar":
                 df_edit = conn.query("SELECT * FROM comercios", ttl=0)
                 target_edit = st.selectbox("Comercio a editar:", df_edit['nombre'].tolist())
@@ -304,7 +353,6 @@ with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
                                       {"n": new_n, "c": new_cat, "u": new_ub, "f": foto_f, "r": new_res, "e": new_est, "m": new_m, "id": int(row['id'])})
                             s.commit()
                         st.rerun()
-
             elif accion == "Quitar":
                 df_del = conn.query("SELECT nombre FROM comercios", ttl=0)
                 target_del = st.selectbox("Eliminar comercio:", df_del['nombre'].tolist())
@@ -329,12 +377,56 @@ with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
         with tabs[3]:
             resumen = conn.query("SELECT c.nombre, c.estrellas_w, AVG(o.estrellas_u) FROM comercios c LEFT JOIN opiniones o ON c.id = o.comercio_id GROUP BY c.id, c.nombre, c.estrellas_w", ttl=0)
             st.table(resumen)
-            
+
+        with tabs[4]:
+            st.write("### Denuncias de Usuarios")
+            df_den = conn.query("SELECT * FROM denuncias", ttl=0)
+            if not df_den.empty:
+                st.dataframe(df_den)
+                den_id = st.number_input("ID de Denuncia para cambiar estatus/borrar:", step=1)
+                col_d1, col_d2 = st.columns(2)
+                if col_d1.button("Marcar como Atendido"):
+                    with conn.session as s:
+                        s.execute(text("UPDATE denuncias SET estatus='Atendido' WHERE id=:id"), {"id": den_id})
+                        s.commit()
+                    st.rerun()
+                if col_d2.button("Eliminar Registro"):
+                    with conn.session as s:
+                        s.execute(text("DELETE FROM denuncias WHERE id=:id"), {"id": den_id})
+                        s.commit()
+                    st.rerun()
+            else:
+                st.info("No hay denuncias registradas.")
+
         st.markdown('</div>', unsafe_allow_html=True)
     else:
         if clave != "": st.error("Clave incorrecta")
 
-# --- BUSCADOR PÚBLICO (Zona de Navegación de Usuario) ---
+# --- SECCIÓN DE DENUNCIAS PÚBLICAS ---
+st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
+with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS"):
+    st.markdown("""
+        <div class="denuncia-box">
+            <h2 style="color: white; text-align: center;">🛡️ Centro de Atención al Ciudadano</h2>
+            <p style="color: white; text-align: center;">Si has tenido una mala experiencia o quieres reportar una irregularidad, infórmanos aquí.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    with st.form("form_denuncia"):
+        d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
+        d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermercado Central")
+        d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
+        if st.form_submit_button("Enviar Denuncia"):
+            if d_comercio and d_motivo:
+                with conn.session as s:
+                    s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
+                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": datetime.now().strftime("%d/%m/%Y %H:%M")})
+                    s.commit()
+                st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
+            else:
+                st.warning("Por favor, indica el comercio y el motivo.")
+
+# --- BUSCADOR PÚBLICO ---
 st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
 busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería, Farmacia...", key="user_search")
 df = conn.query("SELECT * FROM comercios", ttl=0)
@@ -367,7 +459,7 @@ if not df.empty:
                             s.commit()
                         st.rerun()
 
-# --- PIE DE PÁGINA CON PLACA DE BRONCE Y LETRAS DORADAS ---
+# --- PIE DE PÁGINA ---
 st.markdown(f"""
     <div class='footer-willian'>
         <div class='copyright-box'>
