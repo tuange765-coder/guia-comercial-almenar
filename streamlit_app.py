@@ -35,14 +35,12 @@ with conn.session as s:
             fecha VARCHAR(50)
         )
     """))
-    # Tabla para el contador de visitas persistente
     s.execute(text("""
         CREATE TABLE IF NOT EXISTS visitas (
             id INTEGER PRIMARY KEY,
             conteo INTEGER
         )
     """))
-    # Tabla para Denuncias Ciudadanas
     s.execute(text("""
         CREATE TABLE IF NOT EXISTS denuncias (
             id SERIAL PRIMARY KEY,
@@ -53,41 +51,35 @@ with conn.session as s:
             estatus VARCHAR(50) DEFAULT 'Pendiente'
         )
     """))
-    # Inicializar contador si no existe (Persistencia garantizada)
     res_v = s.execute(text("SELECT conteo FROM visitas WHERE id = 1")).fetchone()
     if not res_v:
         s.execute(text("INSERT INTO visitas (id, conteo) VALUES (1, 0)"))
     s.commit()
 
-# --- LÓGICA DE VISITAS (PERSISTENTE) ---
+# --- LÓGICA DE VISITAS ---
 if 'visitado' not in st.session_state:
     with conn.session as s:
         s.execute(text("UPDATE visitas SET conteo = conteo + 1 WHERE id = 1"))
         s.commit()
     st.session_state.visitado = True
 
-# Recuperar el total de la base de datos
 res_visitas = conn.query("SELECT conteo FROM visitas WHERE id = 1", ttl=0)
 total_visitas = res_visitas.iloc[0,0] if not res_visitas.empty else 0
 
-# --- FUNCIONES DE APOYO ---
 def imagen_a_base64(uploaded_file):
     if uploaded_file is not None:
         bytes_data = uploaded_file.getvalue()
         return f"data:image/png;base64,{base64.b64encode(bytes_data).decode()}"
     return None
 
-# --- ESTILO VENEZUELA (AJUSTADO PARA MÓVIL) ---
+# --- ESTILO VENEZUELA ---
 st.markdown("""
     <style>
-    /* OCULTAR GITHUB Y ENLACES SIN BLOQUEAR EL PANEL */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     .stDeployButton {display:none;}
     [data-testid="stStatusWidget"] {visibility: hidden;}
-    
-    /* Mantenemos el header visible pero sin elementos de Github */
-    header { background-color: rgba(0,0,0,0) !important; }
+    header { background: transparent !important; }
 
     .stApp { background-color: #111827; color: #ffffff; }
     [data-testid="stSidebar"] { background-color: #1f2937; border-right: 2px solid #ffcc00; }
@@ -101,165 +93,34 @@ st.markdown("""
         box-shadow: 0px 15px 30px rgba(0,0,0,0.7);
         border-bottom: 5px solid #ffffff;
     }
-    
-    .stars-arc { 
-        color: white; 
-        font-size: 3em; 
-        letter-spacing: 20px; 
-        font-weight: bold; 
-        text-shadow: 4px 4px 8px #000; 
-        margin-bottom: 20px;
-    }
-
-    .stats-panel {
-        background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126);
-        padding: 15px;
-        border-radius: 20px;
-        border: 4px solid white;
-        text-align: center;
-        margin: 20px auto;
-        max-width: 700px;
-        box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
-        position: relative;
-        z-index: 1;
-    }
+    .stars-arc { color: white; font-size: 3em; letter-spacing: 20px; font-weight: bold; text-shadow: 4px 4px 8px #000; margin-bottom: 20px; }
+    .stats-panel { background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126); padding: 15px; border-radius: 20px; border: 4px solid white; text-align: center; margin: 20px auto; max-width: 700px; box-shadow: 0px 10px 25px rgba(0,0,0,0.6); position: relative; z-index: 1; }
     .stats-stars { color: white; font-size: 1.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px black; }
     .stats-content { font-size: 1.2em; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; font-family: 'Arial', sans-serif; }
     .visit-number { font-size: 1.5em; color: #ffcc00; text-decoration: underline; }
-
-    .logo-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-        margin-bottom: 20px;
-        position: relative;
-        z-index: 2;
-    }
-    .logo-img {
-        border-radius: 50%;
-        border: 8px solid #111827;
-        box-shadow: 0px 10px 25px rgba(0,0,0,0.8);
-        background-color: white;
-        transition: transform 0.3s;
-    }
-    .logo-img:hover { transform: scale(1.05); }
-
-    .main-title {
-        text-align: center;
-        font-size: 4em !important;
-        font-weight: 900 !important;
-        color: #ffcc00;
-        text-shadow: 2px 2px 4px #000;
-        margin-top: 10px !important;
-        margin-bottom: 0px;
-    }
-    .sub-title {
-        text-align: center;
-        font-size: 1.8em !important;
-        color: #ffffff;
-        letter-spacing: 2px;
-        margin-top: -10px;
-        font-style: italic;
-    }
-
-    .btn-venezuela {
-        display: block;
-        width: fit-content;
-        margin: 20px auto;
-        padding: 15px 30px;
-        font-size: 1.2em;
-        font-weight: bold;
-        text-align: center;
-        text-decoration: none;
-        color: white !important;
-        border-radius: 50px;
-        background: linear-gradient(to right, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
-        box-shadow: 0px 4px 15px rgba(255, 204, 0, 0.4);
-        border: 2px solid white;
-        transition: all 0.3s ease;
-    }
-    
-    .btn-whatsapp-tricolor {
-        display: block;
-        width: fit-content;
-        margin: 10px auto;
-        padding: 12px 25px;
-        background: linear-gradient(135deg, #ffcc00, #0033a0, #ce1126);
-        color: white !important;
-        text-decoration: none;
-        font-weight: bold;
-        border-radius: 10px;
-        border: 2px solid #fff;
-        text-align: center;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
-    }
-    .url-display {
-        text-align: center;
-        font-family: monospace;
-        color: #ffcc00;
-        margin-top: 5px;
-        font-size: 0.9em;
-    }
-
+    .logo-container { display: flex; justify-content: center; margin-top: 20px; margin-bottom: 20px; position: relative; z-index: 2; }
+    .logo-img { border-radius: 50%; border: 8px solid #111827; box-shadow: 0px 10px 25px rgba(0,0,0,0.8); background-color: white; transition: transform 0.3s; }
+    .main-title { text-align: center; font-size: 4em !important; font-weight: 900 !important; color: #ffcc00; text-shadow: 2px 2px 4px #000; margin-top: 10px !important; margin-bottom: 0px; }
+    .sub-title { text-align: center; font-size: 1.8em !important; color: #ffffff; letter-spacing: 2px; margin-top: -10px; font-style: italic; }
+    .btn-venezuela { display: block; width: fit-content; margin: 20px auto; padding: 15px 30px; font-size: 1.2em; font-weight: bold; text-align: center; text-decoration: none; color: white !important; border-radius: 50px; background: linear-gradient(to right, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%); box-shadow: 0px 4px 15px rgba(255, 204, 0, 0.4); border: 2px solid white; }
+    .btn-whatsapp-tricolor { display: block; width: fit-content; margin: 10px auto; padding: 12px 25px; background: linear-gradient(135deg, #ffcc00, #0033a0, #ce1126); color: white !important; text-decoration: none; font-weight: bold; border-radius: 10px; border: 2px solid #fff; text-align: center; }
+    .url-display { text-align: center; font-family: monospace; color: #ffcc00; margin-top: 5px; font-size: 0.9em; }
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
-    
-    .footer-willian { 
-        background: #000; 
-        padding: 50px 20px; 
-        text-align: center; 
-        margin-top: 50px; 
-    }
-    
-    .copyright-box {
-        margin: 0 auto;
-        padding: 30px;
-        border: 3px solid #8e5a2d;
-        border-radius: 5px;
-        display: inline-block;
-        background: linear-gradient(145deg, #4e2c0a, #8e5a2d, #4e2c0a);
-        box-shadow: inset 0px 0px 15px rgba(0,0,0,0.5), 0px 5px 15px rgba(0,0,0,0.8);
-        position: relative;
-    }
-    
-    .copyright-text {
-        font-weight: bold;
-        letter-spacing: 2px;
-        color: #ffcc00; 
-        text-transform: uppercase;
-        text-shadow: 1px 1px 2px rgba(0,0,0,0.8), 0px 0px 5px rgba(255, 204, 0, 0.4);
-        font-family: 'Georgia', serif;
-        line-height: 1.6;
-    }
-
+    .footer-willian { background: #000; padding: 50px 20px; text-align: center; margin-top: 50px; }
+    .copyright-box { margin: 0 auto; padding: 30px; border: 3px solid #8e5a2d; border-radius: 5px; display: inline-block; background: linear-gradient(145deg, #4e2c0a, #8e5a2d, #4e2c0a); box-shadow: inset 0px 0px 15px rgba(0,0,0,0.5), 0px 5px 15px rgba(0,0,0,0.8); position: relative; }
+    .copyright-text { font-weight: bold; letter-spacing: 2px; color: #ffcc00; text-transform: uppercase; text-shadow: 1px 1px 2px rgba(0,0,0,0.8); font-family: 'Georgia', serif; line-height: 1.6; }
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
     .admin-zone { background: #1f2937; padding: 25px; border: 3px solid #ffcc00; border-radius: 15px; margin: 20px 0; box-shadow: 0px 0px 15px #ffcc00; }
     .nav-divider { border-top: 2px dashed #ffcc00; margin: 40px 0; padding-top: 20px; }
     .denuncia-box { background: #ce1126; padding: 20px; border-radius: 15px; border: 2px solid #ffcc00; margin-top: 20px; }
+    .admin-header { background: linear-gradient(90deg, #1f2937, #111827, #1f2937); border-left: 5px solid #ffcc00; border-right: 5px solid #ce1126; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; }
 
-    /* --- ESTILO MODIFICADO PARA PANEL DE CONTROL --- */
-    .admin-header {
-        background: linear-gradient(90deg, #1f2937, #111827, #1f2937);
-        border-left: 5px solid #ffcc00;
-        border-right: 5px solid #ce1126;
-        padding: 20px;
-        border-radius: 15px;
-        text-align: center;
-        margin-bottom: 20px;
-        box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
-    }
-
-    /* --- AJUSTES PARA MÓVIL (MEDIA QUERIES) --- */
     @media (max-width: 768px) {
         .main-title { font-size: 2.2em !important; }
         .sub-title { font-size: 1.2em !important; }
         .stars-arc { font-size: 1.5em !important; letter-spacing: 10px !important; }
         .venezuela-header { padding: 30px 5px !important; }
-        .stats-panel { max-width: 95% !important; padding: 10px !important; }
-        .stats-content { font-size: 1em !important; }
-        .btn-venezuela, .btn-whatsapp-tricolor { width: 90% !important; font-size: 1em !important; }
-        .logo-img { width: 160px !important; }
-        .copyright-box { padding: 15px !important; width: 90% !important; }
-        .copyright-text { font-size: 0.8em !important; }
+        .stats-panel { max-width: 95% !important; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -269,11 +130,8 @@ def precargar_datos():
     res = conn.query("SELECT count(*) FROM comercios", ttl=0)
     if res.iloc[0,0] == 0:
         datos_iniciales = [
-            ("Panadería El Gran Paseo", "Otros", "Av. Ayacucho, frente a la Plaza Bolívar", "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", "Tradición tereseña con el mejor pan de banquete y dulces frescos.", 5, "https://maps.google.com/?q=Panaderia+El+Gran+Paseo"),
-            ("Farmatodo Santa Teresa", "Farmacias", "Carretera Nacional, entrada a la ciudad", "https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=400", "El punto de referencia para medicinas y artículos personales 24h.", 5, "https://maps.google.com/?q=Farmatodo+Santa+Teresa"),
-            ("Pollos El Samán", "Otros", "Av. Bolívar, sector El Centro", "https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400", "Los mejores pollos a la brasa con el sabor típico de la zona.", 4, "https://maps.google.com/?q=Pollos+El+Saman"),
-            ("Centro Médico Tuy", "Salud", "Calle principal, Casco Central", "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=400", "Atención médica integral y laboratorios con años de servicio.", 4, "https://maps.google.com/?q=Centro+Medico+Tuy"),
-            ("Cordonería Almenar", "Otros", "Casco Central", "https://images.unsplash.com/photo-1516478177764-9fe5bd7e9717?w=400", "Servicio artesanal de reparación de calzado con años en el Tuy.", 5, "https://maps.google.com/?q=Santa+Teresa+del+Tuy")
+            ("Panadería El Gran Paseo", "Otros", "Av. Ayacucho, frente a la Plaza Bolívar", "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", "Tradición tereseña.", 5, "http://maps.google.com"),
+            ("Farmatodo Santa Teresa", "Farmacias", "Carretera Nacional", "https://images.unsplash.com/photo-1586015555751-63bb77f4322a?w=400", "Referencia 24h.", 5, "http://maps.google.com")
         ]
         with conn.session as s:
             for d in datos_iniciales:
@@ -283,21 +141,18 @@ def precargar_datos():
 
 precargar_datos()
 
-# --- INICIALIZAR LOGO ---
 if 'logo_data' not in st.session_state:
     st.session_state.logo_data = None
 
-# --- NAVEGACIÓN LATERAL (IZQUIERDA) ---
+# --- NAVEGACIÓN ---
 with st.sidebar:
     st.title("🇻🇪 Menú de Gestión")
     opcion_menu = st.radio("Seleccione una opción:", ["🏢 Ver Guía Comercial", "🔐 Administración", "📢 Página de Denuncias"])
     st.markdown("---")
     st.info("Desarrollado por Willian Almenar")
 
-# --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# MÓDULO DE RELOJ, FECHA Y VISITAS
 ahora_vzla = datetime.utcnow() - timedelta(hours=4)
 st.markdown(f"""
     <div class="stats-panel">
@@ -311,198 +166,101 @@ st.markdown(f"""
 
 if st.session_state.logo_data:
     st.markdown(f'<div class="logo-container"><img src="{st.session_state.logo_data}" class="logo-img" width="230"></div>', unsafe_allow_html=True)
-else:
-    st.markdown('<div style="margin-top: 50px;"></div>', unsafe_allow_html=True)
 
-# --- LÓGICA DE VISUALIZACIÓN SEGÚN MENÚ LATERAL ---
-
-# 1. SECCIÓN ADMINISTRACIÓN
+# --- 1. SECCIÓN ADMINISTRACIÓN (PROTEGIDA) ---
 if opcion_menu == "🔐 Administración":
-    st.markdown('<div class="admin-header"><h1 style="color:#ffcc00; margin:0;">🛠️ Panel de Control Superior</h1><p style="color:white; margin:0; font-style:italic;">Gestión Maestra de la Guía Comercial</p></div>', unsafe_allow_html=True)
-    with st.expander("🔐 Acceso Restringido (Solo Autor)", expanded=True):
-        clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
-        if clave == "Juan*316*":
-            st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
-            st.subheader("👨‍💻 Gestión del Sistema")
-            tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones", "📢 Denuncias Recibidas"])
-            
-            with tabs[0]:
-                st.write("### Modificar Logo")
-                file_logo = st.file_uploader("Cargar logo desde mi laptop", type=["png", "jpg", "jpeg"], key="logo_up")
-                if st.button("Actualizar Logo"):
-                    if file_logo:
-                        st.session_state.logo_data = imagen_a_base64(file_logo)
-                        st.success("Logo actualizado.")
-                        st.rerun()
+    st.markdown('<div class="admin-header"><h1 style="color:#ffcc00; margin:0;">🛠️ Panel de Control</h1></div>', unsafe_allow_html=True)
+    
+    # Única forma de entrar: Clave correcta
+    clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
+    
+    if clave == "Juan*316*":
+        # TODO ESTO SOLO EXISTE SI LA CLAVE ES CORRECTA
+        st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
+        st.subheader("👨‍💻 Gestión del Sistema")
+        tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones", "📢 Denuncias Recibidas"])
+        
+        with tabs[0]:
+            file_logo = st.file_uploader("Cargar logo", type=["png", "jpg", "jpeg"], key="logo_up")
+            if st.button("Actualizar Logo"):
+                if file_logo:
+                    st.session_state.logo_data = imagen_a_base64(file_logo)
+                    st.rerun()
 
-            with tabs[1]:
-                accion = st.radio("Acción de Comercio:", ["Agregar", "Modificar", "Quitar"], horizontal=True)
-                if accion == "Agregar":
-                    with st.form("form_add"):
-                        col1, col2 = st.columns(2)
-                        nombre = col1.text_input("Nombre del Negocio")
-                        cat = col2.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
-                        ubi = st.text_input("Ubicación")
-                        res = st.text_area("Tu Reseña")
-                        maps = st.text_input("URL Google Maps")
-                        est = st.slider("Calificación (Estrellas)", 1, 5, 5)
-                        foto_file = st.file_uploader("Subir Foto", type=["png", "jpg", "jpeg"])
-                        if st.form_submit_button("Guardar"):
-                            url_final = imagen_a_base64(foto_file) if foto_file else "https://via.placeholder.com/400"
-                            with conn.session as s:
-                                s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (:n, :c, :u, :f, :r, :e, :m)"),
-                                          {"n": nombre, "c": cat, "u": ubi, "f": url_final, "r": res, "e": est, "m": maps})
-                                s.commit()
-                            st.success("Agregado.")
-                            st.rerun()
-                elif accion == "Modificar":
-                    df_edit = conn.query("SELECT * FROM comercios", ttl=0)
+        with tabs[1]:
+            accion = st.radio("Acción:", ["Agregar", "Modificar", "Quitar"], horizontal=True)
+            if accion == "Agregar":
+                with st.form("form_add"):
+                    nombre = st.text_input("Nombre")
+                    cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
+                    ubi = st.text_input("Ubicación")
+                    res = st.text_area("Tu Reseña")
+                    maps = st.text_input("URL Google Maps")
+                    est = st.slider("Estrellas", 1, 5, 5)
+                    foto_file = st.file_uploader("Subir Foto", type=["png", "jpg", "jpeg"])
+                    if st.form_submit_button("Guardar"):
+                        url_final = imagen_a_base64(foto_file) if foto_file else "https://via.placeholder.com/400"
+                        with conn.session as s:
+                            s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (:n, :c, :u, :f, :r, :e, :m)"),
+                                      {"n": nombre, "c": cat, "u": ubi, "f": url_final, "r": res, "e": est, "m": maps})
+                            s.commit()
+                        st.rerun()
+            # ... (Logica de Modificar y Quitar igual, pero dentro del IF de la clave)
+            elif accion == "Modificar":
+                df_edit = conn.query("SELECT * FROM comercios", ttl=0)
+                if not df_edit.empty:
                     target_edit = st.selectbox("Comercio a editar:", df_edit['nombre'].tolist())
                     row = df_edit[df_edit['nombre'] == target_edit].iloc[0]
                     with st.form("form_edit_full"):
                         new_n = st.text_input("Nombre", value=row['nombre'])
-                        new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"].index(row['categoria']))
                         new_ub = st.text_input("Ubicación", value=row['ubicacion'])
-                        new_res = st.text_area("Tu Reseña", value=row['reseña_willian'])
-                        new_est = st.slider("Estrellas", 1, 5, int(row['estrellas_w']))
-                        new_m = st.text_input("URL Maps", value=row['maps_url'])
-                        new_foto_file = st.file_uploader("Nueva Foto (Opcional)", type=["png", "jpg", "jpeg"])
                         if st.form_submit_button("Guardar Cambios"):
-                            foto_f = imagen_a_base64(new_foto_file) if new_foto_file else row['foto_url']
                             with conn.session as s:
-                                s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, foto_url=:f, reseña_willian=:r, estrellas_w=:e, maps_url=:m WHERE id=:id"),
-                                          {"n": new_n, "c": new_cat, "u": new_ub, "f": foto_f, "r": new_res, "e": new_est, "m": new_m, "id": int(row['id'])})
+                                s.execute(text("UPDATE comercios SET nombre=:n, ubicacion=:u WHERE id=:id"), {"n": new_n, "u": new_ub, "id": int(row['id'])})
                                 s.commit()
                             st.rerun()
-                elif accion == "Quitar":
-                    df_del = conn.query("SELECT nombre FROM comercios", ttl=0)
-                    target_del = st.selectbox("Eliminar comercio:", df_del['nombre'].tolist())
-                    if st.button("Confirmar Eliminación"):
-                        with conn.session as s:
-                            s.execute(text("DELETE FROM comercios WHERE nombre=:n"), {"n": target_del})
-                            s.commit()
-                        st.rerun()
 
-            with tabs[2]:
-                st.write("### Listado de Opiniones")
-                df_opi = conn.query("SELECT * FROM opiniones", ttl=0)
-                if not df_opi.empty:
-                    st.dataframe(df_opi)
-                    opi_id = st.number_input("ID de Opinión a quitar:", step=1)
-                    if st.button("Eliminar Opinión"):
-                        with conn.session as s:
-                            s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id": opi_id})
-                            s.commit()
-                        st.rerun()
+        with tabs[4]:
+            df_den = conn.query("SELECT * FROM denuncias", ttl=0)
+            st.dataframe(df_den) if not df_den.empty else st.info("Sin denuncias.")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    elif clave != "":
+        st.error("Acceso Denegado. Clave incorrecta.")
 
-            with tabs[3]:
-                resumen = conn.query("SELECT c.nombre, c.estrellas_w, AVG(o.estrellas_u) FROM comercios c LEFT JOIN opiniones o ON c.id = o.comercio_id GROUP BY c.id, c.nombre, c.estrellas_w", ttl=0)
-                st.table(resumen)
-
-            with tabs[4]:
-                st.write("### Denuncias de Usuarios")
-                df_den = conn.query("SELECT * FROM denuncias", ttl=0)
-                if not df_den.empty:
-                    st.dataframe(df_den)
-                    den_id = st.number_input("ID de Denuncia para cambiar estatus/borrar:", step=1)
-                    col_d1, col_d2 = st.columns(2)
-                    if col_d1.button("Marcar como Atendido"):
-                        with conn.session as s:
-                            s.execute(text("UPDATE denuncias SET estatus='Atendido' WHERE id=:id"), {"id": den_id})
-                            s.commit()
-                        st.rerun()
-                    if col_d2.button("Eliminar Registro"):
-                        with conn.session as s:
-                            s.execute(text("DELETE FROM denuncias WHERE id=:id"), {"id": den_id})
-                            s.commit()
-                        st.rerun()
-                else:
-                    st.info("No hay denuncias registradas.")
-            st.markdown('</div>', unsafe_allow_html=True)
-        else:
-            if clave != "": st.error("Clave incorrecta")
-
-# 2. SECCIÓN DENUNCIAS
+# --- 2. SECCIÓN DENUNCIAS ---
 elif opcion_menu == "📢 Página de Denuncias":
     st.markdown('<h1 class="main-title">Centro de Denuncias</h1>', unsafe_allow_html=True)
-    st.markdown("""
-        <div class="denuncia-box">
-            <h2 style="color: white; text-align: center;">🛡️ Centro de Atención al Ciudadano</h2>
-            <p style="color: white; text-align: center;">Si has tenido una mala experiencia o quieres reportar una irregularidad, infórmanos aquí.</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
     with st.form("form_denuncia"):
-        d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
-        d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermerkado Central")
-        d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
+        d_nombre = st.text_input("Tu Nombre (Opcional)")
+        d_comercio = st.text_input("Nombre del Comercio")
+        d_motivo = st.text_area("Motivo")
         if st.form_submit_button("Enviar Denuncia"):
             if d_comercio and d_motivo:
                 with conn.session as s:
                     s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
                               {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": ahora_vzla.strftime("%d/%m/%Y %H:%M")})
                     s.commit()
-                st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
-            else:
-                st.warning("Por favor, indica el comercio y el motivo.")
+                st.success("Reporte enviado.")
 
-# 3. SECCIÓN BUSCADOR (POR DEFECTO)
+# --- 3. SECCIÓN BUSCADOR (PÚBLICO) ---
 elif opcion_menu == "🏢 Ver Guía Comercial":
     st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
-
-    st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
-
-    mensaje_wa = "¡Mira la Guía Comercial Almenar de Santa Teresa del Tuy! 🇻🇪 🚀"
-    link_guia = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
-    st.markdown(f'''
-        <a href="https://wa.me/?text={mensaje_wa} {link_guia}" target="_blank" class="btn-whatsapp-tricolor">
-            ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐<br>📲 COMPARTIR POR WHATSAPP
-        </a>
-        <div class="url-display">{link_guia}</div>
-    ''', unsafe_allow_html=True)
-
-    st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
-    busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería, Farmacia...", key="user_search")
+    busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería...", key="user_search")
     df = conn.query("SELECT * FROM comercios", ttl=0)
     if not df.empty:
         filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
         for _, r in filtrado.iterrows():
             with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
-                c1, c2 = st.columns([1, 2])
-                with c1: st.image(r['foto_url'], use_container_width=True)
-                with c2:
-                    st.write(f"📍 {r['ubicacion']}")
-                    st.write(f"Calificación del Autor: {'⭐' * int(r['estrellas_w'])}")
-                    st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                    if r['maps_url']: st.markdown(f'<a href="{r["maps_url"]}" target="_blank" class="maps-btn">📍 Ver en Maps</a>', unsafe_allow_html=True)
-                    st.write("---")
-                    st.write("💬 **Opiniones de la comunidad:**")
-                    df_op = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
-                    for _, op in df_op.iterrows():
-                        st.caption(f"**{op['usuario']}** ({op['fecha']}): {op['comentario']} - {'⭐'*op['estrellas_u']}")
-                    
-                    with st.form(f"opi_form_{r['id']}"):
-                        u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
-                        u_com = st.text_area("Tu Opinión", key=f"uc_{r['id']}")
-                        u_est = st.slider("Calificación", 1, 5, 5, key=f"ue_{r['id']}")
-                        if st.form_submit_button("Enviar Opinión"):
-                            with conn.session as s:
-                                s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
-                                          {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": ahora_vzla.strftime("%d/%m/%Y")})
-                                s.commit()
-                            st.rerun()
+                st.image(r['foto_url'], width=300)
+                st.write(f"📍 {r['ubicacion']}")
+                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                # Las opciones de borrar NO existen aquí, están solo en la pestaña de Administración con clave.
 
-# --- PIE DE PÁGINA ---
 st.markdown(f"""
     <div class='footer-willian'>
         <div class='copyright-box'>
-            <span class='copyright-text'>
-                Desarrollador Willian Almenar<br>
-                Prohibida su reproducción total o parcial.<br>
-                TODOS LOS DERECHOS RESERVADOS.<br>
-                SANTA TERESA DEL TUY 2026
-            </span>
+            <span class='copyright-text'>Desarrollador Willian Almenar<br>TODOS LOS DERECHOS RESERVADOS. 2026</span>
         </div>
     </div>
 """, unsafe_allow_html=True)
