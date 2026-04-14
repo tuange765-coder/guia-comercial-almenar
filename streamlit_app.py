@@ -80,6 +80,13 @@ def imagen_a_base64(uploaded_file):
 # --- ESTILO VENEZUELA (AJUSTADO PARA MÓVIL) ---
 st.markdown("""
     <style>
+    /* OCULTAR GITHUB Y MENÚS DE STREAMLIT */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .stDeployButton {display:none;}
+    [data-testid="stStatusWidget"] {visibility: hidden;}
+    
     .stApp { background-color: #111827; color: #ffffff; }
     [data-testid="stSidebar"] { background-color: #1f2937; border-right: 2px solid #ffcc00; }
     
@@ -227,6 +234,18 @@ st.markdown("""
     .nav-divider { border-top: 2px dashed #ffcc00; margin: 40px 0; padding-top: 20px; }
     .denuncia-box { background: #ce1126; padding: 20px; border-radius: 15px; border: 2px solid #ffcc00; margin-top: 20px; }
 
+    /* --- ESTILO MODIFICADO PARA PANEL DE CONTROL --- */
+    .admin-header {
+        background: linear-gradient(90deg, #1f2937, #111827, #1f2937);
+        border-left: 5px solid #ffcc00;
+        border-right: 5px solid #ce1126;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        margin-bottom: 20px;
+        box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
+    }
+
     /* --- AJUSTES PARA MÓVIL (MEDIA QUERIES) --- */
     @media (max-width: 768px) {
         .main-title { font-size: 2.2em !important; }
@@ -297,7 +316,7 @@ else:
 
 # 1. SECCIÓN ADMINISTRACIÓN
 if opcion_menu == "🔐 Administración":
-    st.markdown('<h1 class="main-title">Panel de Control</h1>', unsafe_allow_html=True)
+    st.markdown('<div class="admin-header"><h1 style="color:#ffcc00; margin:0;">🛠️ Panel de Control Superior</h1><p style="color:white; margin:0; font-style:italic;">Gestión Maestra de la Guía Comercial</p></div>', unsafe_allow_html=True)
     with st.expander("🔐 Acceso Restringido (Solo Autor)", expanded=True):
         clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
         if clave == "Juan*316*":
