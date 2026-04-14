@@ -77,7 +77,7 @@ def imagen_a_base64(uploaded_file):
         return f"data:image/png;base64,{base64.b64encode(bytes_data).decode()}"
     return None
 
-# --- ESTILO VENEZUELA (MODIFICADO PARA IMPACTO VISUAL) ---
+# --- ESTILO VENEZUELA ---
 st.markdown("""
     <style>
     .stApp { background-color: #111827; color: #ffffff; }
@@ -121,8 +121,8 @@ st.markdown("""
     .logo-container {
         display: flex;
         justify-content: center;
-        margin-top: -140px; /* Logo más arriba */
-        margin-bottom: 10px;
+        margin-top: 20px;
+        margin-bottom: 20px;
         position: relative;
         z-index: 2;
     }
@@ -141,7 +141,7 @@ st.markdown("""
         font-weight: 900 !important;
         color: #ffcc00;
         text-shadow: 2px 2px 4px #000;
-        margin-top: 20px !important; /* Espacio para que el logo no tape el título */
+        margin-top: 10px !important;
         margin-bottom: 0px;
     }
     .sub-title {
@@ -252,6 +252,10 @@ precargar_datos()
 if 'logo_data' not in st.session_state:
     st.session_state.logo_data = None
 
+# --- NAVEGACIÓN (CONTROL DE VISIBILIDAD) ---
+st.sidebar.title("🇻🇪 Menú de Navegación")
+opcion_menu = st.sidebar.radio("Ir a:", ["🏢 Guía Comercial", "📢 Denuncias", "🔐 Administración"])
+
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
@@ -272,184 +276,180 @@ if st.session_state.logo_data:
 else:
     st.markdown('<div style="margin-top: 50px;"></div>', unsafe_allow_html=True)
 
-st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
+# --- SECCIÓN: ADMINISTRACIÓN ---
+if opcion_menu == "🔐 Administración":
+    with st.expander("🔐 Gestión Administrativa (Solo Autor)", expanded=True):
+        clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
+        if clave == "Juan*316*":
+            st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
+            st.subheader("👨‍💻 Panel de Control Total")
+            tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones", "📢 Denuncias Recibidas"])
+            
+            with tabs[0]:
+                st.write("### Modificar Logo")
+                file_logo = st.file_uploader("Cargar logo desde mi laptop", type=["png", "jpg", "jpeg"], key="logo_up")
+                if st.button("Actualizar Logo"):
+                    if file_logo:
+                        st.session_state.logo_data = imagen_a_base64(file_logo)
+                        st.success("Logo actualizado.")
+                        st.rerun()
 
-st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
+            with tabs[1]:
+                accion = st.radio("Acción de Comercio:", ["Agregar", "Modificar", "Quitar"], horizontal=True)
+                if accion == "Agregar":
+                    with st.form("form_add"):
+                        col1, col2 = st.columns(2)
+                        nombre = col1.text_input("Nombre del Negocio")
+                        cat = col2.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
+                        ubi = st.text_input("Ubicación")
+                        res = st.text_area("Tu Reseña")
+                        maps = st.text_input("URL Google Maps")
+                        est = st.slider("Calificación (Estrellas)", 1, 5, 5)
+                        foto_file = st.file_uploader("Subir Foto", type=["png", "jpg", "jpeg"])
+                        if st.form_submit_button("Guardar"):
+                            url_final = imagen_a_base64(foto_file) if foto_file else "https://via.placeholder.com/400"
+                            with conn.session as s:
+                                s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (:n, :c, :u, :f, :r, :e, :m)"),
+                                          {"n": nombre, "c": cat, "u": ubi, "f": url_final, "r": res, "e": est, "m": maps})
+                                s.commit()
+                            st.success("Agregado.")
+                            st.rerun()
+                elif accion == "Modificar":
+                    df_edit = conn.query("SELECT * FROM comercios", ttl=0)
+                    target_edit = st.selectbox("Comercio a editar:", df_edit['nombre'].tolist())
+                    row = df_edit[df_edit['nombre'] == target_edit].iloc[0]
+                    with st.form("form_edit_full"):
+                        new_n = st.text_input("Nombre", value=row['nombre'])
+                        new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"].index(row['categoria']))
+                        new_ub = st.text_input("Ubicación", value=row['ubicacion'])
+                        new_res = st.text_area("Tu Reseña", value=row['reseña_willian'])
+                        new_est = st.slider("Estrellas", 1, 5, int(row['estrellas_w']))
+                        new_m = st.text_input("URL Maps", value=row['maps_url'])
+                        new_foto_file = st.file_uploader("Nueva Foto (Opcional)", type=["png", "jpg", "jpeg"])
+                        if st.form_submit_button("Guardar Cambios"):
+                            foto_f = imagen_a_base64(new_foto_file) if new_foto_file else row['foto_url']
+                            with conn.session as s:
+                                s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, foto_url=:f, reseña_willian=:r, estrellas_w=:e, maps_url=:m WHERE id=:id"),
+                                          {"n": new_n, "c": new_cat, "u": new_ub, "f": foto_f, "r": new_res, "e": new_est, "m": new_m, "id": int(row['id'])})
+                                s.commit()
+                            st.rerun()
+                elif accion == "Quitar":
+                    df_del = conn.query("SELECT nombre FROM comercios", ttl=0)
+                    target_del = st.selectbox("Eliminar comercio:", df_del['nombre'].tolist())
+                    if st.button("Confirmar Eliminación"):
+                        with conn.session as s:
+                            s.execute(text("DELETE FROM comercios WHERE nombre=:n"), {"n": target_del})
+                            s.commit()
+                        st.rerun()
 
-mensaje_wa = "¡Mira la Guía Comercial Almenar de Santa Teresa del Tuy! 🇻🇪 🚀"
-link_guia = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
-st.markdown(f'''
-    <a href="https://wa.me/?text={mensaje_wa} {link_guia}" target="_blank" class="btn-whatsapp-tricolor">
-        ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐<br>📲 COMPARTIR POR WHATSAPP
-    </a>
-    <div class="url-display">{link_guia}</div>
-''', unsafe_allow_html=True)
+            with tabs[2]:
+                st.write("### Listado de Opiniones")
+                df_opi = conn.query("SELECT * FROM opiniones", ttl=0)
+                if not df_opi.empty:
+                    st.dataframe(df_opi)
+                    opi_id = st.number_input("ID de Opinión a quitar:", step=1)
+                    if st.button("Eliminar Opinión"):
+                        with conn.session as s:
+                            s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id": opi_id})
+                            s.commit()
+                        st.rerun()
 
-st.markdown('<br>', unsafe_allow_html=True)
+            with tabs[3]:
+                resumen = conn.query("SELECT c.nombre, c.estrellas_w, AVG(o.estrellas_u) FROM comercios c LEFT JOIN opiniones o ON c.id = o.comercio_id GROUP BY c.id, c.nombre, c.estrellas_w", ttl=0)
+                st.table(resumen)
 
-# --- ACCESO DE ADMINISTRADOR ---
-with st.expander("🔐 Gestión Administrativa (Solo Autor)"):
-    clave = st.text_input("Ingresa clave para activar edición:", type="password", placeholder="Clave de Willian...")
+            with tabs[4]:
+                st.write("### Denuncias de Usuarios")
+                df_den = conn.query("SELECT * FROM denuncias", ttl=0)
+                if not df_den.empty:
+                    st.dataframe(df_den)
+                    den_id = st.number_input("ID de Denuncia para cambiar estatus/borrar:", step=1)
+                    col_d1, col_d2 = st.columns(2)
+                    if col_d1.button("Marcar como Atendido"):
+                        with conn.session as s:
+                            s.execute(text("UPDATE denuncias SET estatus='Atendido' WHERE id=:id"), {"id": den_id})
+                            s.commit()
+                        st.rerun()
+                    if col_d2.button("Eliminar Registro"):
+                        with conn.session as s:
+                            s.execute(text("DELETE FROM denuncias WHERE id=:id"), {"id": den_id})
+                            s.commit()
+                        st.rerun()
+                else:
+                    st.info("No hay denuncias registradas.")
+            st.markdown('</div>', unsafe_allow_html=True)
+        else:
+            if clave != "": st.error("Clave incorrecta")
+
+# --- SECCIÓN: DENUNCIAS ---
+elif opcion_menu == "📢 Denuncias":
+    st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
+    with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS", expanded=True):
+        st.markdown("""
+            <div class="denuncia-box">
+                <h2 style="color: white; text-align: center;">🛡️ Centro de Atención al Ciudadano</h2>
+                <p style="color: white; text-align: center;">Si has tenido una mala experiencia o quieres reportar una irregularidad, infórmanos aquí.</p>
+            </div>
+        """, unsafe_allow_html=True)
+        with st.form("form_denuncia"):
+            d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
+            d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermerkado Central")
+            d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
+            if st.form_submit_button("Enviar Denuncia"):
+                if d_comercio and d_motivo:
+                    with conn.session as s:
+                        s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
+                                  {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": ahora_vzla.strftime("%d/%m/%Y %H:%M")})
+                        s.commit()
+                    st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
+                else:
+                    st.warning("Por favor, indica el comercio y el motivo.")
+
+# --- SECCIÓN: GUÍA COMERCIAL (BUSCADOR) ---
+elif opcion_menu == "🏢 Guía Comercial":
+    st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
+    st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
     
-    if clave == "Juan*316*":
-        st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
-        st.subheader("👨‍💻 Panel de Control Total")
-        tabs = st.tabs(["🖼️ Logo", "🏢 Comercios", "💬 Opiniones", "⭐ Calificaciones", "📢 Denuncias Recibidas"])
-        
-        with tabs[0]:
-            st.write("### Modificar Logo")
-            file_logo = st.file_uploader("Cargar logo desde mi laptop", type=["png", "jpg", "jpeg"], key="logo_up")
-            if st.button("Actualizar Logo"):
-                if file_logo:
-                    st.session_state.logo_data = imagen_a_base64(file_logo)
-                    st.success("Logo actualizado.")
-                    st.rerun()
+    mensaje_wa = "¡Mira la Guía Comercial Almenar de Santa Teresa del Tuy! 🇻🇪 🚀"
+    link_guia = "https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app"
+    st.markdown(f'''
+        <a href="https://wa.me/?text={mensaje_wa} {link_guia}" target="_blank" class="btn-whatsapp-tricolor">
+            ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐ ⭐<br>📲 COMPARTIR POR WHATSAPP
+        </a>
+        <div class="url-display">{link_guia}</div>
+    ''', unsafe_allow_html=True)
 
-        with tabs[1]:
-            accion = st.radio("Acción de Comercio:", ["Agregar", "Modificar", "Quitar"], horizontal=True)
-            if accion == "Agregar":
-                with st.form("form_add"):
-                    col1, col2 = st.columns(2)
-                    nombre = col1.text_input("Nombre del Negocio")
-                    cat = col2.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
-                    ubi = st.text_input("Ubicación")
-                    res = st.text_area("Tu Reseña")
-                    maps = st.text_input("URL Google Maps")
-                    est = st.slider("Calificación (Estrellas)", 1, 5, 5)
-                    foto_file = st.file_uploader("Subir Foto", type=["png", "jpg", "jpeg"])
-                    if st.form_submit_button("Guardar"):
-                        url_final = imagen_a_base64(foto_file) if foto_file else "https://via.placeholder.com/400"
-                        with conn.session as s:
-                            s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (:n, :c, :u, :f, :r, :e, :m)"),
-                                      {"n": nombre, "c": cat, "u": ubi, "f": url_final, "r": res, "e": est, "m": maps})
-                            s.commit()
-                        st.success("Agregado.")
-                        st.rerun()
-            elif accion == "Modificar":
-                df_edit = conn.query("SELECT * FROM comercios", ttl=0)
-                target_edit = st.selectbox("Comercio a editar:", df_edit['nombre'].tolist())
-                row = df_edit[df_edit['nombre'] == target_edit].iloc[0]
-                with st.form("form_edit_full"):
-                    new_n = st.text_input("Nombre", value=row['nombre'])
-                    new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"].index(row['categoria']))
-                    new_ub = st.text_input("Ubicación", value=row['ubicacion'])
-                    new_res = st.text_area("Tu Reseña", value=row['reseña_willian'])
-                    new_est = st.slider("Estrellas", 1, 5, int(row['estrellas_w']))
-                    new_m = st.text_input("URL Maps", value=row['maps_url'])
-                    new_foto_file = st.file_uploader("Nueva Foto (Opcional)", type=["png", "jpg", "jpeg"])
-                    if st.form_submit_button("Guardar Cambios"):
-                        foto_f = imagen_a_base64(new_foto_file) if new_foto_file else row['foto_url']
-                        with conn.session as s:
-                            s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, foto_url=:f, reseña_willian=:r, estrellas_w=:e, maps_url=:m WHERE id=:id"),
-                                      {"n": new_n, "c": new_cat, "u": new_ub, "f": foto_f, "r": new_res, "e": new_est, "m": new_m, "id": int(row['id'])})
-                            s.commit()
-                        st.rerun()
-            elif accion == "Quitar":
-                df_del = conn.query("SELECT nombre FROM comercios", ttl=0)
-                target_del = st.selectbox("Eliminar comercio:", df_del['nombre'].tolist())
-                if st.button("Confirmar Eliminación"):
-                    with conn.session as s:
-                        s.execute(text("DELETE FROM comercios WHERE nombre=:n"), {"n": target_del})
-                        s.commit()
-                    st.rerun()
-
-        with tabs[2]:
-            st.write("### Listado de Opiniones")
-            df_opi = conn.query("SELECT * FROM opiniones", ttl=0)
-            if not df_opi.empty:
-                st.dataframe(df_opi)
-                opi_id = st.number_input("ID de Opinión a quitar:", step=1)
-                if st.button("Eliminar Opinión"):
-                    with conn.session as s:
-                        s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id": opi_id})
-                        s.commit()
-                    st.rerun()
-
-        with tabs[3]:
-            resumen = conn.query("SELECT c.nombre, c.estrellas_w, AVG(o.estrellas_u) FROM comercios c LEFT JOIN opiniones o ON c.id = o.comercio_id GROUP BY c.id, c.nombre, c.estrellas_w", ttl=0)
-            st.table(resumen)
-
-        with tabs[4]:
-            st.write("### Denuncias de Usuarios")
-            df_den = conn.query("SELECT * FROM denuncias", ttl=0)
-            if not df_den.empty:
-                st.dataframe(df_den)
-                den_id = st.number_input("ID de Denuncia para cambiar estatus/borrar:", step=1)
-                col_d1, col_d2 = st.columns(2)
-                if col_d1.button("Marcar como Atendido"):
-                    with conn.session as s:
-                        s.execute(text("UPDATE denuncias SET estatus='Atendido' WHERE id=:id"), {"id": den_id})
-                        s.commit()
-                    st.rerun()
-                if col_d2.button("Eliminar Registro"):
-                    with conn.session as s:
-                        s.execute(text("DELETE FROM denuncias WHERE id=:id"), {"id": den_id})
-                        s.commit()
-                    st.rerun()
-            else:
-                st.info("No hay denuncias registradas.")
-
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        if clave != "": st.error("Clave incorrecta")
-
-# --- SECCIÓN DE DENUNCIAS PÚBLICAS ---
-st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
-with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS"):
-    st.markdown("""
-        <div class="denuncia-box">
-            <h2 style="color: white; text-align: center;">🛡️ Centro de Atención al Ciudadano</h2>
-            <p style="color: white; text-align: center;">Si has tenido una mala experiencia o quieres reportar una irregularidad, infórmanos aquí.</p>
-        </div>
-    """, unsafe_allow_html=True)
-    
-    with st.form("form_denuncia"):
-        d_nombre = st.text_input("Tu Nombre (Opcional)", placeholder="Anónimo")
-        d_comercio = st.text_input("Nombre del Comercio/Lugar", placeholder="Ej: Supermerkado Central")
-        d_motivo = st.text_area("Describe lo sucedido (Maltrato, Precios, Higiene, etc.)")
-        if st.form_submit_button("Enviar Denuncia"):
-            if d_comercio and d_motivo:
-                with conn.session as s:
-                    s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
-                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": ahora_vzla.strftime("%d/%m/%Y %H:%M")})
-                    s.commit()
-                st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
-            else:
-                st.warning("Por favor, indica el comercio y el motivo.")
-
-# --- BUSCADOR PÚBLICO ---
-st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
-busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería, Farmacia...", key="user_search")
-df = conn.query("SELECT * FROM comercios", ttl=0)
-
-if not df.empty:
-    filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
-    for _, r in filtrado.iterrows():
-        with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
-            c1, c2 = st.columns([1, 2])
-            with c1: st.image(r['foto_url'], use_container_width=True)
-            with c2:
-                st.write(f"📍 {r['ubicacion']}")
-                st.write(f"Calificación del Autor: {'⭐' * int(r['estrellas_w'])}")
-                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
-                if r['maps_url']: st.markdown(f'<a href="{r["maps_url"]}" target="_blank" class="maps-btn">📍 Ver en Maps</a>', unsafe_allow_html=True)
-                st.write("---")
-                st.write("💬 **Opiniones de la comunidad:**")
-                df_op = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
-                for _, op in df_op.iterrows():
-                    st.caption(f"**{op['usuario']}** ({op['fecha']}): {op['comentario']} - {'⭐'*op['estrellas_u']}")
-                
-                with st.form(f"opi_form_{r['id']}"):
-                    u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
-                    u_com = st.text_area("Tu Opinión", key=f"uc_{r['id']}")
-                    u_est = st.slider("Calificación", 1, 5, 5, key=f"ue_{r['id']}")
-                    if st.form_submit_button("Enviar Opinión"):
-                        with conn.session as s:
-                            s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
-                                      {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": ahora_vzla.strftime("%d/%m/%Y")})
-                            s.commit()
-                        st.rerun()
+    st.markdown('<br>', unsafe_allow_html=True)
+    st.markdown('<div class="nav-divider"></div>', unsafe_allow_html=True)
+    busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería, Farmacia...", key="user_search")
+    df = conn.query("SELECT * FROM comercios", ttl=0)
+    if not df.empty:
+        filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
+        for _, r in filtrado.iterrows():
+            with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
+                c1, c2 = st.columns([1, 2])
+                with c1: st.image(r['foto_url'], use_container_width=True)
+                with c2:
+                    st.write(f"📍 {r['ubicacion']}")
+                    st.write(f"Calificación del Autor: {'⭐' * int(r['estrellas_w'])}")
+                    st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                    if r['maps_url']: st.markdown(f'<a href="{r["maps_url"]}" target="_blank" class="maps-btn">📍 Ver en Maps</a>', unsafe_allow_html=True)
+                    st.write("---")
+                    st.write("💬 **Opiniones de la comunidad:**")
+                    df_op = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
+                    for _, op in df_op.iterrows():
+                        st.caption(f"**{op['usuario']}** ({op['fecha']}): {op['comentario']} - {'⭐'*op['estrellas_u']}")
+                    with st.form(f"opi_form_{r['id']}"):
+                        u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
+                        u_com = st.text_area("Tu Opinión", key=f"uc_{r['id']}")
+                        u_est = st.slider("Calificación", 1, 5, 5, key=f"ue_{r['id']}")
+                        if st.form_submit_button("Enviar Opinión"):
+                            with conn.session as s:
+                                s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
+                                          {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": ahora_vzla.strftime("%d/%m/%Y")})
+                                s.commit()
+                            st.rerun()
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
