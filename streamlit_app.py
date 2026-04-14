@@ -104,6 +104,28 @@ st.markdown("""
         font-style: italic;
     }
 
+    /* Botón Bandera de Venezuela */
+    .btn-venezuela {
+        display: block;
+        width: fit-content;
+        margin: 20px auto;
+        padding: 15px 30px;
+        font-size: 1.2em;
+        font-weight: bold;
+        text-align: center;
+        text-decoration: none;
+        color: white !important;
+        border-radius: 50px;
+        background: linear-gradient(to right, #ffcc00 33%, #0033a0 33%, #0033a0 66%, #ce1126 66%);
+        box-shadow: 0px 4px 15px rgba(255, 204, 0, 0.4);
+        border: 2px solid white;
+        transition: all 0.3s ease;
+    }
+    .btn-venezuela:hover {
+        transform: scale(1.1);
+        box-shadow: 0px 6px 20px rgba(206, 17, 38, 0.6);
+    }
+
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
     .footer-willian { background: #000; color: #fff; padding: 30px; text-align: center; border-top: 4px solid #ffcc00; margin-top: 50px; }
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
@@ -147,6 +169,10 @@ else:
 
 st.markdown('<h1 class="main-title">Guía Comercial Almenar</h1>', unsafe_allow_html=True)
 st.markdown('<p class="sub-title">🚀 El Corazón Comercial de Santa Teresa del Tuy</p>', unsafe_allow_html=True)
+
+# Botón Bandera de Venezuela con el enlace solicitado
+st.markdown('<a href="https://guia-comercial-almenar-cpe3yfntxmzncn2e7wgueh.streamlit.app" target="_blank" class="btn-venezuela">🇻🇪 Visitar Guía Oficial</a>', unsafe_allow_html=True)
+
 st.markdown('<br>', unsafe_allow_html=True)
 
 # --- ACCESO DE ADMINISTRADOR (Aislado) ---
