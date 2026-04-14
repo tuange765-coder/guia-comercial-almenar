@@ -1,6 +1,6 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta  # Añadido timedelta para ajuste de zona horaria
+from datetime import datetime, timedelta
 from sqlalchemy import text
 from PIL import Image, ImageFile
 import base64
@@ -60,7 +60,6 @@ with conn.session as s:
     s.commit()
 
 # --- LÓGICA DE VISITAS (PERSISTENTE) ---
-# Se incrementa solo una vez por sesión de navegador para no inflar el número artificialmente
 if 'visitado' not in st.session_state:
     with conn.session as s:
         s.execute(text("UPDATE visitas SET conteo = conteo + 1 WHERE id = 1"))
@@ -84,7 +83,6 @@ st.markdown("""
     .stApp { background-color: #111827; color: #ffffff; }
     [data-testid="stSidebar"] { background-color: #1f2937; }
     
-    /* Encabezado Tricolor llamativo */
     .venezuela-header {
         text-align: center;
         padding: 60px 10px;
@@ -104,22 +102,20 @@ st.markdown("""
         margin-bottom: 20px;
     }
 
-    /* Panel de Estadísticas Tricolor - COMPACTO */
     .stats-panel {
         background: linear-gradient(to right, #ffcc00, #0033a0, #ce1126);
-        padding: 10px 20px;
-        border-radius: 15px;
-        border: 2px solid white;
+        padding: 15px;
+        border-radius: 20px;
+        border: 4px solid white;
         text-align: center;
-        margin: 10px auto;
-        max-width: 600px;
-        box-shadow: 0px 5px 15px rgba(0,0,0,0.5);
+        margin: 20px auto;
+        max-width: 700px;
+        box-shadow: 0px 10px 25px rgba(0,0,0,0.6);
     }
-    .stats-stars { color: white; font-size: 1.2em; margin-bottom: 5px; }
-    .stats-content { font-size: 1em; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; font-family: 'Arial', sans-serif; }
-    .visit-number { font-size: 1.2em; color: #ffcc00; }
+    .stats-stars { color: white; font-size: 1.5em; margin-bottom: 5px; text-shadow: 2px 2px 4px black; }
+    .stats-content { font-size: 1.2em; font-weight: bold; color: white; text-shadow: 2px 2px 4px black; font-family: 'Arial', sans-serif; }
+    .visit-number { font-size: 1.5em; color: #ffcc00; text-decoration: underline; }
 
-    /* Estilo para el Logo Centrado y Grande */
     .logo-container {
         display: flex;
         justify-content: center;
@@ -135,7 +131,6 @@ st.markdown("""
     }
     .logo-img:hover { transform: scale(1.05); }
 
-    /* Títulos Impactantes */
     .main-title {
         text-align: center;
         font-size: 4em !important;
@@ -153,7 +148,6 @@ st.markdown("""
         font-style: italic;
     }
 
-    /* Botón Bandera de Venezuela */
     .btn-venezuela {
         display: block;
         width: fit-content;
@@ -170,12 +164,7 @@ st.markdown("""
         border: 2px solid white;
         transition: all 0.3s ease;
     }
-    .btn-venezuela:hover {
-        transform: scale(1.1);
-        box-shadow: 0px 6px 20px rgba(206, 17, 38, 0.6);
-    }
     
-    /* Botón Compartir WhatsApp Tricolor */
     .btn-whatsapp-tricolor {
         display: block;
         width: fit-content;
@@ -200,7 +189,6 @@ st.markdown("""
 
     input, textarea, [data-baseweb="select"] { background-color: #ffffff !important; color: #000000 !important; font-weight: bold !important; }
     
-    /* PIE DE PÁGINA - PLACA DE BRONCE CON LETRAS DORADAS */
     .footer-willian { 
         background: #000; 
         padding: 50px 20px; 
@@ -219,9 +207,6 @@ st.markdown("""
         position: relative;
     }
     
-    .copyright-box::before { content: "•"; color: #222; position: absolute; top: 5px; left: 10px; font-size: 20px; }
-    .copyright-box::after { content: "•"; color: #222; position: absolute; bottom: 5px; right: 10px; font-size: 20px; }
-
     .copyright-text {
         font-weight: bold;
         letter-spacing: 2px;
@@ -235,7 +220,6 @@ st.markdown("""
     .maps-btn { display: inline-block; padding: 10px 20px; background-color: #ea4335; color: white !important; text-decoration: none; border-radius: 5px; font-weight: bold; margin-top: 10px; }
     .admin-zone { background: #1f2937; padding: 25px; border: 3px solid #ffcc00; border-radius: 15px; margin: 20px 0; box-shadow: 0px 0px 15px #ffcc00; }
     .nav-divider { border-top: 2px dashed #ffcc00; margin: 40px 0; padding-top: 20px; }
-    
     .denuncia-box { background: #ce1126; padding: 20px; border-radius: 15px; border: 2px solid #ffcc00; margin-top: 20px; }
     </style>
     """, unsafe_allow_html=True)
@@ -266,14 +250,13 @@ if 'logo_data' not in st.session_state:
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 
-# MÓDULO DE RELOJ, FECHA Y VISITAS (AJUSTADO A VENEZUELA Y COMPACTO)
-# Se usa UTC-4 para la hora de Venezuela
-hora_venezuela = datetime.utcnow() - timedelta(hours=4)
+# MÓDULO DE RELOJ, FECHA Y VISITAS (AJUSTADO A VENEZUELA UTC-4)
+ahora_vzla = datetime.utcnow() - timedelta(hours=4)
 st.markdown(f"""
     <div class="stats-panel">
         <div class="stats-stars">★ ★ ★ ★ ★ ★ ★ ★</div>
         <div class="stats-content">
-            📅 {hora_venezuela.strftime('%d/%m/%Y')} | ⏰ {hora_venezuela.strftime('%I:%M:%S %p')} VZLA<br>
+            🇻🇪 {ahora_vzla.strftime('%d/%m/%Y')} | ⏰ {ahora_vzla.strftime('%I:%M:%S %p')}<br>
             <span class="visit-number">🚀 VISITAS: {total_visitas}</span>
         </div>
     </div>
@@ -424,7 +407,7 @@ with st.expander("📢 PÁGINA DE DENUNCIAS Y RECLAMOS"):
             if d_comercio and d_motivo:
                 with conn.session as s:
                     s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES (:d, :c, :m, :f)"),
-                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": hora_venezuela.strftime("%d/%m/%Y %H:%M")})
+                              {"d": d_nombre if d_nombre else "Anónimo", "c": d_comercio, "m": d_motivo, "f": ahora_vzla.strftime("%d/%m/%Y %H:%M")})
                     s.commit()
                 st.success("Denuncia enviada correctamente. Willian Almenar revisará este reporte.")
             else:
@@ -459,7 +442,7 @@ if not df.empty:
                     if st.form_submit_button("Enviar Opinión"):
                         with conn.session as s:
                             s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
-                                      {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": hora_venezuela.strftime("%d/%m/%Y")})
+                                      {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": ahora_vzla.strftime("%d/%m/%Y")})
                             s.commit()
                         st.rerun()
 
