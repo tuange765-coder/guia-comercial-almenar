@@ -61,8 +61,6 @@ st.markdown("""
 def precargar_datos():
     res = conn.query("SELECT count(*) FROM comercios", ttl=0)
     cuenta_actual = res.iloc[0,0]
-
-    # Paso 1: Cargar los primeros 5 si la tabla está totalmente vacía
     if cuenta_actual == 0:
         datos_iniciales = [
             ("Panadería El Gran Paseo", "Otros", "Av. Ayacucho, frente a la Plaza Bolívar", "https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400", "Tradición tereseña con el mejor pan de banquete y dulces frescos.", 5, "https://maps.google.com/?q=Panaderia+El+Gran+Paseo"),
@@ -78,12 +76,10 @@ def precargar_datos():
             s.commit()
         cuenta_actual = 5
 
-    # Paso 2: Cargar el resto si solo hay 5 o menos
     if cuenta_actual <= 5:
         datos_faltantes = [
             ("Licorería El Recreo", "Otros", "Sector El Rincón", "https://images.unsplash.com/photo-1569937756447-1d44f657dc69?w=400", "Gran variedad de bebidas y atención rápida.", 4, "https://maps.google.com"),
             ("Supermercado Unicasa", "Supermercados", "C.C. Paseo Tuy", "https://images.unsplash.com/photo-1542838132-92c53300491e?w=400", "Víveres frescos y excelente atención en el centro comercial.", 5, "https://maps.google.com"),
-            # --- AGREGA AQUÍ LOS OTROS 13 NEGOCIOS SIGUIENDO EL MISMO FORMATO ---
             ("Repuestos El Tuy", "Otros", "Av. Principal", "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400", "Todo para su vehículo con asesoría experta.", 5, "https://maps.google.com"),
         ]
         with conn.session as s:
@@ -94,58 +90,75 @@ def precargar_datos():
 
 precargar_datos()
 
-# --- PANEL ADMIN (SIDEBAR) ---
+# --- PANEL ADMIN (BARRA LATERAL) ---
 st.sidebar.title("🛠️ Administración")
-admin_pass = st.sidebar.text_input("Clave de Acceso", type="password")
+admin_pass = st.sidebar.text_input("Ingrese Clave para Gestionar", type="password", help="Escribe aquí tu clave para activar el panel central")
 
 # --- CUERPO PRINCIPAL ---
 st.markdown('<div class="venezuela-header"><div class="stars-arc">★ ★ ★ ★ ★ ★ ★ ★</div></div>', unsafe_allow_html=True)
 st.title("🚀 Guía Comercial Almenar")
 st.write("#### Santa Teresa del Tuy: Información confiable para nuestra gente")
 
-# --- NUEVO PANEL DE ADMINISTRADOR SUPERIOR ---
+# --- LÓGICA DEL PANEL DE ADMINISTRADOR SUPERIOR ---
 if admin_pass == "Juan*316*":
     st.markdown('<div class="admin-zone">', unsafe_allow_html=True)
     st.subheader("👨‍💻 Panel de Gestión de Willian")
     
-    op_admin = st.radio("Seleccione tarea:", ["Añadir Nuevo Comercio", "Modificar Existente", "Eliminar Registro"], horizontal=True)
+    op_admin = st.radio("Seleccione tarea:", ["Añadir Nuevo Comercio", "Eliminar Registro", "Ver Datos Técnicos"], horizontal=True)
     
     if op_admin == "Añadir Nuevo Comercio":
         with st.form("top_add_form"):
             col1, col2 = st.columns(2)
-            n_name = col1.text_input("Nombre del Comercio")
+            n_name = col1.text_input("Nombre del Negocio")
             n_cat = col2.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
             n_ub = st.text_input("Ubicación")
-            n_res = st.text_area("Tu Reseña")
+            n_res = st.text_area("Tu Reseña como Autor")
             n_url_map = st.text_input("URL Google Maps")
-            n_est = st.slider("Estrellas", 1, 5, 5)
-            if st.form_submit_button("✅ Guardar en Neon"):
-                with conn.session as s:
-                    s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (:nombre, :cat, :ub, :foto, :res, :est, :maps)"),
-                              {"nombre": n_name, "cat": n_cat, "ub": n_ub, "foto": "https://via.placeholder.com/400", "res": n_res, "est": n_est, "maps": n_url_map})
-                    s.commit()
-                st.success("¡Comercio guardado exitosamente!")
-                st.rerun()
+            n_est = st.slider("Estrellas Almenar", 1, 5, 5)
+            if st.form_submit_button("✅ Guardar en Base de Datos"):
+                if n_name and n_ub:
+                    with conn.session as s:
+                        s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) VALUES (:nombre, :cat, :ub, :foto, :res, :est, :maps)"),
+                                  {"nombre": n_name, "cat": n_cat, "ub": n_ub, "foto": "https://via.placeholder.com/400", "res": n_res, "est": n_est, "maps": n_url_map})
+                        s.commit()
+                    st.success(f"¡{n_name} ha sido publicado!")
+                    st.rerun()
+                else:
+                    st.error("Por favor rellena al menos el nombre y la ubicación.")
 
     elif op_admin == "Eliminar Registro":
         df_del = conn.query("SELECT id, nombre FROM comercios", ttl=0)
-        target_del = st.selectbox("Comercio a eliminar:", df_del['nombre'].tolist())
-        if st.button("🚨 Confirmar Eliminación"):
-            id_to_del = df_del[df_del['nombre'] == target_del]['id'].values[0]
-            with conn.session as s:
-                s.execute(text("DELETE FROM comercios WHERE id=:id"), {"id": int(id_to_del)})
-                s.commit()
-            st.warning(f"Se ha eliminado {target_del}")
-            st.rerun()
+        if not df_del.empty:
+            target_del = st.selectbox("Elija el comercio que desea borrar permanentemente:", df_del['nombre'].tolist())
+            if st.button("🚨 Eliminar Ahora"):
+                id_to_del = df_del[df_del['nombre'] == target_del]['id'].values[0]
+                with conn.session as s:
+                    s.execute(text("DELETE FROM comercios WHERE id=:id"), {"id": int(id_to_del)})
+                    s.commit()
+                st.warning(f"Se ha borrado: {target_del}")
+                st.rerun()
+    
+    elif op_admin == "Ver Datos Técnicos":
+        df_tech = conn.query("SELECT * FROM comercios", ttl=0)
+        st.dataframe(df_tech)
             
     st.markdown('</div>', unsafe_allow_html=True)
+else:
+    # Si la clave no es correcta o está vacía, mostramos un recordatorio discreto
+    if admin_pass != "":
+        st.sidebar.error("Clave incorrecta")
 
-# --- BUSCADOR ---
-busq = st.text_input("🔍 ¿Qué estás buscando hoy?", placeholder="Ej: Farmacia, Repuestos...")
+# --- BUSCADOR PÚBLICO ---
+busq = st.text_input("🔍 ¿Qué estás buscando hoy?", placeholder="Ej: Farmacia, Panadería, Repuestos...")
 df = conn.query("SELECT * FROM comercios", ttl=0)
 
 if not df.empty:
     filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
+    
+    if filtrado.empty:
+        st.info("No encontramos negocios con ese nombre, pero aquí tienes el resto del catálogo:")
+        filtrado = df
+
     for _, r in filtrado.iterrows():
         with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
             col1, col2 = st.columns([1, 2])
@@ -153,9 +166,9 @@ if not df.empty:
                 st.image(r['foto_url'], use_container_width=True)
             with col2:
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                st.write(f"⭐ **Calificación:** {'⭐' * int(r['estrellas_w'])}")
-                st.info(f"**Reseña:** {r['reseña_willian']}")
+                st.write(f"⭐ **Calificación Almenar:** {'⭐' * int(r['estrellas_w'])}")
+                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
                 if r['maps_url']:
                     st.markdown(f'<a href="{r["maps_url"]}" target="_blank" class="maps-btn">📍 Ver en Google Maps</a>', unsafe_allow_html=True)
 
-st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Venezuela.<br>© {datetime.now().year} - Reflexiones de Willian Almenar</div>", unsafe_allow_html=True)
+st.markdown(f"<div class='footer-willian'>📍 Santa Teresa del Tuy, Miranda, Venezuela.<br>© {datetime.now().year} - Reflexiones de Willian Almenar</div>", unsafe_allow_html=True)
