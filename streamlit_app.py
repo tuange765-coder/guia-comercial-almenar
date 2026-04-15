@@ -140,6 +140,15 @@ st.markdown("""
         border-top: 4px solid #ffcc00; 
         margin-top: 50px; 
     }
+    
+    /* ESTILO PARA EL PANEL DE CONTROL MAESTRO */
+    .master-panel {
+        background-color: #0033a0;
+        border: 3px solid #ffcc00;
+        padding: 20px;
+        border-radius: 15px;
+        margin-top: 40px;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -235,6 +244,30 @@ elif opcion_menu == "🏢 Ver Guía Comercial":
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * (r['estrellas_w'] if r['estrellas_w'] else 0)}")
                 st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+
+# --- AGREGADO: PANEL DE ADMINISTRADOR MAESTRO (SOLO CON CONTRASEÑA) ---
+st.markdown("---")
+with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
+    master_key = st.text_input("Ingrese Contraseña Maestra para gestionar datos:", type="password", key="master_pass")
+    if master_key == "Juan*316*":
+        st.markdown('<div class="master-panel">', unsafe_allow_html=True)
+        st.subheader("📊 Gestión de Datos en Tiempo Real")
+        
+        m_tab1, m_tab2 = st.tabs(["📝 Ver Denuncias Recibidas", "⚙️ Gestionar Comercios"])
+        
+        with m_tab1:
+            denuncias_df = conn.query("SELECT * FROM denuncias ORDER BY id DESC", ttl=0)
+            if not denuncias_df.empty:
+                st.dataframe(denuncias_df, use_container_width=True)
+            else:
+                st.write("No hay denuncias registradas.")
+                
+        with m_tab2:
+            comercios_df = conn.query("SELECT id, nombre, categoria, ubicacion FROM comercios", ttl=0)
+            st.write("Lista de comercios activos:")
+            st.dataframe(comercios_df, use_container_width=True)
+            
+        st.markdown('</div>', unsafe_allow_html=True)
 
 # --- PIE DE PÁGINA ---
 st.markdown(f"""
