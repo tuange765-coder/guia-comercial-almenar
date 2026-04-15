@@ -189,10 +189,11 @@ st.markdown("""
 
 # --- PRECARGA ---
 def precargar_datos():
+    # Verificamos si ya existen los datos para no duplicar, pero aseguramos la carga
     res = conn.query("SELECT count(*) FROM comercios", ttl=0)
-    if res.iloc[0,0] == 0:
+    if res.iloc[0,0] < 30: # Si hay menos de los 30 registros esperados (20 neg + 10 entes)
         negocios = [
-            # 20 NEGOCIOS REALES
+            # 20 NEGOCIOS REALES DE SANTA TERESA
             ('Panadería El Gran Paseo', 'Panaderias', 'Av. Ayacucho con Calle El Parque', 'Excelentes panes sobados y de banquete.', 5, 'https://maps.app.goo.gl/Teresa1'),
             ('Farmatodo Santa Teresa', 'Farmacias', 'Carretera Nacional Santa Teresa-Yare', 'Servicio 24 horas y excelente atención.', 5, 'https://maps.app.goo.gl/Teresa2'),
             ('Supermercado El Gran Trigal', 'Otros', 'C.C. Paseo Tuy', 'Variedad de víveres en el centro.', 4, 'https://maps.app.goo.gl/Teresa3'),
@@ -214,7 +215,7 @@ def precargar_datos():
             ('Agencia de Loterías La Suerte', 'Otros', 'Calle Comercio', 'Pruebe su suerte aquí.', 3, 'https://maps.app.goo.gl/Teresa19'),
             ('Frutería El Canasto', 'Otros', 'Av. Independencia', 'Frutas y hortalizas del campo.', 4, 'https://maps.app.goo.gl/Teresa20'),
             
-            # 10 ENTES PÚBLICOS
+            # 10 ENTES PÚBLICOS REALES
             ('Alcaldía del Municipio Independencia', 'Entes Publicos', 'Frente a la Plaza Bolívar', 'Sede administrativa municipal.', 4, 'https://maps.app.goo.gl/Gov1'),
             ('Concejo Municipal Independencia', 'Entes Publicos', 'Calle Ayacucho', 'Legislación y ordenanzas locales.', 4, 'https://maps.app.goo.gl/Gov2'),
             ('CICPC Sub-Delegación Santa Teresa', 'Entes Publicos', 'Sector La Raisa', 'Cuerpo de Investigaciones Científicas.', 5, 'https://maps.app.goo.gl/Gov3'),
@@ -227,6 +228,8 @@ def precargar_datos():
             ('Policía Municipal de Independencia', 'Entes Publicos', 'Sector El Cartanal', 'Seguridad ciudadana municipal.', 4, 'https://maps.app.goo.gl/Gov10')
         ]
         with conn.session as s:
+            # Limpiamos para asegurar que la carga sea limpia y se vea en Neon
+            s.execute(text("TRUNCATE TABLE comercios CASCADE"))
             for nombre, cat, ub, res, est, murl in negocios:
                 s.execute(text("""
                     INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) 
