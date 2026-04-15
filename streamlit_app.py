@@ -11,6 +11,14 @@ st.set_page_config(page_title="Guía Comercial Almenar", layout="wide", page_ico
 # --- CONEXIÓN A NEON (POSTGRESQL) ---
 conn = st.connection("postgresql", type="sql")
 
+# --- CATEGORÍAS DEFINIDAS ---
+CAT_LIST = [
+    "Salud", "Laboratorios", "Opticas", "Farmacias", "Dulcerias", 
+    "Comida Rapida", "Panaderias", "Charcuterias", "Carnicerias", 
+    "Ferreterias", "Zapaterias", "Electrodomesticos", "Fibras Opticas", 
+    "Taxis", "Mototaxis", "Servicios", "Entes Publicos", "Otros"
+]
+
 # --- CREACIÓN DE TABLAS ---
 with conn.session as s:
     s.execute(text("""
@@ -184,7 +192,7 @@ def precargar_datos():
     res = conn.query("SELECT count(*) FROM comercios", ttl=0)
     if res.iloc[0,0] == 0:
         with conn.session as s:
-            s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES ('Panadería El Gran Paseo', 'Otros', 'Av. Ayacucho', 'https://via.placeholder.com/400', 'Tradición tereseña.', 5)"))
+            s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES ('Panadería El Gran Paseo', 'Panaderias', 'Av. Ayacucho', 'https://via.placeholder.com/400', 'Tradición tereseña.', 5)"))
             s.commit()
 
 precargar_datos()
@@ -192,7 +200,7 @@ precargar_datos()
 # --- PANEL LATERAL ---
 with st.sidebar:
     st.title("🇻🇪 Gestión")
-    opcion_menu = st.radio("Ir a:", ["🏢 Ver Guía Comercial", "🔐 Administración", "📢 Página de Denuncias"])
+    opcion_menu = st.radio("Ir a:", ["🏢 Ver Guía Comercial", "🔐 Administración"])
     st.markdown("---")
     st.info("Desarrollado por Willian Almenar")
 
@@ -209,7 +217,6 @@ st.markdown(f'''
 ''', unsafe_allow_html=True)
 
 # --- LÓGICA DE MENÚ ---
-
 if opcion_menu == "🔐 Administración":
     clave = st.text_input("Clave de Acceso:", type="password")
     if clave == "Juan*316*":
@@ -218,30 +225,19 @@ if opcion_menu == "🔐 Administración":
         with tab1:
             with st.form("admin_form"):
                 n = st.text_input("Nombre del Negocio")
-                cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
+                cat = st.selectbox("Categoría", CAT_LIST)
                 ub = st.text_input("Ubicación")
+                gm = st.text_input("Enlace Google Maps (URL)")
                 res = st.text_area("Tu Reseña")
                 est = st.slider("Estrellas", 1, 5, 5)
                 if st.form_submit_button("Guardar en la Base de Datos"):
                     with conn.session as s:
-                        s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, reseña_willian, estrellas_w) VALUES (:n, :c, :u, :r, :e)"),
-                                    {"n": n, "c": cat, "u": ub, "r": res, "e": est})
+                        s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, reseña_willian, estrellas_w, maps_url) VALUES (:n, :c, :u, :r, :e, :m)"),
+                                    {"n": n, "c": cat, "u": ub, "r": res, "e": est, "m": gm})
                         s.commit()
                     st.success("¡Guardado correctamente!")
         with tab2:
             st.write("Mantenimiento de Imagen")
-
-elif opcion_menu == "📢 Página de Denuncias":
-    st.markdown("## 📢 Centro de Denuncias Ciudadanas")
-    with st.form("denuncia_form"):
-        com = st.text_input("Comercio afectado")
-        mot = st.text_area("Motivo de la denuncia")
-        if st.form_submit_button("Enviar Reporte"):
-            with conn.session as s:
-                s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES ('Anónimo', :c, :m, :f)"),
-                            {"c": com, "m": mot, "f": ahora_vzla.strftime("%d/%m/%Y")})
-                s.commit()
-            st.success("Denuncia recibida por Willian Almenar.")
 
 elif opcion_menu == "🏢 Ver Guía Comercial":
     st.title("🚀 Guía Comercial Almenar")
@@ -270,27 +266,76 @@ elif opcion_menu == "🏢 Ver Guía Comercial":
         ''', unsafe_allow_html=True)
 
     st.markdown("---")
+    
+    with st.expander("📢 ¿Deseas reportar una irregularidad comercial? Haz clic aquí"):
+        with st.form("denuncia_principal"):
+            st.write("### Centro de Denuncias Ciudadanas")
+            com_d = st.text_input("Comercio afectado")
+            mot_d = st.text_area("Motivo de la denuncia")
+            if st.form_submit_button("Enviar Reporte"):
+                with conn.session as s:
+                    s.execute(text("INSERT INTO denuncias (denunciante, comercio_afectado, motivo, fecha) VALUES ('Anónimo', :c, :m, :f)"),
+                                {"c": com_d, "m": mot_d, "f": ahora_vzla.strftime("%d/%m/%Y")})
+                    s.commit()
+                st.success("Denuncia recibida por Willian Almenar.")
+
+    st.markdown("---")
+    
+    # --- BUSCADOR Y PESTAÑAS DE CATEGORÍAS ---
     busq = st.text_input("🔍 ¿Qué buscas en Santa Teresa?", placeholder="Ej: Panadería, Farmacia...")
     
+    # Sistema de Pestañas
+    tab_labels = ["Todos"] + CAT_LIST
+    tabs_main = st.tabs(tab_labels)
+    
     df = conn.query("SELECT * FROM comercios", ttl=0)
-    if not df.empty:
-        filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
-        for _, r in filtrado.iterrows():
-            with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
-                if r['foto_url']:
-                    st.image(r['foto_url'], width=300)
-                st.write(f"📍 **Ubicación:** {r['ubicacion']}")
-                st.write(f"⭐ **Calificación:** {'⭐' * (r['estrellas_w'] if r['estrellas_w'] else 0)}")
-                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+    
+    for i, tab in enumerate(tabs_main):
+        with tab:
+            categoria_seleccionada = tab_labels[i]
+            
+            if not df.empty:
+                # Filtrado por buscador
+                filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
                 
-                st.markdown("---")
-                st.write("💬 **Opiniones de Usuarios:**")
-                op_df = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
-                if not op_df.empty:
-                    for _, op in op_df.iterrows():
-                        st.write(f"👤 **{op['usuario']}**: {op['comentario']} ({'⭐'*op['estrellas_u']})")
+                # Filtrado adicional por pestaña (si no es "Todos")
+                if categoria_seleccionada != "Todos":
+                    filtrado = filtrado[filtrado['categoria'] == categoria_seleccionada]
+                
+                if filtrado.empty:
+                    st.warning(f"No hay comercios registrados en {categoria_seleccionada}." if categoria_seleccionada != "Todos" else "No se encontraron resultados.")
                 else:
-                    st.write("Sé el primero en opinar.")
+                    for _, r in filtrado.iterrows():
+                        with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
+                            col_img, col_info = st.columns([1, 2])
+                            with col_img:
+                                if r['foto_url']:
+                                    st.image(r['foto_url'], use_container_width=True)
+                            with col_info:
+                                st.write(f"📍 **Ubicación:** {r['ubicacion']}")
+                                if r['maps_url']:
+                                    st.link_button("🗺️ Ver en Google Maps", r['maps_url'])
+                                st.write(f"⭐ **Calificación Willian:** {'⭐' * (r['estrellas_w'] if r['estrellas_w'] else 0)}")
+                                st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                            
+                            st.markdown("---")
+                            st.write("💬 **Opiniones y Calificación de Usuarios:**")
+                            
+                            with st.form(f"form_op_{r['id']}"):
+                                u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
+                                u_com = st.text_area("Tu comentario", key=f"uc_{r['id']}")
+                                u_est = st.slider("Tu calificación", 1, 5, 5, key=f"ue_{r['id']}")
+                                if st.form_submit_button("Enviar Opinión"):
+                                    with conn.session as s:
+                                        s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
+                                                    {"id": r['id'], "u": u_nom, "c": u_com, "e": u_est, "f": ahora_vzla.strftime("%d/%m/%Y")})
+                                        s.commit()
+                                    st.rerun()
+
+                            op_df = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']} ORDER BY id DESC", ttl=0)
+                            if not op_df.empty:
+                                for _, op in op_df.iterrows():
+                                    st.write(f"👤 **{op['usuario']}** ({op['fecha']}): {op['comentario']} ({'⭐'*op['estrellas_u']})")
 
 # --- PANEL DE ADMINISTRADOR MAESTRO MEJORADO ---
 st.markdown("---")
@@ -310,23 +355,22 @@ with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
                         s.execute(text("DELETE FROM denuncias"))
                         s.commit()
                     st.rerun()
-            else:
-                st.write("No hay denuncias registradas.")
 
         with m_tab2:
             st.write("### Registrar Nuevo Comercio")
             with st.form("master_add_form"):
                 add_n = st.text_input("Nombre del Negocio")
-                add_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], key="add_cat")
+                add_cat = st.selectbox("Categoría", CAT_LIST, key="add_cat")
                 add_ub = st.text_input("Ubicación exacta")
+                add_maps = st.text_input("Enlace Google Maps")
                 add_res = st.text_area("Reseña de Willian")
                 add_est = st.slider("Calificación (Estrellas)", 1, 5, 5)
                 add_foto = st.file_uploader("Subir Imagen del Local", type=["png", "jpg", "jpeg"])
                 if st.form_submit_button("🚀 Registrar Comercio"):
                     img_data = imagen_a_base64(add_foto) if add_foto else None
                     with conn.session as s:
-                        s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, reseña_willian, estrellas_w, foto_url) VALUES (:n, :c, :u, :r, :e, :f)"),
-                                    {"n": add_n, "c": add_cat, "u": add_ub, "r": add_res, "e": add_est, "f": img_data})
+                        s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, reseña_willian, estrellas_w, foto_url, maps_url) VALUES (:n, :c, :u, :r, :e, :f, :m)"),
+                                    {"n": add_n, "c": add_cat, "u": add_ub, "r": add_res, "e": add_est, "f": img_data, "m": add_maps})
                         s.commit()
                     st.success("Negocio añadido con éxito.")
                     st.rerun()
@@ -341,8 +385,9 @@ with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
                     col1, col2 = st.columns(2)
                     with col1:
                         new_n = st.text_input("Nombre", value=target['nombre'])
-                        new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], index=0)
+                        new_cat = st.selectbox("Categoría", CAT_LIST, index=CAT_LIST.index(target['categoria']) if target['categoria'] in CAT_LIST else 0)
                         new_ub = st.text_input("Ubicación", value=target['ubicacion'])
+                        new_maps = st.text_input("Google Maps URL", value=target['maps_url'] if target['maps_url'] else "")
                     with col2:
                         new_est = st.slider("Estrellas Willian", 1, 5, int(target['estrellas_w']))
                         new_foto = st.file_uploader("Cambiar Foto", type=["png", "jpg", "jpeg"])
@@ -350,8 +395,8 @@ with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
                     if st.form_submit_button("✅ Actualizar"):
                         final_foto = target['foto_url'] if not new_foto else imagen_a_base64(new_foto)
                         with conn.session as s:
-                            s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, reseña_willian=:r, estrellas_w=:e, foto_url=:f WHERE id=:id"),
-                                    {"n":new_n, "c":new_cat, "u":new_ub, "r":new_res_text, "e":new_est, "f":final_foto, "id":target['id']})
+                            s.execute(text("UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, reseña_willian=:r, estrellas_w=:e, foto_url=:f, maps_url=:m WHERE id=:id"),
+                                    {"n":new_n, "c":new_cat, "u":new_ub, "r":new_res_text, "e":new_est, "f":final_foto, "m":new_maps, "id":target['id']})
                             s.commit()
                         st.rerun()
 
