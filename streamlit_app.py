@@ -241,31 +241,102 @@ elif opcion_menu == "🏢 Ver Guía Comercial":
         filtrado = df[df['nombre'].str.contains(busq, case=False) | df['categoria'].str.contains(busq, case=False)]
         for _, r in filtrado.iterrows():
             with st.expander(f"🏢 {r['nombre']} - {r['categoria']}"):
+                if r['foto_url']:
+                    st.image(r['foto_url'], width=300)
                 st.write(f"📍 **Ubicación:** {r['ubicacion']}")
                 st.write(f"⭐ **Calificación:** {'⭐' * (r['estrellas_w'] if r['estrellas_w'] else 0)}")
                 st.info(f"**Reseña de Willian:** {r['reseña_willian']}")
+                
+                # Sección de Opiniones de Usuarios
+                st.markdown("---")
+                st.write("💬 **Opiniones de Usuarios:**")
+                op_df = conn.query(f"SELECT * FROM opiniones WHERE comercio_id = {r['id']}", ttl=0)
+                if not op_df.empty:
+                    for _, op in op_df.iterrows():
+                        st.write(f"👤 **{op['usuario']}**: {op['comentario']} ({'⭐'*op['estrellas_u']})")
+                else:
+                    st.write("Sé el primero en opinar.")
 
-# --- AGREGADO: PANEL DE ADMINISTRADOR MAESTRO (SOLO CON CONTRASEÑA) ---
+# --- AGREGADO: PANEL DE ADMINISTRADOR MAESTRO MEJORADO ---
 st.markdown("---")
 with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
     master_key = st.text_input("Ingrese Contraseña Maestra para gestionar datos:", type="password", key="master_pass")
     if master_key == "Juan*316*":
         st.markdown('<div class="master-panel">', unsafe_allow_html=True)
-        st.subheader("📊 Gestión de Datos en Tiempo Real")
+        st.subheader("📊 GESTIÓN INTEGRAL DE LA GUÍA")
         
-        m_tab1, m_tab2 = st.tabs(["📝 Ver Denuncias Recibidas", "⚙️ Gestionar Comercios"])
+        m_tab1, m_tab2, m_tab3 = st.tabs(["📝 Denuncias", "⚙️ Gestión de Comercios", "💬 Moderación de Opiniones"])
         
         with m_tab1:
             denuncias_df = conn.query("SELECT * FROM denuncias ORDER BY id DESC", ttl=0)
             if not denuncias_df.empty:
                 st.dataframe(denuncias_df, use_container_width=True)
+                if st.button("Limpiar historial de denuncias"):
+                    with conn.session as s:
+                        s.execute(text("DELETE FROM denuncias"))
+                        s.commit()
+                    st.rerun()
             else:
                 st.write("No hay denuncias registradas.")
                 
         with m_tab2:
-            comercios_df = conn.query("SELECT id, nombre, categoria, ubicacion FROM comercios", ttl=0)
-            st.write("Lista de comercios activos:")
-            st.dataframe(comercios_df, use_container_width=True)
+            st.write("### Modificar o Eliminar Comercio")
+            comercios_master = conn.query("SELECT * FROM comercios", ttl=0)
+            
+            if not comercios_master.empty:
+                opcion_edit = st.selectbox("Seleccione Comercio para editar:", comercios_master['nombre'].tolist())
+                target = comercios_master[comercios_master['nombre'] == opcion_edit].iloc[0]
+                
+                with st.form("master_edit_form"):
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        new_n = st.text_input("Nombre", value=target['nombre'])
+                        new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"].index(target['categoria']) if target['categoria'] in ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"] else 0)
+                        new_ub = st.text_input("Ubicación", value=target['ubicacion'])
+                    with col2:
+                        new_est = st.slider("Estrellas Willian", 1, 5, int(target['estrellas_w']) if target['estrellas_w'] else 5)
+                        new_foto = st.file_uploader("Actualizar Foto (deje vacío para mantener la actual)", type=["png", "jpg", "jpeg"])
+                    
+                    new_res_text = st.text_area("Reseña de Willian", value=target['reseña_willian'])
+                    
+                    c1, c2 = st.columns(2)
+                    if c1.form_submit_button("✅ Guardar Cambios"):
+                        final_foto = target['foto_url']
+                        if new_foto:
+                            final_foto = imagen_a_base64(new_foto)
+                        
+                        with conn.session as s:
+                            s.execute(text("""
+                                UPDATE comercios SET nombre=:n, categoria=:c, ubicacion=:u, 
+                                reseña_willian=:r, estrellas_w=:e, foto_url=:f WHERE id=:id
+                            """), {"n":new_n, "c":new_cat, "u":new_ub, "r":new_res_text, "e":new_est, "f":final_foto, "id":target['id']})
+                            s.commit()
+                        st.success("Cambios aplicados.")
+                        st.rerun()
+                        
+                    if c2.form_submit_button("🗑️ Eliminar Comercio"):
+                        with conn.session as s:
+                            s.execute(text("DELETE FROM comercios WHERE id=:id"), {"id":target['id']})
+                            s.commit()
+                        st.warning("Comercio eliminado.")
+                        st.rerun()
+            else:
+                st.write("No hay comercios para gestionar.")
+
+        with m_tab3:
+            st.write("### Gestionar Opiniones de Usuarios")
+            todas_op = conn.query("SELECT opiniones.id, comercios.nombre as comercio, usuario, comentario FROM opiniones JOIN comercios ON opiniones.comercio_id = comercios.id", ttl=0)
+            if not todas_op.empty:
+                st.dataframe(todas_op, use_container_width=True)
+                id_eliminar = st.number_input("ID de Opinión a eliminar", step=1, min_value=0)
+                if st.button("Eliminar Opinión Seleccionada"):
+                    with conn.session as s:
+                        s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id":id_eliminar})
+                        s.commit()
+                    st.success("Opinión eliminada.")
+                    st.rerun()
+            else:
+                st.write("No hay opiniones para moderar.")
             
         st.markdown('</div>', unsafe_allow_html=True)
 
