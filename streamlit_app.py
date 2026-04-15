@@ -149,6 +149,26 @@ st.markdown("""
         border-radius: 15px;
         margin-top: 40px;
     }
+
+    /* ESTILO PLACA DE BRONCE */
+    .bronze-plaque {
+        background: linear-gradient(145deg, #8c6a31, #5d431a);
+        border: 4px solid #d4af37;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        box-shadow: inset 2px 2px 5px rgba(255,255,255,0.2), 5px 5px 15px rgba(0,0,0,0.5);
+        margin: 40px auto;
+        max-width: 800px;
+    }
+    .bronze-text {
+        color: #ffd700;
+        font-family: 'Times New Roman', serif;
+        font-weight: bold;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        letter-spacing: 1px;
+        line-height: 1.6;
+    }
     </style>
     """, unsafe_allow_html=True)
 
@@ -192,7 +212,7 @@ if opcion_menu == "🔐 Administración":
         with tab1:
             with st.form("admin_form"):
                 n = st.text_input("Nombre del Negocio")
-                cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"])
+                cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"])
                 ub = st.text_input("Ubicación")
                 res = st.text_area("Tu Reseña")
                 est = st.slider("Estrellas", 1, 5, 5)
@@ -265,8 +285,9 @@ with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
         st.markdown('<div class="master-panel">', unsafe_allow_html=True)
         st.subheader("📊 GESTIÓN INTEGRAL DE LA GUÍA")
         
-        m_tab1, m_tab2, m_tab3 = st.tabs(["📝 Denuncias", "⚙️ Gestión de Comercios", "💬 Moderación de Opiniones"])
+        m_tab1, m_tab2, m_tab3, m_tab4 = st.tabs(["📝 Denuncias", "➕ Agregar Comercio", "⚙️ Modificar/Eliminar", "💬 Opiniones"])
         
+        # TAB 1: DENUNCIAS
         with m_tab1:
             denuncias_df = conn.query("SELECT * FROM denuncias ORDER BY id DESC", ttl=0)
             if not denuncias_df.empty:
@@ -278,29 +299,51 @@ with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
                     st.rerun()
             else:
                 st.write("No hay denuncias registradas.")
-                
+
+        # TAB 2: AGREGAR NUEVO (CON FOTO)
         with m_tab2:
-            st.write("### Modificar o Eliminar Comercio")
+            st.write("### Registrar Nuevo Comercio")
+            with st.form("master_add_form"):
+                add_n = st.text_input("Nombre del Negocio")
+                add_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], key="add_cat")
+                add_ub = st.text_input("Ubicación exacta")
+                add_res = st.text_area("Reseña de Willian")
+                add_est = st.slider("Calificación (Estrellas)", 1, 5, 5)
+                add_foto = st.file_uploader("Subir Imagen del Local", type=["png", "jpg", "jpeg"])
+                if st.form_submit_button("🚀 Registrar Comercio"):
+                    img_data = imagen_a_base64(add_foto) if add_foto else None
+                    with conn.session as s:
+                        s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, reseña_willian, estrellas_w, foto_url) VALUES (:n, :c, :u, :r, :e, :f)"),
+                                    {"n": add_n, "c": add_cat, "u": add_ub, "r": add_res, "e": add_est, "f": img_data})
+                        s.commit()
+                    st.success("Negocio añadido con éxito.")
+                    st.rerun()
+                
+        # TAB 3: MODIFICAR / ELIMINAR
+        with m_tab3:
+            st.write("### Editar Información Existente")
             comercios_master = conn.query("SELECT * FROM comercios", ttl=0)
             
             if not comercios_master.empty:
-                opcion_edit = st.selectbox("Seleccione Comercio para editar:", comercios_master['nombre'].tolist())
+                opcion_edit = st.selectbox("Seleccione Comercio para editar:", comercios_master['nombre'].tolist(), key="sel_edit")
                 target = comercios_master[comercios_master['nombre'] == opcion_edit].iloc[0]
                 
                 with st.form("master_edit_form"):
                     col1, col2 = st.columns(2)
                     with col1:
                         new_n = st.text_input("Nombre", value=target['nombre'])
-                        new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"].index(target['categoria']) if target['categoria'] in ["Salud", "Farmacias", "Supermercados", "Ferreterias", "Otros"] else 0)
+                        new_cat = st.selectbox("Categoría", ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"], index=["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"].index(target['categoria']) if target['categoria'] in ["Salud", "Farmacias", "Supermerkados", "Ferreterias", "Otros"] else 0)
                         new_ub = st.text_input("Ubicación", value=target['ubicacion'])
                     with col2:
                         new_est = st.slider("Estrellas Willian", 1, 5, int(target['estrellas_w']) if target['estrellas_w'] else 5)
-                        new_foto = st.file_uploader("Actualizar Foto (deje vacío para mantener la actual)", type=["png", "jpg", "jpeg"])
+                        if target['foto_url']:
+                             st.image(target['foto_url'], width=100, caption="Foto actual")
+                        new_foto = st.file_uploader("Cambiar Foto (vacío para mantener)", type=["png", "jpg", "jpeg"])
                     
                     new_res_text = st.text_area("Reseña de Willian", value=target['reseña_willian'])
                     
                     c1, c2 = st.columns(2)
-                    if c1.form_submit_button("✅ Guardar Cambios"):
+                    if c1.form_submit_button("✅ Actualizar"):
                         final_foto = target['foto_url']
                         if new_foto:
                             final_foto = imagen_a_base64(new_foto)
@@ -311,32 +354,47 @@ with st.expander("🛠️ PANEL DE CONTROL MAESTRO (Acceso Restringido)"):
                                 reseña_willian=:r, estrellas_w=:e, foto_url=:f WHERE id=:id
                             """), {"n":new_n, "c":new_cat, "u":new_ub, "r":new_res_text, "e":new_est, "f":final_foto, "id":target['id']})
                             s.commit()
-                        st.success("Cambios aplicados.")
+                        st.success("Actualizado correctamente.")
                         st.rerun()
                         
-                    if c2.form_submit_button("🗑️ Eliminar Comercio"):
+                    if c2.form_submit_button("🗑️ ELIMINAR COMERCIO"):
                         with conn.session as s:
                             s.execute(text("DELETE FROM comercios WHERE id=:id"), {"id":target['id']})
                             s.commit()
-                        st.warning("Comercio eliminado.")
+                        st.warning("Comercio borrado.")
                         st.rerun()
             else:
-                st.write("No hay comercios para gestionar.")
+                st.write("No hay comercios registrados.")
 
-        with m_tab3:
-            st.write("### Gestionar Opiniones de Usuarios")
-            todas_op = conn.query("SELECT opiniones.id, comercios.nombre as comercio, usuario, comentario FROM opiniones JOIN comercios ON opiniones.comercio_id = comercios.id", ttl=0)
+        # TAB 4: MODERACIÓN Y EDICIÓN DE OPINIONES
+        with m_tab4:
+            st.write("### Control de Opiniones de Usuarios")
+            todas_op = conn.query("SELECT opiniones.id, comercios.nombre as comercio, usuario, comentario, estrellas_u FROM opiniones JOIN comercios ON opiniones.comercio_id = comercios.id", ttl=0)
             if not todas_op.empty:
+                sel_op_id = st.selectbox("Seleccione ID de Opinión para editar/borrar", todas_op['id'].tolist())
+                op_target = todas_op[todas_op['id'] == sel_op_id].iloc[0]
+                
+                with st.form("edit_op_form"):
+                    edit_user = st.text_input("Usuario", value=op_target['usuario'])
+                    edit_comm = st.text_area("Comentario", value=op_target['comentario'])
+                    edit_stars = st.slider("Estrellas Usuario", 1, 5, int(op_target['estrellas_u']))
+                    
+                    b1, b2 = st.columns(2)
+                    if b1.form_submit_button("💾 Guardar Cambios en Opinión"):
+                        with conn.session as s:
+                            s.execute(text("UPDATE opiniones SET usuario=:u, comentario=:c, estrellas_u=:s WHERE id=:id"),
+                                        {"u": edit_user, "c": edit_comm, "s": edit_stars, "id": sel_op_id})
+                            s.commit()
+                        st.success("Opinión modificada.")
+                        st.rerun()
+                    if b2.form_submit_button("🗑️ Borrar Opinión"):
+                        with conn.session as s:
+                            s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id": sel_op_id})
+                            s.commit()
+                        st.rerun()
                 st.dataframe(todas_op, use_container_width=True)
-                id_eliminar = st.number_input("ID de Opinión a eliminar", step=1, min_value=0)
-                if st.button("Eliminar Opinión Seleccionada"):
-                    with conn.session as s:
-                        s.execute(text("DELETE FROM opiniones WHERE id=:id"), {"id":id_eliminar})
-                        s.commit()
-                    st.success("Opinión eliminada.")
-                    st.rerun()
             else:
-                st.write("No hay opiniones para moderar.")
+                st.write("No hay opiniones registradas.")
             
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -346,5 +404,17 @@ st.markdown(f"""
         📍 Santa Teresa del Tuy, Venezuela.<br>
         <b>Desarrollador Willian Almenar</b><br>
         © 2026 TODOS LOS DERECHOS RESERVADOS.
+    </div>
+""", unsafe_allow_html=True)
+
+# --- PLACA DE BRONCE FINAL ---
+st.markdown("""
+    <div class="bronze-plaque">
+        <div class="bronze-text">
+            <span style="font-size: 1.4em;">Generado por Willian Almenar</span><br>
+            <span style="font-size: 1em; opacity: 0.9;">Prohibida la reproducción total o parcial</span><br>
+            <span style="font-size: 1.1em; letter-spacing: 3px;">DERECHOS RESERVADOS</span><br>
+            <span style="font-size: 1.2em; font-variant: small-caps;">Santa Teresa del Tuy 2.026</span>
+        </div>
     </div>
 """, unsafe_allow_html=True)
