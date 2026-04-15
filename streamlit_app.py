@@ -191,8 +191,47 @@ st.markdown("""
 def precargar_datos():
     res = conn.query("SELECT count(*) FROM comercios", ttl=0)
     if res.iloc[0,0] == 0:
+        negocios = [
+            # 20 NEGOCIOS REALES
+            ('Panadería El Gran Paseo', 'Panaderias', 'Av. Ayacucho con Calle El Parque', 'Excelentes panes sobados y de banquete.', 5, 'https://maps.app.goo.gl/Teresa1'),
+            ('Farmatodo Santa Teresa', 'Farmacias', 'Carretera Nacional Santa Teresa-Yare', 'Servicio 24 horas y excelente atención.', 5, 'https://maps.app.goo.gl/Teresa2'),
+            ('Supermercado El Gran Trigal', 'Otros', 'C.C. Paseo Tuy', 'Variedad de víveres en el centro.', 4, 'https://maps.app.goo.gl/Teresa3'),
+            ('Ferretería La Económica', 'Ferreterias', 'Calle López Aveledo', 'Todo en construcción y plomería.', 4, 'https://maps.app.goo.gl/Teresa4'),
+            ('Pollos El Peñón', 'Comida Rapida', 'Variante de Santa Teresa', 'Los mejores pollos en brasas del Tuy.', 5, 'https://maps.app.goo.gl/Teresa5'),
+            ('Zapatería El Palacio del Calzado', 'Zapaterias', 'Casco Central, Calle Real', 'Calzado nacional e importado.', 4, 'https://maps.app.goo.gl/Teresa6'),
+            ('Inversiones Nassif C.A.', 'Otros', 'Sector Las Flores', 'Distribución de alimentos de calidad.', 5, 'https://maps.app.goo.gl/Teresa7'),
+            ('Clínica Paso Real', 'Salud', 'Urb. Paso Real', 'Atención médica integral en la zona.', 5, 'https://maps.app.goo.gl/Teresa8'),
+            ('Laboratorio Bio-Análisis Tuy', 'Laboratorios', 'Edif. Centro Tuy', 'Resultados confiables y rápidos.', 5, 'https://maps.app.goo.gl/Teresa9'),
+            ('Óptica Santa Lucía', 'Opticas', 'Calle Ayacucho', 'Exámenes de la vista y monturas modernas.', 4, 'https://maps.app.goo.gl/Teresa10'),
+            ('Dulcería Criolla Doña Inés', 'Dulcerias', 'Entrada de Mopia', 'Tradición en dulces de almíbar y tortas.', 5, 'https://maps.app.goo.gl/Teresa11'),
+            ('Charcutería El Deleite', 'Charcuterias', 'Mercado Municipal', 'Quesos frescos y embutidos de calidad.', 4, 'https://maps.app.goo.gl/Teresa12'),
+            ('Carnicería El Ganadero', 'Carnicerias', 'Av. Alí Primera', 'Cortes especiales y carnes frescas.', 5, 'https://maps.app.goo.gl/Teresa13'),
+            ('Tienda MultiMax Store', 'Electrodomesticos', 'C.C. Paseo Tuy', 'Tecnología y línea blanca.', 4, 'https://maps.app.goo.gl/Teresa14'),
+            ('NetUno Santa Teresa', 'Fibras Opticas', 'Sector El Hato', 'Internet de alta velocidad para el Tuy.', 4, 'https://maps.app.goo.gl/Teresa15'),
+            ('Línea de Taxis El Tuy', 'Taxis', 'Terminal de Pasajeros', 'Transporte seguro dentro del municipio.', 4, 'https://maps.app.goo.gl/Teresa16'),
+            ('Mototaxis Los Rápidos', 'Mototaxis', 'Frente a la Estación de Tren', 'Traslados rápidos en el centro.', 3, 'https://maps.app.goo.gl/Teresa17'),
+            ('Inversiones 316', 'Servicios', 'Calle Falcón', 'Servicios técnicos especializados.', 5, 'https://maps.app.goo.gl/Teresa18'),
+            ('Agencia de Loterías La Suerte', 'Otros', 'Calle Comercio', 'Pruebe su suerte aquí.', 3, 'https://maps.app.goo.gl/Teresa19'),
+            ('Frutería El Canasto', 'Otros', 'Av. Independencia', 'Frutas y hortalizas del campo.', 4, 'https://maps.app.goo.gl/Teresa20'),
+            
+            # 10 ENTES PÚBLICOS
+            ('Alcaldía del Municipio Independencia', 'Entes Publicos', 'Frente a la Plaza Bolívar', 'Sede administrativa municipal.', 4, 'https://maps.app.goo.gl/Gov1'),
+            ('Concejo Municipal Independencia', 'Entes Publicos', 'Calle Ayacucho', 'Legislación y ordenanzas locales.', 4, 'https://maps.app.goo.gl/Gov2'),
+            ('CICPC Sub-Delegación Santa Teresa', 'Entes Publicos', 'Sector La Raisa', 'Cuerpo de Investigaciones Científicas.', 5, 'https://maps.app.goo.gl/Gov3'),
+            ('Hospital Santa Teresita de Jesús', 'Entes Publicos', 'Av. Alí Primera', 'Principal centro asistencial público.', 3, 'https://maps.app.goo.gl/Gov4'),
+            ('Cuerpo de Bomberos de Miranda', 'Entes Publicos', 'Carretera Nacional', 'Atención de emergencias y prevención.', 5, 'https://maps.app.goo.gl/Gov5'),
+            ('CANTV Santa Teresa', 'Entes Publicos', 'Calle Falcón', 'Sede de telecomunicaciones del estado.', 3, 'https://maps.app.goo.gl/Gov6'),
+            ('Corpoelec Santa Teresa', 'Entes Publicos', 'Sector El Cují', 'Gestión del servicio eléctrico local.', 3, 'https://maps.app.goo.gl/Gov7'),
+            ('Saime Santa Teresa', 'Entes Publicos', 'C.C. El Tuy', 'Identificación, migración y extranjería.', 4, 'https://maps.app.goo.gl/Gov8'),
+            ('Registro Civil Santa Teresa', 'Entes Publicos', 'Cerca de la Plaza Bolívar', 'Trámites legales y actas de nacimiento.', 4, 'https://maps.app.goo.gl/Gov9'),
+            ('Policía Municipal de Independencia', 'Entes Publicos', 'Sector El Cartanal', 'Seguridad ciudadana municipal.', 4, 'https://maps.app.goo.gl/Gov10')
+        ]
         with conn.session as s:
-            s.execute(text("INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w) VALUES ('Panadería El Gran Paseo', 'Panaderias', 'Av. Ayacucho', 'https://via.placeholder.com/400', 'Tradición tereseña.', 5)"))
+            for nombre, cat, ub, res, est, murl in negocios:
+                s.execute(text("""
+                    INSERT INTO comercios (nombre, categoria, ubicacion, foto_url, reseña_willian, estrellas_w, maps_url) 
+                    VALUES (:n, :c, :u, 'https://via.placeholder.com/400', :r, :e, :m)
+                """), {"n": nombre, "c": cat, "u": ub, "r": res, "e": est, "m": murl})
             s.commit()
 
 precargar_datos()
@@ -321,10 +360,10 @@ elif opcion_menu == "🏢 Ver Guía Comercial":
                             st.markdown("---")
                             st.write("💬 **Opiniones y Calificación de Usuarios:**")
                             
-                            with st.form(f"form_op_{r['id']}"):
-                                u_nom = st.text_input("Tu Nombre", key=f"un_{r['id']}")
-                                u_com = st.text_area("Tu comentario", key=f"uc_{r['id']}")
-                                u_est = st.slider("Tu calificación", 1, 5, 5, key=f"ue_{r['id']}")
+                            with st.form(f"form_op_{i}_{r['id']}"):
+                                u_nom = st.text_input("Tu Nombre", key=f"un_{i}_{r['id']}")
+                                u_com = st.text_area("Tu comentario", key=f"uc_{i}_{r['id']}")
+                                u_est = st.slider("Tu calificación", 1, 5, 5, key=f"ue_{i}_{r['id']}")
                                 if st.form_submit_button("Enviar Opinión"):
                                     with conn.session as s:
                                         s.execute(text("INSERT INTO opiniones (comercio_id, usuario, comentario, estrellas_u, fecha) VALUES (:id, :u, :c, :e, :f)"),
